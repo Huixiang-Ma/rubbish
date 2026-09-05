@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 import httpx
 
 from app.config import Settings
+from app.services.metrics import LLM_CALLS, LLM_TOKENS
 
 
 def _dechunk(body: bytes) -> bytes:
@@ -102,6 +103,19 @@ class LLMClient:
             # 失败时降级到短连接兜底通道，保证真实 LLM 调用可用。
             return self._chat_via_socket(payload)
 
+    @staticmethod
+    def _record_usage(data: dict[str, Any]) -> None:
+        """P2 成本治理：从响应 usage 记录 token 消耗；provider 未回 usage 时只计调用数。"""
+        try:
+            LLM_CALLS.inc()
+            usage = data.get("usage") or {}
+            for key, kind in (("prompt_tokens", "prompt"), ("completion_tokens", "completion")):
+                value = usage.get(key)
+                if value:
+                    LLM_TOKENS.labels(kind=kind).inc(int(value))
+        except Exception:
+            pass
+
     def _chat_via_httpx(self, payload: dict[str, Any]) -> str:
         response = httpx.post(
             f"{self.base_url}/chat/completions",
@@ -110,7 +124,9 @@ class LLMClient:
             timeout=self.timeout_seconds,
         )
         response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"]
+        data = response.json()
+        self._record_usage(data)
+        return data["choices"][0]["message"]["content"]
 
     def _chat_via_socket(self, payload: dict[str, Any]) -> str:
         parsed = urlparse(f"{self.base_url}/chat/completions")
@@ -141,6 +157,7 @@ class LLMClient:
         if b"transfer-encoding: chunked" in head.lower():
             body_bytes = _dechunk(body_bytes)
         payload_out = json.loads(body_bytes.decode("utf-8", "ignore"))
+        self._record_usage(payload_out)
         return payload_out["choices"][0]["message"]["content"]
 
     @staticmethod

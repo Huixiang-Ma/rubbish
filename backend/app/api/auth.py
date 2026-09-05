@@ -55,6 +55,19 @@ def me(request: Request) -> dict:
     return {"username": data.get("u"), "role": data.get("r"), "exp": data.get("exp")}
 
 
+def require_traveler(request: Request) -> dict:
+    """P2.2 toC 登录守卫：返回 token payload（u=用户名）；未登录 401、非游客角色 403。"""
+    token = bearer_token(request)
+    if not token:
+        raise HTTPException(status_code=401, detail="需要登录")
+    payload = auth_service.verify_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="token 无效或已过期")
+    if payload.get("r") != "traveler":
+        raise HTTPException(status_code=403, detail="FORBIDDEN_ROLE")
+    return payload
+
+
 def require_admin(request: Request) -> None:
     """AUTH_ENABLED=true 时挂载到 toB 管理路由的守卫。"""
     if not auth_service.verify_token(bearer_token(request), role="admin"):

@@ -23,6 +23,7 @@ from app.services.embedding import active_dim
 logger = logging.getLogger("wl.pg_mirror")
 
 _DDL = [
+    "ALTER TABLE plan_jobs ADD COLUMN IF NOT EXISTS user_id TEXT",
     "CREATE EXTENSION IF NOT EXISTS vector",
     """
     CREATE TABLE IF NOT EXISTS plan_jobs (
@@ -33,6 +34,7 @@ _DDL = [
         origin TEXT,
         customer TEXT,
         tenant TEXT,
+        user_id TEXT,
         updated_at TIMESTAMPTZ DEFAULT NOW(),
         payload JSONB
     )
@@ -139,12 +141,12 @@ class PgMirror:
         user_input = state.get("user_input", {})
         self._safe(
             """
-            INSERT INTO plan_jobs (job_id, status, version, destination, origin, customer, tenant, updated_at, payload)
-            VALUES (:job_id, :status, :version, :destination, :origin, :customer, :tenant, NOW(), :payload)
+            INSERT INTO plan_jobs (job_id, status, version, destination, origin, customer, tenant, user_id, updated_at, payload)
+            VALUES (:job_id, :status, :version, :destination, :origin, :customer, :tenant, :user_id, NOW(), :payload)
             ON CONFLICT (job_id) DO UPDATE SET
                 status = EXCLUDED.status, version = EXCLUDED.version,
                 destination = EXCLUDED.destination, origin = EXCLUDED.origin,
-                customer = EXCLUDED.customer, tenant = EXCLUDED.tenant,
+                customer = EXCLUDED.customer, tenant = EXCLUDED.tenant, user_id = EXCLUDED.user_id,
                 updated_at = NOW(), payload = EXCLUDED.payload
             """,
             {
@@ -155,6 +157,7 @@ class PgMirror:
                 "origin": user_input.get("origin"),
                 "customer": state.get("customer"),
                 "tenant": state.get("tenant"),
+                "user_id": state.get("user_id"),
                 "payload": json.dumps(state, ensure_ascii=False, default=str),
             },
         )

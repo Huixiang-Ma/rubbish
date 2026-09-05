@@ -16,6 +16,7 @@ class PlanRequest(BaseModel):
     mood: str | None = Field(default=None, description="心情词（C7 人生剧本），填写后生成情绪弧线章节")
     preferences: list[str] = Field(default_factory=list)
     constraints: list[str] = Field(default_factory=list)
+    user_id: str | None = Field(default=None, description="服务端从 Bearer token 注入，客户端传值会被覆盖")
 
 
 class PlanListItem(BaseModel):
@@ -33,6 +34,8 @@ class PlanListItem(BaseModel):
     created_at: str | None = None
     updated_at: str | None = None
     pipeline: str | None = Field(default=None, description="toc / tob，区分游客端与企业端来源")
+    travelers: int | None = Field(default=None, description="出行人数")
+    user_id: str | None = Field(default=None, description="归属账号（toC 登录用户）")
 
 
 class PlanListResponse(BaseModel):

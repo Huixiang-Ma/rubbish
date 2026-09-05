@@ -1904,27 +1904,54 @@ document.addEventListener('click', e => {
   async function loadHistory() {
     var box = $("histChips");
     if (!box) return;
-    var history = [];
-    try { history = JSON.parse(localStorage.getItem("planHistory") || "[]"); } catch (e) { /* 忽略 */ }
-    if (!history.length) {
-      box.innerHTML = '<span class="hist-empty">暂无历史；生成的行程会自动留档在本机，点击可随时回看。</span>';
+    var token = localStorage.getItem("tocToken");
+    var entries = [];
+    try {
+      if (token) {
+        // P2.2 已登录：云端历史优先（跨设备可见）；失败回退本机留档
+        var resp = await fetch(apiBase + "/api/plans/mine", { headers: { "Authorization": "Bearer " + token } });
+        if (resp.ok) {
+          var data = await resp.json();
+          entries = (data.items || []).slice(0, 12).map(function (it) {
+            return { job_id: it.job_id, destination: it.destination || "未知", days: it.days, travelers: it.travelers, status: it.status, updated_at: it.updated_at, created_at: it.created_at, saved_at: "" };
+          });
+        }
+      }
+    } catch (e) { /* 回退本地 */ }
+    if (token && entries.length) {
+      // 合并本机留档中尚未认领的任务（认领过期/跳过的也会出现在列表里，不丢历史）
+      var have = {};
+      entries.forEach(function (en) { have[en.job_id] = true; });
+      var local = [];
+      try { local = JSON.parse(localStorage.getItem("planHistory") || "[]"); } catch (e) { /* 忽略 */ }
+      local.slice(0, 12).forEach(function (item) {
+        if (!have[item.job_id]) {
+          entries.push({ job_id: item.job_id, destination: item.destination || "未知", days: item.days, travelers: item.travelers, status: "UNKNOWN", updated_at: null, created_at: null, saved_at: item.saved_at || "" });
+        }
+      });
+    }
+    if (!entries.length) {
+      var history = [];
+      try { history = JSON.parse(localStorage.getItem("planHistory") || "[]"); } catch (e) { /* 忽略 */ }
+      entries = await Promise.all(history.slice(0, 12).map(async function (item) {
+        var st = null;
+        try { st = await (await fetch(apiBase + "/api/plans/" + item.job_id)).json(); } catch (e) { /* 后端不可达时仍展示本地留档 */ }
+        return {
+          job_id: item.job_id,
+          destination: item.destination || "未知",
+          days: item.days,
+          travelers: item.travelers,
+          status: st ? st.status : "UNKNOWN",
+          updated_at: st && st.updated_at ? st.updated_at : null,
+          created_at: st && st.created_at ? st.created_at : null,
+          saved_at: item.saved_at || ""
+        };
+      }));
+    }
+    if (!entries.length) {
+      box.innerHTML = '<span class="hist-empty">暂无历史；生成的行程会自动留档，登录后可跨设备查看。</span>';
       return;
     }
-    box.innerHTML = '<span class="hist-empty">历史加载中…</span>';
-    var entries = await Promise.all(history.slice(0, 12).map(async function (item) {
-      var st = null;
-      try { st = await (await fetch(apiBase + "/api/plans/" + item.job_id)).json(); } catch (e) { /* 后端不可达时仍展示本地留档 */ }
-      return {
-        job_id: item.job_id,
-        destination: item.destination || "未知",
-        days: item.days,
-        travelers: item.travelers,
-        status: st ? st.status : "UNKNOWN",
-        updated_at: st && st.updated_at ? st.updated_at : null,
-        created_at: st && st.created_at ? st.created_at : null,
-        saved_at: item.saved_at || ""
-      };
-    }));
     box.innerHTML = entries.map(function (en, i) {
       var stCn = HISTORY_STATUS_CN[en.status] || en.status;
       var done = en.status === "COMPLETED";
@@ -2014,6 +2041,17 @@ document.addEventListener('click', e => {
       localStorage.setItem("tocName", data.name);
       $("authGate").style.display = "none";
       updateUserChip();
+      // P2.2 登录后认领本机近 72h 的游客单，历史云端化
+      try {
+        var localIds = JSON.parse(localStorage.getItem("planHistory") || "[]").map(function (h) { return h.job_id; });
+        if (localIds.length) {
+          fetch(apiBase + "/api/plans/claim", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + data.token },
+            body: JSON.stringify({ job_ids: localIds })
+          }).then(function () { loadHistory(); }).catch(function () { /* 静默 */ });
+        }
+      } catch (e) { /* 忽略 */ }
     } catch (err) {
       $("authError").textContent = "网络异常，请确认后端已启动";
     }

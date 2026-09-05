@@ -14,3 +14,7 @@ QUEUE_DEPTH = Gauge("queue_depth", "当前队列积压深度")
 # P1 票务链路：飞猪 MCP 调用结果分布 + 预订跳转点击
 FLIGGY_REQUESTS = Counter("fliggy_requests_total", "飞猪MCP调用结果分布", ["kind", "result"])
 BOOKING_CLICKS = Counter("booking_clicks_total", "预订跳转点击数", ["kind"])
+
+# P2 成本治理：LLM 调用与 token 消耗（usage 缺失时不计 token 只计调用）
+LLM_CALLS = Counter("llm_calls_total", "LLM 调用次数")
+LLM_TOKENS = Counter("llm_tokens_total", "LLM token 消耗", ["kind"])

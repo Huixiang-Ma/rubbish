@@ -1,11 +1,16 @@
 import difflib
 import json
 import shutil
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
-from app.api.auth import require_role
+from pydantic import BaseModel
+
+from app.api.auth import bearer_token, require_role, require_traveler
+from app.services import auth_service
+
+from app.config import get_settings
 
 from app.models.schemas import (
     ApprovalRequest,
@@ -44,8 +49,83 @@ APPROVABLE_STATUSES = {
 PLAN_GENERATION_VERSION = "geo_cluster_v19"
 
 
+# ---------- P2.2 任务归属 / P2.4b 配额 ----------
+
+def _optional_traveler(request: Request) -> str | None:
+    """从 Bearer token 解析 toC 用户名；未登录/无效 token 一律 None（游客单）。"""
+    try:
+        payload = auth_service.verify_token(bearer_token(request))
+        if payload and payload.get("r") == "traveler":
+            return payload.get("u")
+    except Exception:
+        pass
+    return None
+
+
+def _quota_checker():
+    """Redis 每日免费额度：INCR + 当日过期；Redis 不可用时放行（不阻断主链路）。"""
+    settings = get_settings()
+    limit = max(1, settings.free_plan_per_day)
+    redis = None
+    try:
+        from redis import Redis
+        redis = Redis.from_url(settings.redis_url, decode_responses=True, socket_connect_timeout=2)
+    except Exception:
+        redis = None
+    day = datetime.now().strftime("%Y%m%d")
+
+    def check(scope: str, ident: str) -> None:
+        if redis is None:
+            return
+        key = f"quota:{scope}:{ident}:{day}"
+        try:
+            count = redis.incr(key)
+            if count == 1:
+                redis.expire(key, 90000)
+            if count > limit:
+                raise HTTPException(status_code=429, detail=f"今日免费规划额度已用完（{limit} 单/天），明天再来或联系客服升级")
+        except HTTPException:
+            raise
+        except Exception:
+            return
+
+    return check
+
+
+_check_quota = _quota_checker()
+
+
+def _list_item(state: dict) -> dict:
+    user_input = state.get("user_input", {})
+    return {
+        "job_id": state.get("job_id"),
+        "status": state.get("status", "UNKNOWN"),
+        "current_node": state.get("current_node"),
+        "progress": state.get("progress", 0),
+        "destination": user_input.get("destination"),
+        "origin": user_input.get("origin"),
+        "days": user_input.get("days"),
+        "departure_date": user_input.get("departure_date"),
+        "return_date": user_input.get("return_date"),
+        "budget": user_input.get("budget"),
+        "customer": state.get("customer"),
+        "error": state.get("error"),
+        "version": state.get("version", 1),
+        "created_at": state.get("created_at"),
+        "updated_at": state.get("updated_at"),
+        "pipeline": state.get("pipeline"),
+        "travelers": user_input.get("travelers"),
+        "user_id": state.get("user_id"),
+    }
+
+
 @router.post("", response_model=PlanCreateResponse)
-def create_plan(payload: PlanRequest) -> PlanCreateResponse:
+def create_plan(payload: PlanRequest, request: Request) -> PlanCreateResponse:
+    # P2.2 归属：服务端从 token 注入 user_id（客户端传值一律覆盖）；P2.4b：登录按账号、游客按 IP 计免费额度
+    user_id = _optional_traveler(request)
+    payload.user_id = user_id
+    client_ip = request.client.host if request.client else "unknown"
+    _check_quota("user" if user_id else "ip", user_id or client_ip)
     data = payload.model_dump()
     hash_data = {**data, "_generation_version": PLAN_GENERATION_VERSION}
     digest = request_hash(hash_data)
@@ -55,12 +135,14 @@ def create_plan(payload: PlanRequest) -> PlanCreateResponse:
         state = store.load(job_id)
         return PlanCreateResponse(job_id=job_id, status=state.get("status", JobStatus.QUEUED.value))
     store.create(job_id, data, digest)
-    if payload.customer or payload.tenant:
-        state = store.load(job_id)
+    state = store.load(job_id)
+    if payload.customer or payload.tenant or user_id:
         if payload.customer:
             state["customer"] = payload.customer
         if payload.tenant:
             state["tenant"] = payload.tenant
+        if user_id:
+            state["user_id"] = user_id
         store.save(job_id, state)
     queue_client.enqueue(job_id)
     PLAN_SUBMITS.inc()
@@ -74,6 +156,51 @@ def create_plan(payload: PlanRequest) -> PlanCreateResponse:
         return_date=payload.return_date,
     )
     return PlanCreateResponse(job_id=job_id, status=JobStatus.QUEUED.value)
+
+
+@router.get("/mine", response_model=PlanListResponse)
+def list_my_plans(user: dict = Depends(require_traveler)) -> PlanListResponse:
+    """P2.2 toC 历史云端化：当前登录用户的任务列表（按更新时间倒序）。"""
+    username = user.get("u")
+    items = [_list_item(state) for state in job_index.iter_states(DATA_ROOT) if state.get("user_id") == username]
+    items.sort(key=lambda item: item.get("updated_at") or "", reverse=True)
+    return PlanListResponse(total=len(items), items=items)
+
+
+class PlanClaimRequest(BaseModel):
+    job_ids: list[str]
+
+
+@router.post("/claim")
+def claim_plans(payload: PlanClaimRequest, user: dict = Depends(require_traveler)) -> dict:
+    """P2.2 游客单认领：把近 72 小时内、尚无归属的任务绑定到当前登录账号。"""
+    from datetime import datetime as _dt
+
+    username = user.get("u")
+    claimed, skipped = [], []
+    cutoff = _dt.now(timezone.utc) - timedelta(hours=72)
+    for job_id in payload.job_ids[:50]:
+        try:
+            state = store.load(job_id)
+        except Exception:
+            skipped.append({"job_id": job_id, "reason": "not_found"})
+            continue
+        if state.get("user_id"):
+            skipped.append({"job_id": job_id, "reason": "already_owned"})
+            continue
+        created = state.get("created_at")
+        try:
+            created_dt = _dt.fromisoformat(created.replace("Z", "+00:00")) if created else None
+        except ValueError:
+            created_dt = None
+        if created_dt and created_dt < cutoff:
+            skipped.append({"job_id": job_id, "reason": "expired"})
+            continue
+        state["user_id"] = username
+        store.save(job_id, state)
+        claimed.append(job_id)
+    log_event("plans_claimed", user=username, claimed=claimed, skipped=len(skipped))
+    return {"claimed": claimed, "skipped": skipped}
 
 
 @router.get("", response_model=PlanListResponse)
@@ -92,27 +219,7 @@ def list_plans(
             continue
         if tenant and state.get("tenant") != tenant:
             continue
-        user_input = state.get("user_input", {})
-        items.append(
-            {
-                "job_id": state.get("job_id"),
-                "status": state.get("status", "UNKNOWN"),
-                "current_node": state.get("current_node"),
-                "progress": state.get("progress", 0),
-                "destination": user_input.get("destination"),
-                "origin": user_input.get("origin"),
-                "days": user_input.get("days"),
-                "departure_date": user_input.get("departure_date"),
-                "return_date": user_input.get("return_date"),
-                "budget": user_input.get("budget"),
-                "customer": state.get("customer"),
-                "error": state.get("error"),
-                "version": state.get("version", 1),
-                "created_at": state.get("created_at"),
-                "updated_at": state.get("updated_at"),
-                "pipeline": state.get("pipeline"),
-            }
-        )
+        items.append(_list_item(state))
     items.sort(key=lambda item: item.get("updated_at") or "", reverse=True)
     items = items[: max(1, min(limit, 500))]
     return PlanListResponse(total=len(items), items=items)
