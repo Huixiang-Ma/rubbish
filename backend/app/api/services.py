@@ -1,12 +1,21 @@
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
-from app.services import amap_client
+from app.services import amap_client, ticketing
+from app.services.metrics import BOOKING_CLICKS
 from app.services.travel_context_service import TravelContextService
 
 router = APIRouter(prefix="/api/services", tags=["services"])
 travel = TravelContextService()
+
+# CPS 推广位参数：环境变量 FLIGGY_CPS_<名>=<值> 全量注入（P2 商业化，未配置时为直链）
+import os as _os
+
+ticketing.configure_cps(
+    {k.removeprefix("FLIGGY_CPS_").lower(): v for k, v in _os.environ.items() if k.startswith("FLIGGY_CPS_")}
+)
 
 SERVICE_KINDS = {"train", "flight", "attraction", "merchant", "entertainment"}
 
@@ -45,15 +54,35 @@ def service_window(kind: str, destination: str = "北京", origin: str | None = 
 
 
 def _dispatch_service_window(kind: str, origin: str | None, destination: str) -> dict[str, Any]:
+    # 三级降级（技术方案 §1）：飞猪真实数据优先 → 本地估算/官方渠道 → 诚实空态
     if kind == "train":
-        return travel.train_tickets(origin, destination)
+        return ticketing.enrich_train_flight(travel.train_tickets(origin, destination), kind, origin, destination)
     if kind == "flight":
-        return travel.flights(origin, destination)
+        return ticketing.enrich_train_flight(travel.flights(origin, destination), kind, origin, destination)
     if kind == "attraction":
-        return travel.attractions(destination)
+        return ticketing.enrich_attractions(travel.attractions(destination), destination)
     if kind == "merchant":
-        return travel.merchants(destination)
+        base = travel.merchants(destination)
+        hotels = ticketing.fliggy_hotels(destination)
+        if hotels:
+            base["hotels"] = hotels
+            base["source"] = "fliggy"
+        return base
     return travel.entertainment(destination)
+
+
+class BookingClickRequest(BaseModel):
+    kind: str
+    job_id: str | None = None
+
+
+@router.post("/booking/click")
+def booking_click(payload: BookingClickRequest) -> dict[str, str]:
+    """预订跳转埋点：CPS 转化归因的粗口径（跳转在浏览器发生，服务端只记点击）。"""
+    if payload.kind not in SERVICE_KINDS:
+        raise HTTPException(status_code=400, detail="kind must be train|flight|attraction|merchant|entertainment")
+    BOOKING_CLICKS.labels(kind=payload.kind).inc()
+    return {"status": "ok"}
 
 
 _city_photo_cache: dict[str, tuple[float, list[dict[str, str]]]] = {}

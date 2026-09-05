@@ -10,3 +10,7 @@ SAFETY_BLOCKED = Counter("safety_blocked_total", "高风险拦截次数")
 APPROVALS = Counter("approval_total", "人工审批次数", ["decision"])
 JOB_PROCESS_SECONDS = Histogram("job_process_seconds", "单个任务处理耗时（秒）")
 QUEUE_DEPTH = Gauge("queue_depth", "当前队列积压深度")
+
+# P1 票务链路：飞猪 MCP 调用结果分布 + 预订跳转点击
+FLIGGY_REQUESTS = Counter("fliggy_requests_total", "飞猪MCP调用结果分布", ["kind", "result"])
+BOOKING_CLICKS = Counter("booking_clicks_total", "预订跳转点击数", ["kind"])

@@ -100,6 +100,12 @@ def tob_page(request: Request) -> Response:
     return _read_page("admin.html", request)
 
 
+@app.get("/s/{job_id}", response_class=HTMLResponse)
+def share_page(job_id: str, request: Request) -> Response:
+    """P1.6 行程书只读分享页（免登录；job_id 为 12 位 hash，不可枚举；页面带 noindex）。"""
+    return _read_page("share.html", request)
+
+
 _vendor_dir = FRONTEND_DIR / "vendor"
 if _vendor_dir.exists():
     app.mount("/vendor", StaticFiles(directory=str(_vendor_dir)), name="vendor")

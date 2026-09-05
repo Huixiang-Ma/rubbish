@@ -528,6 +528,15 @@
   border: 1px solid rgba(176,74,58,.35); }
 .gen-hold p { margin: 0 0 12px; font-size: 14px; color: #6e2f22; line-height: 1.6; }
 .gen-hold .hold-note { margin: 10px 0 0; font-size: 12px; color: var(--ink-faint, #8b857a); }
+/* P1.4 直播辩论投票条 */
+.live-vote { display: none; margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: rgba(169,134,63,.10); border: 1px solid rgba(169,134,63,.35); }
+.live-vote .lv-title { display: block; font-size: 13px; color: #7a5a17; margin-bottom: 10px; }
+.live-vote .lv-btns { display: flex; gap: 10px; }
+.live-vote .lv-btns .ha { flex: 1; padding: 9px 0; border-radius: 10px; border: none; cursor: pointer; font-size: 13.5px; letter-spacing: 1px; }
+.live-vote .lv-btns .ha.ok { background: var(--teal, #2f5d50); color: #f6f3ea; }
+.live-vote .lv-btns .ha.no { background: #a9863f; color: #f6f3ea; }
+.live-vote .lv-btns .ha:disabled { opacity: .55; cursor: default; }
+.live-vote .lv-state { display: block; margin-top: 8px; font-size: 12.5px; color: var(--teal-deep, #233c34); }
 .hold-btns { display: flex; gap: 10px; }
 .hold-btns button { flex: 1; padding: 10px 0; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; letter-spacing: 1px; }
 .hold-btns .ha.ok { background: var(--teal, #2f5d50); color: #f6f3ea; }
@@ -812,6 +821,7 @@
           <div>辩论裁决 <b>生成后显示</b></div>
         </div>
         <div class="seal"><span>山</span><span>水</span><span>有</span><span>约</span></div>
+        <button class="btn-s ghost" id="shareBtn" style="display:none;margin-top:12px;width:100%">🔗 复制分享链接</button>
       </div>
       <div class="book-body">
         <div class="book-tabs" id="bookTabs">
@@ -942,6 +952,14 @@
     <div class="g-sub" id="genSub">提交规划后显示参数</div>
     <div class="gen-log" id="genLog"></div>
     <div class="gen-bar"><i id="genBar"></i></div>
+    <div class="live-vote" id="liveVote" style="display:none">
+      <span class="lv-title">⚔️ 直播辩论进行中——你站哪边？投票将计入裁决倾向</span>
+      <div class="lv-btns">
+        <button id="votePlan" class="ha ok">支持 规划方</button>
+        <button id="voteTraveler" class="ha no">支持 游客方</button>
+      </div>
+      <span class="lv-state" id="voteState"></span>
+    </div>
     <div class="gen-hold" id="genHold" style="display:none">
       <p id="genHoldText"></p>
       <div class="hold-btns">
@@ -1192,7 +1210,17 @@ document.addEventListener('click', e => {
   }
   const ag = e.target.closest('.agent');
   if (ag && !ag.closest('#genOverlay')) { toast('各智能体的真实产出随行程生成；生成完成后可在行程书各章回看'); return; }
-  const sb = e.target.closest('[data-svc-book]'); if (sb) { toast('在线预订通道尚未开通：请通过窗口内官方渠道前往购买或预约'); return; }
+  const sb = e.target.closest('[data-svc-book]');
+  if (sb) {
+    if (sb.tagName === 'A' && sb.href) {
+      // 真实供应商跳转（CPS）：先发点击埋点，再放行默认跳转
+      try { navigator.sendBeacon(apiBase + '/api/services/booking/click', new Blob([JSON.stringify({ kind: window._currentSvcKind || 'unknown' })], { type: 'application/json' })); } catch (err) { /* 埋点失败不阻断跳转 */ }
+      toast('已跳转供应商页面：价格与库存以对方公示为准');
+      return;
+    }
+    toast('该条目暂无在线预订通道：请通过窗口内官方渠道前往购买或预约');
+    return;
+  }
   const gb = e.target.closest('[data-goto]'); if (gb) {
     closeDetail();
     const tab = document.querySelector('.b-tab[data-ch="' + gb.dataset.goto + '"]');
@@ -1207,6 +1235,7 @@ document.addEventListener('click', e => {
 (function () {
   "use strict";
   var apiBase = localStorage.getItem("apiBase") || (location.protocol === "file:" ? "http://127.0.0.1:8000" : "");
+  window.apiBase = apiBase;  // 供其它脚本段（埋点等）使用
   var STATUS_CN = {
     IDLE: "未开始", QUEUED: "排队中", RUNNING: "规划中", WAITING_RATE_LIMIT: "限流等待",
     WAITING_BUDGET_APPROVAL: "待预算确认", WAITING_SAFETY_REVIEW: "待安全确认", WAITING_PARSE_REVIEW: "解析待复核",
@@ -1217,14 +1246,17 @@ document.addEventListener('click', e => {
   /* ---------- 服务大厅真实数据窗口：实时调 /api/services/{kind} ---------- */
   var SVC_KIND_MAP = { train: "train", flight: "flight", ticket: "attraction", local: "merchant", show: "entertainment" };
   var escSvc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
-  var svcRow = function (name, mid, price, btn) {
-    return '<div class="svc-row"><b>' + escSvc(name) + '</b><span class="s-mid">' + escSvc(mid) + '</span><span class="price">' + escSvc(price) + '</span><button class="btn-s ghost" data-svc-book>' + escSvc(btn || "预订") + '</button></div>';
+  var svcRow = function (name, mid, price, btn, url) {
+    var action = url
+      ? '<a class="btn-s ghost" data-svc-book href="' + escSvc(url) + '" target="_blank" rel="noopener">前往预订</a>'
+      : '<button class="btn-s ghost" data-svc-book>' + escSvc(btn || "预订") + '</button>';
+    return '<div class="svc-row"><b>' + escSvc(name) + '</b><span class="s-mid">' + escSvc(mid) + '</span><span class="price">' + escSvc(price) + '</span>' + action + '</div>';
   };
   function renderServiceWindow(kind, data) {
     var rows = [];
     if (kind === "train" && Array.isArray(data.tickets) && data.tickets.length) {
       data.tickets.forEach(function (t) {
-        rows.push(svcRow(t.train_no + " · " + t.tag, t.departure + " 出发 · " + t.duration + " · " + t.seat + " · " + t.status, "¥" + t.price));
+        rows.push(svcRow(t.train_no + " · " + t.tag, t.departure + " 出发" + (t.arrival ? " · " + t.arrival + " 到达" : "") + (t.duration ? " · " + t.duration : "") + " · " + t.seat + " · " + t.status, t.price ? "¥" + t.price : "以公示为准", "预订", t.booking_url));
       });
     } else if (kind === "train" && data.guide) {
       // 诚实口径：无票务数据源，展示路线决策建议 + 官方渠道
@@ -1234,7 +1266,7 @@ document.addEventListener('click', e => {
       });
     } else if (kind === "flight" && Array.isArray(data.flights) && data.flights.length) {
       data.flights.forEach(function (f) {
-        rows.push(svcRow(f.flight_no + " · " + f.tag, f.departure + " 出发 · " + f.duration + " · " + f.seat + " · " + f.status, "¥" + f.price));
+        rows.push(svcRow(f.flight_no + " · " + f.tag, f.departure + " 出发" + (f.arrival ? " · " + f.arrival + " 到达" : "") + (f.duration ? " · " + f.duration : "") + " · " + f.seat + " · " + f.status, f.price ? "¥" + f.price : "以公示为准", "预订", f.booking_url));
       });
     } else if (kind === "flight" && data.guide) {
       rows.push('<div class="exp-card"><strong>' + escSvc(data.guide.route || "") + '</strong><div class="legend">' + escSvc(data.guide.advice || "") + '</div></div>');
@@ -1243,24 +1275,29 @@ document.addEventListener('click', e => {
       });
     } else if (kind === "attraction" && Array.isArray(data.attractions)) {
       data.attractions.slice(0, 8).forEach(function (a) {
-        rows.push(svcRow(a.name, (a.tags || []).join(" / ") + " · " + (a.open_time || "以景区公告为准"), a.ticket_price > 0 ? "¥" + a.ticket_price : "免费", "领票"));
+        rows.push(svcRow(a.name, (a.ticket_info ? a.ticket_info + " · " : "") + (a.tags || []).join(" / ") + " · " + (a.open_time || "以景区公告为准"), a.ticket_price > 0 ? "¥" + a.ticket_price : "免费", "领票", a.booking_url));
       });
-    } else if (kind === "merchant" && Array.isArray(data.merchants)) {
-      data.merchants.slice(0, 8).forEach(function (m) {
+    } else if (kind === "merchant" && (Array.isArray(data.merchants) || Array.isArray(data.hotels))) {
+      (data.hotels || []).slice(0, 6).forEach(function (h) {
+        rows.push(svcRow(h.name + "（" + h.category + "）", (h.position ? h.position + " · " : "") + (h.price_hint || ""), h.score ? "★ " + h.score : "详情", "预订", h.booking_url));
+      });
+      (data.merchants || []).slice(0, 6).forEach(function (m) {
         rows.push(svcRow(m.name + "（" + m.category + "）", "距市中心约 " + m.distance_km + " 公里 · " + (m.price_hint || ""), m.score ? "★ " + m.score : "详情", "预约"));
       });
     } else if (kind === "entertainment" && Array.isArray(data.entertainments)) {
       data.entertainments.slice(0, 8).forEach(function (it) {
-        rows.push(svcRow(it.name, (it.category || "") + (it.schedule ? " · " + it.schedule : ""), it.price_hint || "详情", "预约"));
+        rows.push(svcRow(it.name, (it.category || "") + (it.schedule ? " · " + it.schedule : ""), it.price_hint || "详情", "预约", it.booking_url));
       });
     }
     if (!rows.length) rows.push('<p class="vote-hint">暂无数据：' + escSvc(data.note || "该窗口暂未接入实时数据源。") + '</p>');
     else if (data.note) rows.push('<p class="vote-hint">' + escSvc(data.note) + '</p>');
+    if (data.source === "fliggy") rows.push('<p class="vote-hint">以上为飞猪AI 实时检索结果；价格与库存以供应商页面公示为准。</p>');
     return rows.join("");
   }
   var SVC_TITLES = { train: ["🚄 火车票", "实时窗口 · 与行程日期匹配"], flight: ["✈️ 机票", "实时窗口 · 往返比价"], ticket: ["🎫 景点门票", "实时 POI · 免排队电子票"], local: ["🏨 本地商家", "实时周边 · 支持预约到店"], show: ["🎭 娱乐演出", "实时窗口 · 演出与展览"] };
   window.loadServiceWindow = async function (svcKey) {
     var kind = SVC_KIND_MAP[svcKey];
+    window._currentSvcKind = kind;  // 预订点击埋点用
     var title = SVC_TITLES[svcKey] || [svcKey, "实时窗口"];
     var destInput = document.getElementById("fDest") || document.getElementById("destination");
     var destination = destInput && destInput.value.trim();
@@ -1460,10 +1497,61 @@ document.addEventListener('click', e => {
   }
   function endRun() {
     clearInterval(realTimer);
+    stopLiveDebate();
     var btn = $("btnGo");
     btn.disabled = false;
     btn.dataset.busy = "";
   }
+
+  /* ---------- P1.4 生成中直播辩论（SSE + 中途投票） ---------- */
+  var liveSource = null, liveVoted = false;
+  function showLiveVote(show) {
+    var bar = $("liveVote");
+    if (bar) bar.style.display = show ? "block" : "none";
+    if (show) { liveVoted = false; $("voteState").textContent = ""; $("votePlan").disabled = false; $("voteTraveler").disabled = false; }
+  }
+  async function castVote(side) {
+    if (liveVoted || !jobId) return;
+    liveVoted = true;
+    $("votePlan").disabled = true; $("voteTraveler").disabled = true;
+    $("voteState").textContent = "投票提交中…";
+    try {
+      var resp = await fetch(apiBase + "/api/plans/" + jobId + "/debate/vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ side: side })
+      });
+      var data = await resp.json();
+      $("voteState").textContent = resp.ok
+        ? "已计入：你支持了" + side + "，裁决倾向已更新并写入行程书。"
+        : "投票未生效：" + (typeof data.detail === "string" ? data.detail : "状态不允许");
+    } catch (err) {
+      $("voteState").textContent = "网络异常，投票未送达。";
+    }
+  }
+  function startLiveDebate(id) {
+    if (liveSource || !window.EventSource) return;
+    logRow("⚔️ 辩论席开工：正反双方当场对质，你可以下方投票站队——");
+    showLiveVote(true);
+    liveSource = new EventSource(apiBase + "/api/plans/" + id + "/debate/live");
+    liveSource.onmessage = function (ev) {
+      try {
+        var m = JSON.parse(ev.data);
+        if (m && m.text) logRow("<b style='color:var(--gold,#a9863f)'>" + escapeHtml(m.side || "") + "</b>：" + escapeHtml(m.text));
+      } catch (e) { /* 忽略坏帧 */ }
+    };
+    liveSource.addEventListener("done", function () {
+      logRow("辩论收场：裁决已生成 ✓（你的投票已计入倾向）");
+      stopLiveDebate();
+    });
+    liveSource.onerror = function () { stopLiveDebate(); };  // 流断开不影响主生成链路
+  }
+  function stopLiveDebate() {
+    if (liveSource) { try { liveSource.close(); } catch (e) { /* 忽略 */ } liveSource = null; }
+    showLiveVote(false);
+  }
+  $("votePlan").addEventListener("click", function () { castVote("规划方"); });
+  $("voteTraveler").addEventListener("click", function () { castVote("游客方"); });
   function failRun(msg) {
     endRun();
     logRow("✕ " + escapeHtml(msg), "ok");
@@ -1546,6 +1634,7 @@ document.addEventListener('click', e => {
       if (cur && cur !== lastNode) {
         logRow((NODE_CN[cur] || cur) + "：开工…");
         lastNode = cur;
+        if (cur === "Debate") startLiveDebate(id);  // P1.4 辩论节点开播
       }
       $("genBar").style.width = (data.progress || 0) + "%";
       paintRealAgents(data.completed_nodes, cur, data.status);
@@ -1606,6 +1695,18 @@ document.addEventListener('click', e => {
   }
   $("holdApprove").addEventListener("click", function () { decideReal("approve"); });
   $("holdReject").addEventListener("click", function () { decideReal("reject"); });
+
+  /* ---------- P1.6 行程书分享 ---------- */
+  $("shareBtn").addEventListener("click", async function () {
+    if (!jobId) { toast("请先生成或从历史行程载入一本行程书"); return; }
+    var url = location.origin + "/s/" + jobId;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast("分享链接已复制：" + url);
+    } catch (e) {
+      prompt("复制以下链接分享行程书：", url);
+    }
+  });
 
   /* ---------- 历史行程交互 ---------- */
   $("histChips").addEventListener("click", function (e) {
@@ -1739,6 +1840,8 @@ document.addEventListener('click', e => {
         while (chars.length < 4) chars.push("记");
         seal.innerHTML = chars.map(function (c) { return "<span>" + escapeHtml(c) + "</span>"; }).join("");
       }
+      var shareBtn = $("shareBtn");
+      if (shareBtn) shareBtn.style.display = "block";
     }
   }
 
@@ -1804,6 +1907,7 @@ document.addEventListener('click', e => {
   async function loadHistoryPlan(entry) {
     if (typeof toast === "function") toast("正在载入历史行程书…");
     try {
+      jobId = entry.job_id;  // 分享/审批等后续操作以当前载入的行程为准
       /* 用后端真实起止时间校准“出稿用时”，历史回看不再显示刚过几秒 */
       if (entry.created_at && entry.updated_at) {
         var sec = Math.max(1, Math.round((new Date(entry.updated_at) - new Date(entry.created_at)) / 1000));

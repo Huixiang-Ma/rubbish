@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>行程书 · 山水有约</title>
+<style>
+  :root { --teal: #2f5d50; --teal-deep: #233c34; --gold: #a9863f; --ink: #26322c; --ink-soft: #5b6a63;
+    --ink-faint: #8b857a; --card: #fffdf7; --bg: #f4f0e6; --hairline: rgba(38,50,44,.12); }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 28px 18px 60px; }
+  .head { text-align: center; padding: 26px 0 10px; }
+  .head .kicker { font-size: 12px; letter-spacing: 4px; color: var(--gold); }
+  .head h1 { font-family: "Noto Serif SC", "SimSun", serif; font-size: 30px; margin: 10px 0 6px; letter-spacing: 2px; }
+  .head .sub { font-size: 14px; color: var(--ink-soft); }
+  .day-tab { display: inline-block; margin: 4px 6px 0 0; padding: 6px 14px; border-radius: 99px;
+    border: 1px solid var(--hairline); background: var(--card); font-size: 13px; cursor: pointer; }
+  .day-tab.on { background: var(--teal); color: #f6f3ea; border-color: var(--teal); }
+  .card { background: var(--card); border: 1px solid var(--hairline); border-radius: 14px; padding: 20px 22px; margin-top: 16px; }
+  .tl-item { padding: 10px 0; border-bottom: 1px dashed var(--hairline); }
+  .tl-item:last-child { border-bottom: none; }
+  .tl-time { font-size: 12px; color: var(--gold); letter-spacing: 1px; }
+  .tl-item h4 { margin: 4px 0 4px; font-size: 15px; }
+  .tl-item p { margin: 0; font-size: 13px; color: var(--ink-soft); line-height: 1.7; }
+  .md-doc h1, .md-doc h2 { font-size: 17px; border-bottom: 1px solid var(--hairline); padding-bottom: 6px; }
+  .md-doc h3 { font-size: 15px; }
+  .md-doc h4, .md-doc h5, .md-doc h6 { font-size: 14px; }
+  .md-doc p, .md-doc li { font-size: 13.5px; line-height: 1.85; color: var(--ink-soft); }
+  .md-doc code { background: rgba(47,93,80,.08); border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+  .md-doc pre { background: #1f2a25; color: #d8e2dc; border-radius: 8px; padding: 12px; overflow-x: auto; font-size: 12px; }
+  .ch-empty { font-size: 13px; color: var(--ink-faint); }
+  .foot { text-align: center; font-size: 12px; color: var(--ink-faint); margin-top: 28px; line-height: 1.8; }
+  .loading { text-align: center; color: var(--ink-faint); padding: 80px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="kicker">— 行程书分享 —</div>
+    <h1 id="title">山水有约</h1>
+    <div class="sub" id="sub">正在加载行程书…</div>
+  </div>
+  <div id="days"></div>
+  <div id="chapters"></div>
+  <div class="foot">
+    本行程由多智能体协作真实生成 · AI 生成内容仅供参考<br/>
+    价格、库存与开放信息以供应商及景区官方公示为准 · 山水有约
+  </div>
+</div>
+<script>
+function escapeHtml(s) {
+  return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function inlineMd(s) {
+  return s
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+}
+function mdToHtml(md) {
+  var lines = escapeHtml(String(md || "")).split(/\r?\n/), out = [], depth = 0, liOpen = false, para = [];
+  function flushPara() { if (para.length) { out.push("<p>" + para.join("<br>") + "</p>"); para = []; } }
+  function closeLi() { if (liOpen) { out.push("</li>"); liOpen = false; } }
+  function closeLists() { while (depth > 0) { closeLi(); out.push("</ul>"); depth--; } }
+  lines.forEach(function (line) {
+    var tag = line.trim();
+    var h = line.match(/^(#{1,6})\s+(.*)$/);
+    if (h) { flushPara(); closeLists(); out.push("<h" + Math.min(h[1].length, 4) + ">" + inlineMd(h[2]) + "</h" + Math.min(h[1].length, 4) + ">"); return; }
+    var item = line.match(/^\s*-\s+(.*)$/);
+    if (item) { flushPara(); closeLi(); if (!liOpen) { out.push("<ul>"); depth++; } out.push("<li>" + inlineMd(item[1])); liOpen = true; return; }
+    if (!tag) { flushPara(); closeLists(); return; }
+    closeLists(); para.push(inlineMd(line));
+  });
+  flushPara(); closeLists();
+  return out.join("\n") || '<p class="ch-empty">暂无内容</p>';
+}
+function stripEngineering(md) {
+  var out = [];
+  String(md || "").split(/\r?\n/).forEach(function (l) {
+    if (/^##\s+\d+\.\s*(工程说明|Agent 结构化输出索引)/.test(l)) return;
+    out.push(l);
+  });
+  return out.join("\n");
+}
+(function () {
+  var jobId = location.pathname.split("/").pop() || "";
+  fetch("/api/plans/" + encodeURIComponent(jobId) + "/result")
+    .then(function (r) { if (!r.ok) throw new Error("not found"); return r.json(); })
+    .then(function (data) {
+      var ui = data.user_input || {};
+      document.getElementById("title").textContent =
+        escapeHtml(ui.destination || "行程书") + (ui.days ? " · " + ui.days + " 天" : "");
+      document.getElementById("sub").textContent =
+        (ui.travelers ? ui.travelers + " 人出行 · " : "") + (ui.budget ? "总预算 ¥" + Number(ui.budget).toLocaleString() + " · " : "") + "由智能体辩论定稿";
+      var daysBox = document.getElementById("days");
+      var itin = Array.isArray(data.itinerary) ? data.itinerary : [];
+      if (itin.length) {
+        daysBox.innerHTML = '<div style="margin-top:14px;">' + itin.map(function (d, i) {
+          return '<span class="day-tab' + (i === 0 ? " on" : "") + '" data-day="' + i + '">Day ' + d.day + (d.theme ? " · " + escapeHtml(d.theme) : "") + "</span>";
+        }).join("") + "</div>";
+        itin.forEach(function (d, i) {
+          var events = (d.items || []).map(function (it) {
+            var s = it.spot || {};
+            return '<div class="tl-item"><div class="tl-time">' + escapeHtml(it.time || "") + "</div><h4>" + escapeHtml(it.title || s.name || "") +
+              '</h4><p>' + [s.open_time ? "开放 " + s.open_time : "", s.address || ""].filter(Boolean).join(" · ") + "</p></div>";
+          }).join("") + (d.meals || []).map(function (m) {
+            return '<div class="tl-item"><div class="tl-time">' + escapeHtml(m.time || "") + '</div><h4>🍜 ' + escapeHtml(m.title || "用餐") + "</h4><p>" + escapeHtml([m.signature, m.location_hint].filter(Boolean).join(" · ")) + "</p></div>";
+          }).join("");
+          daysBox.insertAdjacentHTML("beforeend",
+            '<div class="card" data-day-panel="' + i + '" style="display:' + (i === 0 ? "block" : "none") + '"><h3 style="margin:0 0 6px;font-size:15px;">Day ' + d.day + (d.theme ? " · " + escapeHtml(d.theme) : "") + "</h3>" + (d.weather ? '<p style="font-size:13px;color:#5b6a63;margin:0 0 4px;">🌤 ' + escapeHtml(d.weather) + "</p>" : "") + events + "</div>");
+        });
+        daysBox.addEventListener("click", function (e) {
+          var t = e.target.closest(".day-tab"); if (!t) return;
+          daysBox.querySelectorAll(".day-tab").forEach(function (x) { x.classList.remove("on"); });
+          t.classList.add("on");
+          daysBox.querySelectorAll("[data-day-panel]").forEach(function (p) { p.style.display = p.dataset.dayPanel === t.dataset.day ? "block" : "none"; });
+        });
+      }
+      var md = stripEngineering(data.travel_plan_md);
+      document.getElementById("chapters").innerHTML = '<div class="card"><div class="md-doc">' + mdToHtml(md) + "</div></div>";
+    })
+    .catch(function () {
+      document.getElementById("sub").textContent = "行程书不存在或链接已失效。";
+      document.getElementById("days").innerHTML = '<div class="loading">请向分享者确认链接是否完整。</div>';
+    });
+})();
+</script>
+</body>
+</html>
