@@ -113,6 +113,20 @@ _API_DECLARATIONS: tuple[dict, ...] = (
         "base_url_env": "FLIGGY_AI_MCP_URL",
         "docs_url": "https://flyai.open.fliggy.com/",
     },
+    # 携程问道：携程旅游大模型，OpenAI 兼容接口（chat/completions）
+    # 用途：生成备选 LLM（多供应商互备）、行程问答/名导团对话等旅游语义场景
+    # 注意：接入点与模型名以携程问道开放平台控制台为准（每个租户分配专属网关域名，同和风模式）
+    {
+        "name": "ctrip_wendao",
+        "category": "llm",
+        "description": "携程问道旅游大模型（OpenAI 兼容）：行程语义问答与生成备选 LLM，旅游垂直语料口径",
+        "base_url": "https://wendao.ctrip.com/openai/v1",  # 占位：以控制台分配的网关地址为准，用 CTRIP_WENDAO_BASE_URL 覆盖
+        "key_envs": ("CTRIP_WENDAO_API_KEY",),
+        "base_url_env": "CTRIP_WENDAO_BASE_URL",
+        "timeout_seconds": 30.0,
+        "docs_url": "https://pages.ctrip.com/commerce-promote/202208/other/wendao/",
+    },
+
     # 阿里云内容安全：替换正则注入检测（可选增强）
     {
         "name": "aliyun_content_safety",
