@@ -572,6 +572,44 @@
 .hist-chip em.dim, .hist-chip.dim { opacity: .65; }
 .hist-empty { font-size: 13px; color: var(--ink-faint, #8b857a); }
 .history-bar .sub-h { margin-top: 30px; }
+/* P1.5 体验中心动态弹层 */
+.exp-map { height: 300px; border-radius: 10px; border: 1px solid var(--hairline); margin: 8px 0; }
+.exp-nearby { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 4px; }
+.exp-poi { font-size: 12.5px; color: var(--ink-soft); padding: 4px 0; border-bottom: 1px dashed var(--hairline); }
+.g-input { display: flex; gap: 8px; margin-top: 10px; }
+.g-input input { flex: 1; border: 1px solid var(--hairline); border-radius: 10px; padding: 8px 12px; font-size: 13px; background: var(--card, #fffdf7); color: var(--ink); }
+.exp-cardlist { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+/* P1.7 移动端适配 */
+@media (max-width: 820px) {
+  .pipe { grid-template-columns: repeat(2, 1fr); }
+  .feat-grid { grid-template-columns: repeat(2, 1fr); }
+  .hall { grid-template-columns: repeat(2, 1fr); }
+  .hero-stats { flex-wrap: wrap; gap: 18px; }
+  .sb-places { flex-direction: column; gap: 10px; }
+  .sb-places .sb-swap { transform: rotate(90deg); margin: -2px auto; }
+  .book-wrap { flex-direction: column; }
+  .book-cover { width: auto !important; }
+}
+@media (max-width: 480px) {
+  .wrap { padding-left: 14px; padding-right: 14px; }
+  .pipe, .feat-grid, .hall { grid-template-columns: 1fr; }
+  .nav { display: none; }
+  body { overflow-x: hidden; }
+  .topbar-inner { padding: 0 12px; gap: 8px; }
+  .brand-name { font-size: 15px; letter-spacing: 1px; }
+  .brand-sub { font-size: 10px; }
+  .mode-badge { font-size: 10.5px; padding: 4px 8px; letter-spacing: 0; white-space: nowrap; }
+  .go-note { font-size: 12px; }
+  .hero-stats { gap: 12px; }
+  .hero-stats .stat { min-width: 40%; }
+  .book-tabs { overflow-x: auto; white-space: nowrap; }
+  .day-tabs { overflow-x: auto; white-space: nowrap; }
+  .d-card { position: fixed; inset: 0; border-radius: 0; max-height: 100vh; overflow-y: auto; }
+  .gen-card { margin: 12px; max-height: calc(100vh - 24px); overflow-y: auto; }
+  .btn-go { width: 100%; }
+  .sb-row { flex-direction: column; gap: 10px; }
+  .hist-chip { width: 100%; justify-content: flex-start; }
+}
 </style>
 </head>
 <body>
@@ -885,7 +923,7 @@
     <div class="section-head">
       <div class="kicker">— 体验中心 —</div>
       <h2>行程到手，故事才刚开始</h2>
-      <p>六个体验模块，把"一次规划"延展成"一段可对话的旅程"。以下仅为功能口径说明，页面不内置任何示例数据，相关内容全部随真实生成产出。</p>
+      <p>六个体验模块，把"一次规划"延展成"一段可对话的旅程"。点击模块即查看当前行程的真实生成数据（需先生成或从历史载入一本行程书）。</p>
     </div>
     <div class="feat-grid">
       <div class="feat" data-ex="debate">
@@ -1006,6 +1044,8 @@
   </div>
 </div>
 <div class="toast" id="toast"></div>
+<link rel="stylesheet" href="/vendor/leaflet.css" />
+<script src="/vendor/leaflet.js"></script>
 
 <script>
 /* ---------- 心情 chips ---------- */
@@ -1180,28 +1220,12 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(
 
 /* ---------- 智能体产出：角色卡点击不展示任何预置内容，真实产出随行程书生成 ---------- */
 
-/* ---------- 体验中心 6 模块：仅功能口径说明，不内置示例数据 ---------- */
-const EX = {
-  debate: { t: '⚔️ 决策辩论', s: '分歧的提案、质询与裁决 · 全部来自真实生成',
-    h: `<p class="vote-hint">辩论实录在行程生成时由智能体真实产出，全文收录在行程书第 ④ 章。生成一次行程后，即可回看每一处分歧如何收场。</p>
-        <button class="btn-s ghost" data-goto="debate" style="font-size:12.5px">去行程书第 ④ 章 →</button>` },
-  live: { t: '📡 直播辩论', s: '生成过程实时可见',
-    h: `<p class="vote-hint">点击「AI 规划旅程」真实生成行程时，进度弹层会实时滚动各智能体的真实工作日志（谁在开工、哪里被驳回、谁已定稿），生成完成后自动跳转行程书。</p>` },
-  guide: { t: '🎭 名导团', s: '本地视角讲解',
-    h: `<p class="vote-hint">该模块尚未接入真实讲解数据源。为避免误导，此处不展示任何示例内容；本地视角内容以行程书附加章形式随真实生成产出。</p>` },
-  tourists: { t: '👥 虚拟游客踩点', s: '出发前体检',
-    h: `<p class="vote-hint">该模块尚未接入真实数据源，为避免误导，此处不展示任何示例内容。</p>` },
-  counterfactual: { t: '⏳ 反事实后悔药', s: '另一条时间线推演',
-    h: `<p class="vote-hint">该模块尚未接入真实推演数据源，为避免误导，此处不展示任何示例内容。</p>` },
-  map: { t: '🗺️ 地图与周边', s: '全程动线一张图',
-    h: `<p class="vote-hint">真实行程的逐日动线与点位地址已随行程书第 ② 章逐日展示；地图可视化与周边设施检索将在接入真实地图服务后开放。</p>
-        <button class="btn-s ghost" data-goto="days" style="font-size:12.5px">去行程书第 ② 章看逐日动线 →</button>` }
-};
+/* ---------- 体验中心：点击后由第三段脚本 openExperience 动态装载当前行程的真实数据 ---------- */
 
 /* ---------- 全局事件委托：打开浮层 + 模块内小交互（全部按真实数据口径，无演示兜底） ---------- */
 document.addEventListener('click', e => {
   const feat = e.target.closest('.feat');
-  if (feat && feat.dataset.ex) { const d = EX[feat.dataset.ex]; openDetail(d.t, d.s, d.h); return; }
+  if (feat && feat.dataset.ex) { window.openExperience(feat.dataset.ex); return; }
   const hItem = e.target.closest('.hall-item');
   if (hItem && hItem.dataset.svc) {
     // 服务大厅只走真实后端实时数据，未连接时明确提示，不做静态演示兜底
@@ -1647,6 +1671,7 @@ document.addEventListener('click', e => {
         paintRealAgents(data.completed_nodes, null, "COMPLETED");
         try { await loadRealResult(id); } catch (e) { logRow("行程书加载异常：" + escapeHtml(String(e.message || e))); }
         saveHistory(id);
+        EXP_CACHE = {};  // 新行程：体验中心缓存失效
         loadHistory();
         setTimeout(function () {
           closeRealOverlay();
@@ -1819,6 +1844,14 @@ document.addEventListener('click', e => {
     }
     fillChapter("chLedger", cleanMd, /费用|预算|账/, "本次生成未包含费用账本章节，可在生成弹层查看预算执行情况。");
     fillChapter("chDebate", cleanMd, /辩论|裁决/, "本次生成未包含辩论实录章节。");
+    /* P1.8：第 ④ 章优先用结构化接口渲染双栏对质卡；失败时保留上面的 Markdown 提取结果 */
+    try {
+      var dbData = await (await fetch(apiBase + "/api/plans/" + id + "/debates")).json();
+      var el = $("chDebate");
+      if (el && dbData.debates && dbData.debates.length) {
+        el.innerHTML = '<p class="ch-intro">以下正反双方观点与裁决一一对应，来自结构化辩论接口。</p>' + expDebateCards(dbData.debates);
+      }
+    } catch (e) { /* 忽略，回退 Markdown 口径 */ }
     fillChapter("chMood", cleanMd, /心情|剧本/, "本次未指定心情词，心情导演跳过了这一章。");
     fillChapter("chPlanb", cleanMd, /翻车预演|B\s*计划/, "本次生成未包含 B 计划章节。");
     fillChapter("chPack", cleanMd, /清单|装备/, "本次生成未包含出行清单章节。");
@@ -1985,6 +2018,201 @@ document.addEventListener('click', e => {
       $("authError").textContent = "网络异常，请确认后端已启动";
     }
   });
+
+  /* ---------- P1.5 体验中心：装载当前行程的真实数据 ---------- */
+  var EXP_META = {
+    debate: { t: "⚔️ 决策辩论", s: "正反双方对质与裁决 · 来自当前行程" },
+    live: { t: "📡 直播辩论", s: "生成过程实时可见" },
+    guide: { t: "🎭 名导团", s: "本地视角讲解 · 可继续追问" },
+    tourists: { t: "👥 虚拟游客踩点", s: "出发前体检 · 试玩报告" },
+    counterfactual: { t: "⏳ 反事实后悔药", s: "取舍对照 · 另一条时间线" },
+    map: { t: "🗺️ 地图与周边", s: "全程动线一张图 · 周边即点即达" }
+  };
+  var EXP_CACHE = {};
+  function expDebateCards(list) {
+    return list.map(function (db, i) {
+      return '<div class="db-col">' +
+        '<div class="db-side pro"><b>' + escapeHtml(db.plan_side.role) + '（正）</b>' + escapeHtml(db.plan_side.point) + '</div>' +
+        '<div class="db-side con"><b>' + escapeHtml(db.traveler_side.role) + '（反）</b>' + escapeHtml(db.traveler_side.point) + '</div></div>' +
+        '<div class="db-verdict"><b>议题 ' + (i + 1) + ' 裁决 →</b> ' + escapeHtml(db.verdict.decision) + ' —— ' + escapeHtml(db.verdict.reason) + '</div>';
+    }).join("");
+  }
+  var NEED_PLAN_HTML = '<p class="vote-hint">体验内容全部来自真实生成的行程数据。请先点击「AI 规划旅程」生成一本，或在「历史行程」中载入一本。</p>' +
+    '<button class="btn-s ghost" onclick="document.getElementById(\'historyBar\').scrollIntoView({behavior:\'smooth\'})">去历史行程 →</button>';
+  async function expGet(path) {
+    var resp = await fetch(apiBase + path);
+    if (!resp.ok) throw new Error("接口返回 " + resp.status);
+    return resp.json();
+  }
+  var EXP_BUILD = {
+    debate: async function (id) {
+      var d = await expGet("/api/plans/" + id + "/debates");
+      var list = d.debates || [];
+      if (!list.length) return '<p class="vote-hint">本次行程没有辩论记录（旧版本任务可能未包含辩论节点）。</p>';
+      return expDebateCards(list);
+    },
+    guide: async function (id) {
+      var d = await expGet("/api/plans/" + id + "/guides");
+      var reviews = d.reviews || [];
+      if (!reviews.length) return '<p class="vote-hint">暂无名导团数据。</p>';
+      window._expGuide = { reviews: reviews, current: 0, history: [], id: id };
+      var talk = '<div class="g-talk" id="expGuideTalk"><b>' + escapeHtml(reviews[0].name) + '</b><br>' + escapeHtml(reviews[0].review) + '</div>' +
+        '<div class="g-input"><input id="expGuideInput" placeholder="向' + escapeHtml(reviews[0].name.split("·")[0].trim()) + '提问，如：这条线累不累？" maxlength="100" />' +
+        '<button class="btn-s" id="expGuideSend">问</button></div><div id="expGuideMore"></div>';
+      var chips = '<div class="guide-switch">' + reviews.map(function (r, i) {
+        return '<span class="g-chip' + (i === 0 ? " on" : "") + '" data-gid="' + i + '">' + escapeHtml(r.name.split("·")[0].trim()) + '</span>';
+      }).join("") + '</div>';
+      return chips + talk;
+    },
+    tourists: async function (id) {
+      var d = await expGet("/api/plans/" + id + "/swarm");
+      var reports = d.reports || [];
+      if (!reports.length) return '<p class="vote-hint">本次行程没有虚拟游客试玩报告。</p>';
+      return '<div class="mood-grid">' + reports.map(function (r) {
+        return '<div class="mood-card"><h5>' + escapeHtml(r.persona) + ' · 试玩 Day ' + r.day + '</h5><p>' + escapeHtml(r.verdict) + '</p><small>' + escapeHtml(r.tip || "") + '</small></div>';
+      }).join("") + '</div>';
+    },
+    counterfactual: async function (id) {
+      var d = await expGet("/api/plans/" + id + "/counterfactual");
+      var cards = d.cards || [];
+      if (!cards.length) return '<p class="vote-hint">本次行程没有可推演的取舍点。</p>';
+      return '<p class="vote-hint">基于本次真实行程的取舍推演（' + (d.mode === "real" ? "LLM 真实推演" : "规则推演") + '）：</p>' +
+        '<div class="exp-cardlist">' + cards.map(function (c) {
+          return '<div class="db-verdict"><b>放弃</b> ' + escapeHtml(c.gave_up) + ' <b>⇄ 换来</b> ' + escapeHtml(c.got) +
+            '<br>' + escapeHtml(c.reason) + '<br><small>' + escapeHtml(c.cost_note) + '</small></div>';
+        }).join("") + '</div>';
+    },
+    map: async function (id) {
+      var d = await expGet("/api/plans/" + id + "/map");
+      var days = (d.days || []).filter(function (x) { return (x.spots || []).length; });
+      if (!days.length) return '<p class="vote-hint">本次行程的点位缺少坐标（旧任务或未配置高德 key），暂无法画图；逐日动线见行程书第 ② 章。</p>';
+      window._expMap = { data: days, day: 0, map: null, layer: null, job: id };
+      var chips = '<div class="day-tabs" id="expMapTabs">' + days.map(function (x, i) {
+        return '<button class="day-tab' + (i === 0 ? " on" : "") + '" data-md="' + i + '">Day ' + x.day + (x.theme ? " · " + escapeHtml(x.theme.slice(0, 6)) : "") + '</button>';
+      }).join("") + '</div><div class="exp-map" id="expMap"></div>' +
+        '<div class="exp-nearby">' +
+        '<button class="btn-s ghost" data-near="food">🍜 附近美食</button>' +
+        '<button class="btn-s ghost" data-near="parking">🅿️ 附近车位</button>' +
+        '<button class="btn-s ghost" data-near="toilet">🚻 附近洗手间</button></div>' +
+        '<div id="expPois"></div>';
+      return chips;
+    }
+  };
+  function bindExpMap() {
+    var box = $("expMapTabs");
+    var state = window._expMap;
+    if (!box || !state) return;
+    function draw() {
+      var day = state.data[state.day];
+      var pts = day.spots.filter(function (s) { return s.lat && s.lng; }).map(function (s) { return [Number(s.lat), Number(s.lng)]; });
+      if (!window.L || !pts.length) return;
+      if (!state.map) {
+        state.map = L.map("expMap", { scrollWheelZoom: false });
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" }).addTo(state.map);
+      }
+      setTimeout(function () { state.map.invalidateSize(); }, 60);
+      if (state.layer) state.map.removeLayer(state.layer);
+      state.layer = L.layerGroup().addTo(state.map);
+      var line = pts.map(function (p) { return p; });
+      if (line.length > 1) L.polyline(line, { color: "#a9863f", dashArray: "6 6" }).addTo(state.layer);
+      day.spots.forEach(function (s, i) {
+        if (!s.lat || !s.lng) return;
+        L.circleMarker([Number(s.lat), Number(s.lng)], { radius: 7, color: "#2f5d50", fillOpacity: 0.85 })
+          .bindPopup((i + 1) + ". " + (s.name || "") + (s.time ? " · " + s.time : ""))
+          .addTo(state.layer);
+      });
+      state.map.fitBounds(pts, { padding: [24, 24] });
+    }
+    box.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-md]");
+      if (!b) return;
+      box.querySelectorAll(".day-tab").forEach(function (x) { x.classList.remove("on"); });
+      b.classList.add("on");
+      state.day = Number(b.dataset.md);
+      draw();
+    });
+    document.getElementById("expPois").parentElement.addEventListener("click", async function (e) {
+      var nb = e.target.closest("[data-near]");
+      if (!nb) return;
+      var out = document.getElementById("expPois");
+      out.innerHTML = '<p class="vote-hint">检索中…</p>';
+      try {
+        var d = await expGet("/api/plans/" + state.job + "/nearby?kind=" + nb.dataset.near);
+        var pois = d.pois || [];
+        out.innerHTML = pois.length
+          ? pois.slice(0, 6).map(function (p) {
+              return '<div class="exp-poi">' + escapeHtml(p.name || p.title || "点位") + ' · 约 ' + Math.round(p.distance_m || 0) + ' 米' + (p.address ? ' · ' + escapeHtml(p.address) : "") + '</div>';
+            }).join("")
+          : '<p class="vote-hint">附近暂无检索结果。</p>';
+      } catch (err) {
+        out.innerHTML = '<p class="vote-hint">检索失败：' + escapeHtml(String(err && err.message || err)) + '</p>';
+      }
+    });
+    draw();
+  }
+  function bindGuideChat() {
+    var box = document.getElementById("expGuideTalk");
+    if (!box) return;
+    var st = window._expGuide;
+    document.getElementById("expGuideTalk").parentElement.addEventListener("click", function (e) {
+      var chip = e.target.closest("[data-gid]");
+      if (!chip) return;
+      box.parentElement.querySelectorAll(".g-chip").forEach(function (x) { x.classList.remove("on"); });
+      chip.classList.add("on");
+      st.current = Number(chip.dataset.gid);
+      st.history = [];
+      var r = st.reviews[st.current];
+      box.innerHTML = "<b>" + escapeHtml(r.name) + "</b><br>" + escapeHtml(r.review);
+    });
+    var send = async function () {
+      var input = document.getElementById("expGuideInput");
+      var msg = (input.value || "").trim();
+      if (!msg) return;
+      input.value = "";
+      var r = st.reviews[st.current];
+      box.innerHTML += '<br><b style="color:var(--teal-deep,#233c34)">你：</b>' + escapeHtml(msg);
+      var more = document.getElementById("expGuideMore");
+      more.innerHTML = '<p class="vote-hint">' + escapeHtml(r.name.split("·")[0].trim()) + '思考中…</p>';
+      try {
+        var resp = await fetch(apiBase + "/api/plans/" + st.id + "/dialogue", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ guide_id: r.id, message: msg, history: st.history })
+        });
+        var d = await resp.json();
+        var reply = d.reply || "（对方没有接话，换个问法试试）";
+        st.history.push({ role: "user", content: msg });
+        st.history.push({ role: "assistant", content: reply });
+        more.innerHTML = '<div class="g-talk"><b>' + escapeHtml(d.guide || r.name) + (d.mode === "real" ? "" : "（本地口径）") + '</b><br>' + escapeHtml(reply) + '</div>';
+      } catch (err) {
+        more.innerHTML = '<p class="vote-hint">对话失败：' + escapeHtml(String(err && err.message || err)) + '</p>';
+      }
+    };
+    document.getElementById("expGuideSend").addEventListener("click", send);
+    document.getElementById("expGuideInput").addEventListener("keydown", function (e) { if (e.key === "Enter") send(); });
+  }
+  window.openExperience = async function (key) {
+    if (!window.REAL_MODE) { toast("未连接后端：体验内容全部来自真实生成，请先启动后端"); return; }
+    var meta = EXP_META[key];
+    if (!meta) return;
+    if (key === "live") {
+      openDetail(meta.t, meta.s, '<p class="vote-hint">点击「AI 规划旅程」生成行程时，进度弹层会实时滚动各智能体的真实工作日志；辩论节点会自动开启直播流，可中途投票站队。已完成行程在第 ④ 章回看完整辩论。</p>' +
+        '<button class="btn-s ghost" data-goto="debate">去第 ④ 章回看辩论 →</button>');
+      return;
+    }
+    if (!jobId) { openDetail(meta.t, meta.s, NEED_PLAN_HTML); return; }
+    var cacheKey = jobId + "|" + key;
+    openDetail(meta.t, meta.s, '<p class="vote-hint">正在加载当前行程的真实数据…</p>');
+    var html;
+    if (EXP_CACHE[cacheKey]) html = EXP_CACHE[cacheKey];
+    else {
+      try { html = await EXP_BUILD[key](jobId); EXP_CACHE[cacheKey] = html; }
+      catch (e) { html = '<p class="vote-hint">加载失败：' + escapeHtml(String(e && e.message || e)) + '</p>'; }
+    }
+    openDetail(meta.t, meta.s, html);
+    if (key === "guide") bindGuideChat();
+    if (key === "map") bindExpMap();
+  };
 
   /* ---------- 模式探测与启动 ---------- */
   function applyMode() {

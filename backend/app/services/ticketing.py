@@ -90,6 +90,7 @@ def _find_items(data: Any, depth: int = 0) -> list[dict[str, Any]]:
 
 
 def _rows_train_flight(items: list[dict[str, Any]], is_train: bool) -> list[dict[str, Any]]:
+    """（保留兜底）按班次号键名容错提取；flight 实测结构见 _rows_flight。"""
     rows: list[dict[str, Any]] = []
     for item in items[:8]:
         if is_train:
@@ -127,40 +128,106 @@ def _fliggy_call(kind: str, tool: str, arguments: dict[str, Any]) -> list[dict[s
     return items
 
 
+def _fmt_duration(minutes: Any) -> str:
+    try:
+        m = int(str(minutes))
+        return f"{m // 60}小时{m % 60:02d}分" if m % 60 else f"{m // 60}小时"
+    except (TypeError, ValueError):
+        return str(minutes or "")
+
+
+def _rows_flight(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """飞猪 search_flight 实测结构（docs/飞猪MCP探测.md）：
+    data.itemList[].jumpUrl = 预订链接；journeys[0].segments[0] = 航段详情；ticketPrice 需报价权限，通常为空。"""
+    rows: list[dict[str, Any]] = []
+    for item in items[:8]:
+        journeys = item.get("journeys") or []
+        if not journeys:
+            continue
+        journey = journeys[0]
+        seg = (journey.get("segments") or [{}])[0]
+        no = str(_pick(seg, "marketingTransportNo", "flightNo", "flight_no") or "")
+        if not no:
+            continue
+        airline = str(_pick(seg, "marketingTransportName", "airline") or "")
+        dep_station = str(_pick(seg, "depStationName") or "")
+        arr_station = str(_pick(seg, "arrStationName") or "")
+        dep_term = str(_pick(seg, "depTerm") or "")
+        rows.append(
+            {
+                "flight_no": no,
+                "tag": (airline + " · " if airline else "") + str(_pick(journey, "journeyType") or "直达"),
+                "departure": " ".join(x for x in [str(_pick(seg, "depDateTime")), dep_station + (f" T{dep_term}" if dep_term else "")] if x and x != "None"),
+                "arrival": " ".join(x for x in [str(_pick(seg, "arrDateTime")), arr_station] if x and x != "None"),
+                "duration": _fmt_duration(journey.get("totalDuration")),
+                "seat": str(_pick(seg, "seatClassName") or "经济舱"),
+                "price": _pick(seg, "ticketPrice") or _pick(item, "ticketPrice") or "",
+                "status": "可预订" if item.get("jumpUrl") else "查询班次",
+                "booking_url": _booking_url(item.get("jumpUrl")),
+            }
+        )
+    return rows
+
+
 def enrich_train_flight(base: dict[str, Any], kind: str, origin: str | None, destination: str) -> dict[str, Any]:
-    """大交通窗口：本地建议（guide）保留，tickets/flights 有飞猪真实数据则覆盖。"""
+    """大交通窗口：本地建议（guide）保留，flights 有飞猪真实数据则覆盖；火车票无搜索工具，维持 12306 官方渠道口径。"""
     is_train = kind == "train"
-    args = {"origin": (origin or "").removesuffix("市"), "destination": destination.removesuffix("市")}
-    items = _fliggy_call(kind, "search_train" if is_train else "search_flight", args)
     base.setdefault("source", "local")
+    if is_train:
+        return base  # 探测结论：飞猪 MCP 无火车票搜索工具（train/12306 仅代理商履约接口）
+    items = _fliggy_call(kind, "search_flight", {"origin": (origin or "").removesuffix("市"), "destination": destination.removesuffix("市")})
     if not items:
         return base
-    rows = _rows_train_flight(items, is_train)
+    rows = _rows_flight(items)
     if not rows:
         return base
-    key = "tickets" if is_train else "flights"
-    base[key] = rows
+    base["flights"] = rows
     base["source"] = "fliggy"
-    base["note"] = "来源：飞猪AI 实时检索；价格与库存以供应商页面公示为准。"
+    base["note"] = "来源：飞猪AI 实时检索；票价需在供应商页面查询（未展示的价格以对方公示为准）。"
     return base
 
 
 def enrich_attractions(base: dict[str, Any], destination: str) -> dict[str, Any]:
-    """景点窗口：高德 POI 为主；命中同名景点时补飞猪预订链接与榜单信息。"""
+    """景点窗口：高德 POI 为主；命中同名景点补飞猪预订链接；高德没覆盖的飞猪榜单 POI 追加进列表。"""
     base.setdefault("source", "local")
     items = _fliggy_call("attraction", "search_poi", {"cityName": destination.removesuffix("市"), "keyword": "景点"})
     if not items:
         return base
     by_name = {str(i.get("name")): i for i in items if i.get("name")}
+    linked = 0
+    seen = {str(a.get("name")) for a in base.get("attractions") or []}
     for a in base.get("attractions") or []:
         hit = by_name.get(str(a.get("name"))) or {}
-        url = _booking_url(hit.get("jumpUrl") or hit.get("bookingUrl"))
+        url = _booking_url(hit.get("jumpUrl"))
         if url:
             a["booking_url"] = url
+            linked += 1
         if hit.get("ticketInfo"):
             a["ticket_info"] = hit["ticketInfo"]
-    if any(a.get("booking_url") for a in base.get("attractions") or []):
+    # 高德没覆盖的飞猪 POI（带预订链接与地址）追加展示，去重后最多补 4 个
+    added = 0
+    for name, poi in by_name.items():
+        if name in seen or added >= 4:
+            continue
+        if not poi.get("jumpUrl"):
+            continue
+        base["attractions"].append(
+            {
+                "name": name,
+                "tags": [poi["category"]] if poi.get("category") else [],
+                "open_time": "以景区公告为准",
+                "ticket_price": 0,
+                "visit_minutes": 120,
+                "address": str(poi.get("address") or ""),
+                "booking_url": _booking_url(poi.get("jumpUrl")),
+            }
+        )
+        seen.add(name)
+        added += 1
+        linked += 1
+    if linked:
         base["source"] = "fliggy"
+        base["note"] = "来源：高德实时 POI + 飞猪AI 榜单（带预订链接）；门票以景区公示为准。"
     return base
 
 
