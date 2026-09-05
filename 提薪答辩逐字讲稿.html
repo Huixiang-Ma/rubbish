@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>提薪答辩逐字讲稿（8–10 分钟版）</title>
+<style>:root{
+  --paper:#faf7f0; --card:#ffffff; --ink:#1f3d36; --ink2:#2f5a51;
+  --muted:#6b7f7a; --line:#e3ded2; --teal:#2f8f83; --teal-soft:#e6f3f0;
+  --cinnabar:#b23a2e; --cinnabar-soft:#fbeae7; --gold:#a8842c; --gold-soft:#faf1dc;
+  --warn:#b8781f; --warn-soft:#fdf3e2;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Source Han Sans SC",system-ui,-apple-system,sans-serif;
+  font-size:15px; line-height:1.75;
+}
+.layout{display:flex; max-width:1440px; margin:0 auto; align-items:flex-start}
+.toc{
+  position:sticky; top:0; width:270px; flex:0 0 270px; height:100vh; overflow-y:auto;
+  background:#fff; border-right:1px solid var(--line); padding:26px 18px 60px;
+}
+.toc h3{font-size:13px; letter-spacing:2px; color:var(--muted); margin:0 0 14px; font-weight:600}
+.toc a{
+  display:block; text-decoration:none; color:var(--ink2); font-size:13.5px;
+  padding:6px 10px; border-radius:6px; border-left:2px solid transparent; margin-bottom:1px;
+}
+.toc a:hover{background:var(--teal-soft); color:var(--teal)}
+.toc a.active{background:var(--teal-soft); color:var(--teal); border-left-color:var(--teal); font-weight:600}
+.toc a.sub{padding-left:24px; font-size:12.5px; color:var(--muted)}
+.toc a.sub:hover{color:var(--teal)}
+.toc .brand{font-size:16px; font-weight:700; color:var(--ink); margin-bottom:4px; letter-spacing:1px}
+.toc .brand-sub{font-size:11.5px; color:var(--muted); margin-bottom:22px}
+.toc .toc{font-size:13px}
+main{flex:1; min-width:0; padding:0 46px 100px}
+.hero{padding:52px 0 30px; border-bottom:2px solid var(--line); margin-bottom:34px}
+.hero h1{font-size:31px; margin:0 0 10px; letter-spacing:1px}
+.hero p{margin:0; color:var(--muted); font-size:14.5px}
+h2{
+  font-size:22px; margin:52px 0 8px; padding-top:26px; border-top:1px solid var(--line);
+  scroll-margin-top:20px; letter-spacing:.5px;
+}
+h2:first-of-type{border-top:none}
+h3{font-size:17.5px; margin:34px 0 10px; color:var(--ink2); scroll-margin-top:20px}
+h4{font-size:15.5px; margin:0 0 4px}
+p{margin:8px 0}
+code{background:#f2efe6; padding:1px 6px; border-radius:4px; font-size:13px; font-family:"JetBrains Mono",Consolas,monospace}
+pre{
+  background:#1f3d36; color:#e8f2ef; border-radius:10px; padding:16px 18px; overflow-x:auto;
+  font-size:13px; line-height:1.65; font-family:"JetBrains Mono",Consolas,monospace;
+}
+pre code{background:none; color:inherit; padding:0}
+table{width:100%; border-collapse:collapse; margin:14px 0 20px; font-size:13.6px; background:var(--card)}
+th,td{border:1px solid var(--line); padding:9px 11px; text-align:left; vertical-align:top}
+th{background:var(--teal-soft); color:var(--ink); font-weight:600; white-space:nowrap}
+tbody tr:nth-child(even){background:#fcfbf7}
+blockquote{
+  margin:16px 0; border-left:3px solid var(--teal); background:var(--teal-soft);
+  padding:12px 16px; border-radius:0 8px 8px 0; font-size:14px;
+}
+ul{margin:8px 0; padding-left:20px}
+ol{margin:8px 0; padding-left:22px}
+li{margin:4px 0}
+hr{border:none; border-top:1px solid var(--line); margin:30px 0}
+strong{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc">
+    <div class="brand">多 Agent 文旅系统</div>
+    <div class="brand-sub">文档导航</div>
+    <h3>目录</h3>
+    <div class="toc">
+<ul>
+<li><a href="#30">开场（约 30 秒）</a></li>
+<li><a href="#1-30">一、项目需求（约 1 分 30 秒）</a></li>
+<li><a href="#1-30_1">二、难点（约 1 分 30 秒）</a></li>
+<li><a href="#2">三、怎么解决（约 2 分钟）</a></li>
+<li><a href="#1">四、其它方案（约 1 分钟）</a></li>
+<li><a href="#1-30_2">五、优化与效果（约 1 分 30 秒）</a></li>
+<li><a href="#1-30_3">六、新趋势新技术（约 1 分 30 秒）</a></li>
+<li><a href="#30_1">收尾（约 30 秒）</a></li>
+<li><a href="#_1">附：时间与砍段预案</a></li>
+<li><a href="#_2">附：被追问时的弹药（对应材料章节）</a></li>
+</ul>
+</div>
+
+  </nav>
+  <main>
+    <div class="hero">
+      <h1>提薪答辩逐字讲稿（8–10 分钟版）</h1>
+      <p>基于 backend/app 实际代码核实整理</p>
+    </div>
+    <blockquote>
+<p>版本：v1.0 ｜ 日期：2026-09-05 ｜ 配套材料：《提薪答辩材料_七问完整版.md》
+使用说明：<strong>括号内为动作/提示，不念</strong>；【】内为需按个人情况替换的内容。全稿正文约 2200 字，正常语速（约 240 字/分钟）约 9 分钟。若现场超时，优先砍"四、其它方案"的举例与"六"中 A2A 一段。</p>
+</blockquote>
+<hr />
+<h2 id="30">开场（约 30 秒）</h2>
+<p>各位评审好，我是【姓名】，负责多 Agent 文旅行程规划系统的架构设计和后端实现。今天用十分钟讲清楚三件事：这个项目是什么、难在哪、我是怎么把它做成"能生产、敢交付"的。先给一句话定位——<strong>它不是让大模型写一篇旅游攻略，而是一条可审计、可恢复、能防攻击的 AI 生产流水线。</strong></p>
+<h2 id="1-30">一、项目需求（约 1 分 30 秒）</h2>
+<p>先讲业务价值。传统旅行社排行程靠人工顾问，一个单子要花几个小时，产出标准还不统一，出了问题也没法追溯。我们做的系统，就是把这套流程 AI 化、工业化。</p>
+<p>面向两类用户：<strong>C 端游客</strong>一句话提交需求，后台 9 个 Agent 流水线分钟级产出可执行的行程书；<strong>B 端旅行社和顾问</strong>用九页签工作台做审核、审计、白标交付。核心的工程承诺是三句话：<strong>算得准</strong>——预算和时空校验用确定性代码，不让大模型算账；<strong>崩了能续</strong>——每步落盘，进程被杀也能断点续跑；<strong>出事能查</strong>——注入拦截、人工审批、全量审计，每一步都有记录。</p>
+<p>任务目标量化成指标：提交接口 QPS 200 以上，读接口 P95 一百毫秒以内，进程重启五秒内恢复调度。这些指标最终全部达标——后面我会给数据。</p>
+<h2 id="1-30_1">二、难点（约 1 分 30 秒）</h2>
+<p>这个项目真正的难点，不是"功能多"，而是<strong>把大模型从玩具变成生产工具的工程问题</strong>。我讲三个最典型的。</p>
+<p>第一个，<strong>大模型算不准</strong>。它本质是概率生成器，不是计算器。让它排行程，它可能排出"上午故宫、下午长城"这种六十公里当天往返的行程；让它算预算，十次能算出十个数。这是模型的本质缺陷，绕不过去。</p>
+<p>第二个，<strong>长链路崩溃丢状态</strong>。一单要串行跑九个 Agent，好几分钟，中间多次调用大模型——都是真金白银。进程一旦被杀，内存里的进度全没了，不知道跑到第几步。</p>
+<p>第三个，<strong>外部内容不可信</strong>。我们的 Agent 要抓网页、读用户评论，这些外部文本可以夹带"忽略之前所有指令"这种注入攻击。大模型的注意力机制分不清这是数据还是指令，攻击者就能劫持整条链路、套取系统提示词。</p>
+<h2 id="2">三、怎么解决（约 2 分钟）</h2>
+<p>我的解决思路就一句话：<strong>确定性工程兜底，LLM 按需接入。</strong>每个难点都有对应的工程手段。</p>
+<p>第一个，算不准——<strong>职责分离</strong>。预算分项、时空校验全部用确定性代码。景点距离用 haversine 公式加路网系数精确计算；预算按城际、住宿、交通、门票、餐饮分项核算；超支判定还分标准口径和经济口径两档，<strong>只有两档都超才触发人工审批</strong>——这是从真实业务里抠出来的规则。</p>
+<p>第二个，崩溃丢状态——<strong>状态外置加 checkpoint</strong>。每个节点完成就把状态写到磁盘，记录跑到哪一步、哪些节点已完成。重启时扫描未完成任务自动重新入队，从断点续跑，已完成节点不重跑、不重复烧钱。写盘本身用原子写：先写临时文件、fsync 落盘、原子改名、再写 sha256 校验旁车——<strong>保证任何时候文件要么全旧、要么全新，不存在半写状态</strong>。我现场演示过杀进程，重启后五秒内自动恢复。</p>
+<p>第三个，注入攻击——<strong>外部内容默认不可信</strong>。高危八种模式直接拦截挂起等人工，中危四种清洗降权，每个 Agent 的输出还要递归清洗一遍，防止"输出即注入"。网页调研默认关闭，白名单只有两个官网。</p>
+<p>另外还有两个工程细节值得说。一个是<strong>防资损</strong>：提交请求做了幂等哈希，重复提交返回同一个任务号；审批带版本号，两个人同时批同一个单，第二个直接返回 409 冲突——这就是 CAS 乐观锁。另一个是<strong>异步解耦</strong>：提交接口秒回任务号，生成在后台队列跑，收单和生产分开，压测指标才立得住。</p>
+<h2 id="1">四、其它方案（约 1 分钟）</h2>
+<p>这些设计不是拍脑袋，是比出来的。同步等待方案被砍——生成要几分钟，连接直接耗尽；单一大 Agent 被砍——没法定点恢复、没法解释；让大模型算预算被砍——结果不可复现，没法审计；用 LangGraph 这类编排框架也被砍——MVP 阶段要离线可跑、要完全可控，自研管线只有两百多行，依赖最少，每个节点输出结构化 JSON，将来迁移框架成本也低。</p>
+<p>而且这些技术本身是通用的：原子写和幂等设计可以直接迁移到支付回调、订单履约；异步加 checkpoint 是所有分钟级 AI 任务的标准形态。</p>
+<h2 id="1-30_2">五、优化与效果（约 1 分 30 秒）</h2>
+<p>优化上我遵循一个方法：<strong>先修测量，再修瓶颈</strong>。第一轮压测数据很差，排查发现是 WSL2 并行建连被系统串行化，加上单客户端进程本身有吞吐上限——这是测量方法的问题，不是服务的问题。修正口径、顺序预热再并发之后，才有真实基线。</p>
+<p>然后做了三项针对性优化：首页 GZip 预压缩缓存、服务窗口六十秒结果缓存、全局压缩中间件。效果：健康检查接口从 295 涨到 572 QPS，首页从 138 涨到 350，实时 POI 从 197 涨到 548，全部达到 P95 一百毫秒以内。生成链路八并发百分百成功，单稿五十五秒；增量重规划省约百分之二十三耗时——改预算不用全量重跑，只重算受影响节点。</p>
+<h2 id="1-30_3">六、新趋势新技术（约 1 分 30 秒）</h2>
+<p>最后讲新技术怎么落到项目里。</p>
+<p><strong>MCP 协议</strong>，2024 年 11 月开源，是 AI 接数据源的统一标准。我们项目里排期节点已经接了飞猪 MCP，高德 POI 也有客户端，外部适配器扩展点早就留好了——将来接携程、12306，只写新的 MCP Server，编排一行不用改。<strong>A2A 协议</strong>，2025 年 4 月谷歌开源，解决 Agent 之间怎么协作，和 MCP 互补；我们现在的 Agent 是同进程调用，将来服务化了可以按 A2A 发布。</p>
+<p><strong>推理模型</strong>也是大趋势，DeepSeek-R1、OpenAI o3 这类模型靠测试时计算提升推理质量。我们的 LLM 配置是参数化的，换模型零改动，将来可以把辩论和校验节点切到推理模型。</p>
+<p>新版本方面，<strong>Redis 8</strong> 加了原生向量类型和查询引擎，我们的队列从 7 升 8 完全无侵入，向量检索也多了一个可选方案；<strong>PostgreSQL 17</strong> 的增量备份和 JSON_TABLE，正好用在我们的审计镜像层；<strong>pgvector 0.8</strong> 的过滤检索提速，对应我们预留的语义检索接口。这些都不是推倒重来，都是<strong>往预留的边界层里插新实现</strong>。</p>
+<h2 id="30_1">收尾（约 30 秒）</h2>
+<p>总结一下。这个项目证明了一件事：<strong>AI 应用从 demo 到生产，差的不是模型，是工程</strong>——算得准、崩了能续、出事能查，这三个承诺我们全部用代码兑现了，而且全部有压测数据、有演示、有审计链路。谢谢各位，欢迎提问。</p>
+<hr />
+<h2 id="_1">附：时间与砍段预案</h2>
+<table>
+<thead>
+<tr>
+<th>段落</th>
+<th>时长</th>
+<th>超时时的砍法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>开场</td>
+<td>0:30</td>
+<td>不砍</td>
+</tr>
+<tr>
+<td>一、需求</td>
+<td>1:30</td>
+<td>压缩"两类用户"细节</td>
+</tr>
+<tr>
+<td>二、难点</td>
+<td>1:30</td>
+<td>不砍（评审必问）</td>
+</tr>
+<tr>
+<td>三、解决</td>
+<td>2:00</td>
+<td>砍"防资损/异步解耦"两个细节</td>
+</tr>
+<tr>
+<td>四、其它方案</td>
+<td>1:00</td>
+<td>砍举例，只留一句"比出来的"</td>
+</tr>
+<tr>
+<td>五、优化</td>
+<td>1:30</td>
+<td>砍方法论，直接报数字</td>
+</tr>
+<tr>
+<td>六、双新</td>
+<td>1:30</td>
+<td>砍 A2A 与 pgvector，保 MCP 和 Redis 8</td>
+</tr>
+<tr>
+<td>收尾</td>
+<td>0:30</td>
+<td>不砍</td>
+</tr>
+<tr>
+<td><strong>合计</strong></td>
+<td><strong>约 9:00</strong></td>
+<td>压缩后约 7 分钟</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_2">附：被追问时的弹药（对应材料章节）</h2>
+<ul>
+<li>问"原子写为什么不会半写"→ 材料 §3.3.1：os.replace 同文件系统原子 + fsync 顺序保证</li>
+<li>问"重复审批怎么防"→ 材料 §3.3.4：request_hash + base_version 乐观锁（CAS）+ 分布式锁</li>
+<li>问"为什么不用 LangGraph"→ 材料 §5.2：离线可跑/零重依赖/精确控制，节点契约 JSON 化可低成本迁移</li>
+<li>问"QPS 指什么"→ 附录 C：只指提交/读接口，不指生成吞吐（诚实口径）</li>
+<li>问"双新怎么落地"→ 材料 §6：已落地写代码点，未落地写预留边界与落地方式</li>
+</ul>
+  </main>
+</div>
+<script>
+const links=[...document.querySelectorAll('.toc a')];
+const heads=[...document.querySelectorAll('main h2,h3')].filter(h=>h.id);
+window.addEventListener('scroll',()=>{
+  let cur=null;
+  for(const h of heads){ if(h.getBoundingClientRect().top<=90) cur=h.id; }
+  links.forEach(a=>a.classList.toggle('active', a.getAttribute('href')==='#'+(cur||'')));
+});
+</script>
+</body>
+</html>

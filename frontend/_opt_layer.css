@@ -1,0 +1,176 @@
+/* ============================================================
+   样式优化层（预览版专用，纯视觉覆盖）
+   原则：不动布局/网格/宽度/结构，仅优化
+   圆角 · 阴影 · 过渡 · 字重 · 悬停反馈 · 焦点态 · 滚动条
+   ============================================================ */
+
+/* ---------- 1. 全局质感 ---------- */
+:root {
+  --border: #e4e8f0;
+  --shadow-sm: 0 1px 2px rgba(28, 28, 26, 0.05), 0 2px 8px rgba(28, 28, 26, 0.05);
+  --shadow-md: 0 2px 6px rgba(28, 28, 26, 0.05), 0 8px 24px rgba(28, 28, 26, 0.08);
+  --shadow-lg: 0 4px 12px rgba(28, 28, 26, 0.06), 0 16px 48px rgba(28, 28, 26, 0.12);
+}
+
+::selection { background: rgba(47, 93, 80, 0.22); }
+
+/* 细滚动条，全站统一 */
+* { scrollbar-width: thin; scrollbar-color: rgba(47, 93, 80, 0.28) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: rgba(47, 93, 80, 0.24); border-radius: 8px; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(47, 93, 80, 0.4); }
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- 2. 按钮：统一 8px 圆角 + 悬停浮起 + 按压反馈 ---------- */
+button {
+  border-radius: 8px;
+  background: linear-gradient(180deg, #35695a, #2f5d50);
+  box-shadow: var(--shadow-sm);
+  transition: background 0.18s, box-shadow 0.18s, transform 0.12s;
+}
+button:hover:not(:disabled) {
+  background: linear-gradient(180deg, #3d7565, #35695a);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+button:active:not(:disabled) { transform: translateY(0); box-shadow: var(--shadow-sm); }
+button:disabled { background: #c6cdd9; box-shadow: none; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid rgba(47, 93, 80, 0.55);
+  outline-offset: 2px;
+}
+button.secondary { background: linear-gradient(180deg, #5f6b66, #55605c); }
+button.secondary:hover:not(:disabled) { background: linear-gradient(180deg, #67736d, #5f6b66); }
+button.secondary.ghost {
+  background: #f6f3ea;
+  border: 1px solid #cfcbb8;
+  box-shadow: none;
+}
+button.secondary.ghost:hover:not(:disabled) { background: #efeada; box-shadow: var(--shadow-sm); }
+button.mini { border-radius: 7px; transition: background 0.15s, box-shadow 0.15s, transform 0.12s; }
+button.mini:hover:not(:disabled) { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+button.mini.star { background: linear-gradient(180deg, #ff8c1a, #ff7a00); }
+
+/* ---------- 3. 卡片面板：统一 14px 圆角 + 分层柔影 + 顶部高光 ---------- */
+.panel {
+  border-radius: 14px;
+  box-shadow: var(--shadow-md);
+}
+.panel:first-of-type {
+  background: linear-gradient(180deg, #ecf0e6 0%, #ffffff 62%);
+  border-color: #d9dccd;
+}
+
+.entry-card {
+  border-radius: 14px;
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.entry-history {
+  border-radius: 14px;
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* 历史行程卡：悬停浮起 */
+.history-card {
+  border-radius: 12px;
+  transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+}
+.history-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(47, 93, 80, 0.3);
+}
+
+/* ---------- 4. 输入框：浅底 + 悬停边框 + 统一焦点环 ---------- */
+input, select, textarea {
+  border-radius: 8px;
+  background: #fbfcfe;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+input:hover:not(:disabled):not(:focus),
+select:hover:not(:disabled):not(:focus),
+textarea:hover:not(:disabled):not(:focus) { border-color: #b8c2c0; }
+input:focus, textarea:focus, select:focus {
+  background: #ffffff;
+  border-color: #2f5d50;
+  box-shadow: 0 0 0 3px rgba(47, 93, 80, 0.14);
+}
+
+/* ---------- 5. 规划面板：保留宣纸底，收一层柔影 ---------- */
+.planner-panel {
+  border-radius: 14px;
+  box-shadow: var(--shadow-md);
+}
+.dialogue-panel { border-radius: 10px; }
+.dialogue-bubble { border-radius: 10px; }
+.dialogue-bubble.user { border-radius: 10px 10px 3px 10px; }
+.dialogue-bubble.assistant { border-radius: 10px 10px 10px 3px; }
+.summary-chip { border-radius: 999px; transition: background 0.15s, border-color 0.15s; }
+.summary-chip:hover { background: #efe9d8; border-color: #cbbf9d; }
+
+/* ---------- 6. 体验中心选项卡：胶囊化 ---------- */
+.exp-tabs { gap: 8px; }
+.exp-tabs button {
+  border-radius: 999px;
+  background: #f0ebdf;
+  color: #56534a;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+.exp-tabs button:hover { background: #e5dec9; }
+.exp-tabs button.active {
+  background: linear-gradient(180deg, #35695a, #2f5d50);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(47, 93, 80, 0.35);
+}
+
+/* ---------- 7. 弹窗：柔化金色描边 + 入场动画 ---------- */
+.modal {
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(47, 93, 80, 0.12);
+  animation: optModalIn 0.22s ease-out;
+}
+@keyframes optModalIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+.modal-close {
+  transition: background 0.15s, color 0.15s, transform 0.12s;
+}
+.modal-close:hover { background: #eef1ee; color: var(--ink); transform: rotate(90deg); }
+
+/* ---------- 8. 进度 / 挂起条 ---------- */
+.status-strip { border-radius: 10px; }
+.hold-banner { border-radius: 10px; animation: optPulse 2.2s ease-in-out infinite; }
+@keyframes optPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 122, 0, 0.25); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 122, 0, 0); }
+}
+
+/* ---------- 9. 行程书排版微调 ---------- */
+.plan-doc { border-radius: 12px; }
+.day-chip {
+  border-radius: 999px;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.day-chip.active { box-shadow: 0 2px 8px rgba(47, 93, 80, 0.3); }
+.bubble { border-radius: 12px; }
+
+/* ---------- 10. 顶栏 ---------- */
+.topbar { box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset, var(--shadow-sm); }
+
+/* ---------- 预览标记徽章（合并正式版时删除） ---------- */
+#optBadge {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 9999;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: rgba(28, 38, 34, 0.85);
+  color: #e8f0ea;
+  font-size: 12px;
+  letter-spacing: 1px;
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+}

@@ -1,0 +1,145 @@
+{
+  "schema_version": "1",
+  "source_path": "D:\\Desktop\\WL项目\\提薪答辩材料_七问完整版.html",
+  "source_filename": "提薪答辩材料_七问完整版.html",
+  "source_hash": "0b9ee1fc9d24",
+  "source_size_bytes": 66578,
+  "kind": "html",
+  "rendered_at_utc": "2026-09-05T01:46:07+00:00",
+  "output_dir": "D:\\Desktop\\WL项目\\.preview\\0b9ee1fc9d24",
+  "page_count": 12,
+  "rendered_page_count": 12,
+  "collage_count": 2,
+  "extracted_text_chars": 41649,
+  "text_relpath": "text.md",
+  "thumbnail_relpath": "thumb.jpg",
+  "pages": [
+    {
+      "page": 1,
+      "relpath": "pages\\p001.png",
+      "size_bytes": 290906,
+      "width": 1280,
+      "height": 1600
+    },
+    {
+      "page": 2,
+      "relpath": "pages\\p002.png",
+      "size_bytes": 261135,
+      "width": 1280,
+      "height": 1600
+    },
+    {
+      "page": 3,
+      "relpath": "pages\\p003.png",
+      "size_bytes": 248141,
+      "width": 1280,
+      "height": 1600
+    },
+    {
+      "page": 4,
+      "relpath": "pages\\p004.png",
+      "size_bytes": 211243,
+      "width": 1280,
+      "height": 1600
+    },
+    {
+      "page": 5,
+      "relpath": "pages\\p005.png",
+      "size_bytes": 250071,
+      "width": 1280,
+      "height": 1600
+    },
+    {
+      "page": 6,
+      "relpath": "pages\\p006.png",
+      "size_bytes": 243689,
+      "width": 1280,
+      "height": 1600
+    },
+    {
+      "page": 7,
+      "relpath": "pages\\p007.png",
+      "size_bytes": 237245,
+      "width": 1280,
+      "height": 1600
+    },
+    {
+      "page": 8,
+      "relpath": "pages\\p008.png",
+      "size_bytes": 196392,
+      "width": 1280,
+      "height": 1600
+    },
+    {
+      "page": 9,
+      "relpath": "pages\\p009.png",
+      "size_bytes": 236314,
+      "width": 1280,
+      "height": 1600
+    },
+    {
+      "page": 10,
+      "relpath": "pages\\p010.png",
+      "size_bytes": 255212,
+      "width": 1280,
+      "height": 1600
+    },
+    {
+      "page": 11,
+      "relpath": "pages\\p011.png",
+      "size_bytes": 258029,
+      "width": 1280,
+      "height": 1600
+    },
+    {
+      "page": 12,
+      "relpath": "pages\\p012.png",
+      "size_bytes": 129423,
+      "width": 1280,
+      "height": 1600
+    }
+  ],
+  "collages": [
+    {
+      "relpath": "collages\\c1.jpg",
+      "covers_pages": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "grid_cols": 3,
+      "grid_rows": 2,
+      "size_bytes": 493705
+    },
+    {
+      "relpath": "collages\\c2.jpg",
+      "covers_pages": [
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "grid_cols": 3,
+      "grid_rows": 2,
+      "size_bytes": 437921
+    }
+  ],
+  "warnings": [],
+  "options": {
+    "max_pages": 12,
+    "collage": true,
+    "page_range": null,
+    "thumbnail": true,
+    "text_only": false,
+    "jpeg_quality": 85,
+    "out_max_dim": 2048
+  },
+  "summary": {
+    "bytes": 66578
+  }
+}

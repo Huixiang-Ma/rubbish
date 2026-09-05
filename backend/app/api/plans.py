@@ -1,0 +1,426 @@
+import difflib
+import json
+import shutil
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, HTTPException
+
+from app.api.auth import require_role
+
+from app.models.schemas import (
+    ApprovalRequest,
+    ApprovalResponse,
+    BrandExportRequest,
+    FeedbackRequest,
+    PlanCreateResponse,
+    PlanListResponse,
+    PlanRequest,
+    PlanResultResponse,
+    PlanStatusResponse,
+    ReplanRequest,
+    ReplanResponse,
+)
+from app.models.states import JobStatus
+from app.services import job_index
+from app.services.atomic_writer import AtomicWriter
+from app.services.checkpoint_store import CheckpointStore
+from app.services.hash_utils import request_hash
+from app.services.jsonlog import log_event
+from app.services.metrics import APPROVALS, PLAN_SUBMITS
+from app.services.markdown_reporter import MarkdownReporter
+from app.services.paths import DATA_ROOT, job_dir
+from app.services.queue_client import queue_client
+from app.services.travel_context_service import TravelContextService
+
+router = APIRouter(prefix="/api/plans", tags=["plans"])
+store = CheckpointStore()
+reporter = MarkdownReporter()
+request_index: dict[str, str] = {}
+
+APPROVABLE_STATUSES = {
+    JobStatus.WAITING_BUDGET_APPROVAL.value,
+    JobStatus.WAITING_SAFETY_REVIEW.value,
+}
+PLAN_GENERATION_VERSION = "geo_cluster_v19"
+
+
+@router.post("", response_model=PlanCreateResponse)
+def create_plan(payload: PlanRequest) -> PlanCreateResponse:
+    data = payload.model_dump()
+    hash_data = {**data, "_generation_version": PLAN_GENERATION_VERSION}
+    digest = request_hash(hash_data)
+    job_id = f"plan_{digest[:12]}"
+    request_index[digest] = job_id
+    if store.exists(job_id):
+        state = store.load(job_id)
+        return PlanCreateResponse(job_id=job_id, status=state.get("status", JobStatus.QUEUED.value))
+    store.create(job_id, data, digest)
+    if payload.customer or payload.tenant:
+        state = store.load(job_id)
+        if payload.customer:
+            state["customer"] = payload.customer
+        if payload.tenant:
+            state["tenant"] = payload.tenant
+        store.save(job_id, state)
+    queue_client.enqueue(job_id)
+    PLAN_SUBMITS.inc()
+    log_event(
+        "job_created",
+        job_id=job_id,
+        destination=payload.destination,
+        days=payload.days,
+        budget=payload.budget,
+        departure_date=payload.departure_date,
+        return_date=payload.return_date,
+    )
+    return PlanCreateResponse(job_id=job_id, status=JobStatus.QUEUED.value)
+
+
+@router.get("", response_model=PlanListResponse)
+def list_plans(
+    status: str | None = None,
+    customer: str | None = None,
+    tenant: str | None = None,
+    limit: int = 100,
+) -> PlanListResponse:
+    """B1 顾问工作台：本地任务索引列表（状态/客户/租户筛选，按更新时间倒序）。"""
+    items: list[dict] = []
+    for state in job_index.iter_states(DATA_ROOT):
+        if status and state.get("status") != status:
+            continue
+        if customer and state.get("customer") != customer:
+            continue
+        if tenant and state.get("tenant") != tenant:
+            continue
+        user_input = state.get("user_input", {})
+        items.append(
+            {
+                "job_id": state.get("job_id"),
+                "status": state.get("status", "UNKNOWN"),
+                "current_node": state.get("current_node"),
+                "progress": state.get("progress", 0),
+                "destination": user_input.get("destination"),
+                "origin": user_input.get("origin"),
+                "days": user_input.get("days"),
+                "departure_date": user_input.get("departure_date"),
+                "return_date": user_input.get("return_date"),
+                "budget": user_input.get("budget"),
+                "customer": state.get("customer"),
+                "error": state.get("error"),
+                "version": state.get("version", 1),
+                "created_at": state.get("created_at"),
+                "updated_at": state.get("updated_at"),
+                "pipeline": state.get("pipeline"),
+            }
+        )
+    items.sort(key=lambda item: item.get("updated_at") or "", reverse=True)
+    items = items[: max(1, min(limit, 500))]
+    return PlanListResponse(total=len(items), items=items)
+
+
+@router.get("/{job_id}/audit")
+def get_plan_audit(job_id: str) -> dict:
+    try:
+        store.load(job_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="job not found") from exc
+    audit_path = job_dir(job_id) / "audit.log"
+    events: list[dict] = []
+    if audit_path.exists():
+        for line in audit_path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                events.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    return {"job_id": job_id, "events": events}
+
+
+@router.post("/{job_id}/feedback")
+def submit_feedback(job_id: str, payload: FeedbackRequest, _role: dict = Depends(require_role("consultant", "supervisor", "admin"))) -> dict:
+    """B4 反馈通道（吸收原型"填写好评/填写投诉"），落审计日志。"""
+    try:
+        store.load(job_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="job not found") from exc
+    store.append_audit(
+        job_id,
+        {
+            "action": "feedback",
+            "kind": payload.kind,
+            "operator": payload.operator,
+            "content": payload.content,
+        },
+    )
+    return {"job_id": job_id, "recorded": True}
+
+
+@router.post("/{job_id}/export")
+def export_branded_plan(job_id: str, payload: BrandExportRequest) -> dict:
+    """B5 白标交付：注入企业品牌/顾问署名后另存，交付记录落审计。"""
+    try:
+        state = store.load(job_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="job not found") from exc
+    source = job_dir(job_id) / "travel_plan.md"
+    if not source.exists():
+        raise HTTPException(status_code=404, detail="result not found")
+    markdown = source.read_text(encoding="utf-8")
+    digest_line = state.get("file_hash", "")
+    now = datetime.now(timezone.utc).isoformat()
+    branded = "\n".join(
+        [
+            "---",
+            f"企业品牌：{payload.brand}",
+            "> 中立声明：本方案由中立规划引擎生成，不绑定任何供应链、不参与返佣分成，推荐结果不受库存利益影响。",
+            "（Logo 占位：替换为企业标识）",
+            f"顾问署名：{payload.consultant}",
+            f"导出时间：{now}",
+            f"原稿校验（sha256）：{digest_line}",
+            "交付留痕：本文件由多 Agent 文旅系统导出，交付记录已写入审计日志。",
+            "---",
+            "",
+            markdown,
+        ]
+    )
+    writer = AtomicWriter()
+    branded_digest = writer.write_text(job_dir(job_id) / "travel_plan_branded.md", branded)
+    store.append_audit(
+        job_id,
+        {
+            "action": "export",
+            "brand": payload.brand,
+            "consultant": payload.consultant,
+            "file": "travel_plan_branded.md",
+            "sha256": branded_digest,
+        },
+    )
+    return {"file": "travel_plan_branded.md", "sha256": branded_digest, "markdown": branded}
+
+
+@router.get("/{job_id}/diff")
+def get_plan_diff(job_id: str, base: str | None = None) -> dict:
+    """Return a bounded line-level comparison of a replanned job and its parent."""
+    try:
+        state = store.load(job_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="job not found") from exc
+    parent_job_id = base or state.get("parent_job_id")
+    if not parent_job_id:
+        raise HTTPException(status_code=400, detail="NOT_A_REPLAN：该任务无父版本，无法对比")
+
+    parent_path = job_dir(parent_job_id) / "travel_plan.md"
+    child_path = job_dir(job_id) / "travel_plan.md"
+    if not parent_path.exists() or not child_path.exists():
+        raise HTTPException(status_code=404, detail="travel_plan.md 尚未生成，无法对比")
+
+    parent_lines = parent_path.read_text(encoding="utf-8").splitlines()
+    child_lines = child_path.read_text(encoding="utf-8").splitlines()
+    rows: list[dict[str, str]] = []
+    added = removed = unchanged = 0
+    matcher = difflib.SequenceMatcher(a=parent_lines, b=child_lines, autojunk=False)
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag in ("delete", "replace"):
+            for line in parent_lines[i1:i2]:
+                rows.append({"type": "del", "text": line})
+                removed += 1
+        if tag in ("insert", "replace"):
+            for line in child_lines[j1:j2]:
+                rows.append({"type": "add", "text": line})
+                added += 1
+        if tag == "equal":
+            for line in parent_lines[i1:i2]:
+                rows.append({"type": "same", "text": line})
+                unchanged += 1
+
+    return {
+        "job_id": job_id,
+        "parent_job_id": parent_job_id,
+        "added": added,
+        "removed": removed,
+        "unchanged": unchanged,
+        "truncated": len(rows) > 2000,
+        "lines": rows[:2000],
+    }
+
+
+@router.get("/{job_id}", response_model=PlanStatusResponse)
+def get_plan_status(job_id: str) -> PlanStatusResponse:
+    try:
+        state = store.load(job_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="job not found") from exc
+    return PlanStatusResponse(
+        job_id=job_id,
+        status=state["status"],
+        current_agent=state.get("current_node"),
+        progress=state.get("progress", 0),
+        resume_from=state.get("resume_from"),
+        version=state.get("version", 1),
+        error=state.get("error"),
+        parent_job_id=state.get("parent_job_id"),
+        completed_nodes=state.get("completed_nodes"),
+        created_at=state.get("created_at"),
+        updated_at=state.get("updated_at"),
+    )
+
+
+@router.get("/{job_id}/result", response_model=PlanResultResponse)
+def get_plan_result(job_id: str) -> PlanResultResponse:
+    try:
+        state = store.load(job_id)
+        markdown, digest = reporter.read_result(job_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="result not found") from exc
+    # 结构化行程 + 实时酒店：供 toC 前端渲染携程式行程详情视图（旧 job / toB 口径无此字段）
+    itinerary = None
+    itinerary_relative = state.get("agent_outputs", {}).get("Itinerary")
+    if itinerary_relative:
+        try:
+            output = json.loads((job_dir(job_id) / itinerary_relative).read_text(encoding="utf-8"))
+            itinerary = output.get("payload", {}).get("itinerary")
+        except (OSError, ValueError):
+            itinerary = None
+    hotels = None
+    try:
+        hotels = TravelContextService().hotels(state.get("user_input", {}).get("destination", "北京")).get("hotels") or None
+    except Exception:
+        hotels = None
+    economy_tips = None
+    # 经济贴士：新管线由 Budget 节点产出；旧任务兜底读 Validator 历史字段
+    budget_relative = state.get("agent_outputs", {}).get("Budget")
+    if budget_relative:
+        try:
+            budget_output = json.loads((job_dir(job_id) / budget_relative).read_text(encoding="utf-8"))
+            economy_tips = budget_output.get("payload", {}).get("economy_tips")
+        except (OSError, ValueError):
+            economy_tips = None
+    if economy_tips is None:
+        validator_relative = state.get("agent_outputs", {}).get("Validator")
+        if validator_relative:
+            try:
+                validator_output = json.loads((job_dir(job_id) / validator_relative).read_text(encoding="utf-8"))
+                economy_tips = validator_output.get("payload", {}).get("economy_tips")
+            except (OSError, ValueError):
+                economy_tips = None
+    return PlanResultResponse(
+        job_id=job_id,
+        version=state.get("version", 1),
+        travel_plan_md=markdown,
+        sha256=digest,
+        itinerary=itinerary,
+        hotels=hotels,
+        economy_tips=economy_tips,
+        user_input=state.get("user_input"),
+    )
+
+
+@router.post("/{job_id}/approval", response_model=ApprovalResponse)
+def approve_plan(job_id: str, payload: ApprovalRequest, _role: dict = Depends(require_role("supervisor", "admin"))) -> ApprovalResponse:
+    try:
+        state = store.load(job_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="job not found") from exc
+    if payload.base_version != state.get("version", 1):
+        raise HTTPException(status_code=409, detail="VERSION_CONFLICT")
+    if state.get("status") not in APPROVABLE_STATUSES:
+        raise HTTPException(status_code=409, detail="INVALID_STATE")
+    was_safety_hold = state["status"] == JobStatus.WAITING_SAFETY_REVIEW.value
+    store.append_audit(
+        job_id,
+        {
+            "action": "approval",
+            "decision": payload.decision,
+            "operator": payload.operator,
+            "reason": payload.reason,
+            "base_version": payload.base_version,
+        },
+    )
+    if payload.decision == "reject":
+        state["status"] = JobStatus.REPLAN_REQUIRED.value
+    else:
+        state["status"] = JobStatus.RUNNING.value
+        state["error"] = None
+        if was_safety_hold:
+            state["safety_reviewed"] = True
+    state["version"] = state.get("version", 1) + 1
+    store.save(job_id, state)
+    APPROVALS.labels(decision=payload.decision).inc()
+    log_event("approval", job_id=job_id, decision=payload.decision, operator=payload.operator)
+    if payload.decision == "reject":
+        return ApprovalResponse(status=JobStatus.REPLAN_REQUIRED.value, next_node=None)
+    queue_client.enqueue(job_id)
+    return ApprovalResponse(status="APPROVED", next_node=state.get("resume_from"))
+
+
+@router.post("/{job_id}/replan", response_model=ReplanResponse)
+def replan(job_id: str, payload: ReplanRequest, _role: dict = Depends(require_role("consultant", "supervisor", "admin"))) -> ReplanResponse:
+    try:
+        state = store.load(job_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="job not found") from exc
+    if payload.base_version != state.get("version", 1):
+        raise HTTPException(status_code=409, detail="VERSION_CONFLICT")
+    new_input = dict(state["user_input"])
+    new_input["constraints"] = list(new_input.get("constraints", [])) + [payload.change_request]
+    digest = request_hash({"parent_job_id": job_id, **new_input})
+    new_job_id = f"plan_{digest[:12]}"
+    diff_summary = {
+        "mode": "constraints_append",
+        "changed_fields": ["constraints"],
+        "added_constraints": [payload.change_request],
+        "parent_job_id": job_id,
+        "parent_version": state.get("version", 1),
+    }
+    if store.exists(new_job_id):
+        existing = store.load(new_job_id)
+        return ReplanResponse(
+            job_id=new_job_id,
+            parent_job_id=job_id,
+            status=existing.get("status", JobStatus.QUEUED.value),
+            replan_mode="incremental_by_request",
+            diff_summary=diff_summary,
+        )
+    store.create(new_job_id, new_input, digest)
+    child_state = store.load(new_job_id)
+    child_state["parent_job_id"] = job_id
+    store.save(new_job_id, child_state)
+    # S4 节点级增量：目的地/天数/偏好未变时，Researcher/Planner/Itinerary 均不读 constraints，
+    # 可安全复用父任务输出，只重算 Validator/Debate/Reporter 受影响链。
+    parent_input = state["user_input"]
+    if (
+        parent_input.get("destination") == new_input.get("destination")
+        and parent_input.get("days") == new_input.get("days")
+        and parent_input.get("preferences") == new_input.get("preferences")
+    ):
+        reusable = [name for name in ("Researcher", "Planner", "Itinerary") if name in state.get("agent_outputs", {})]
+        reused_relative: dict[str, str] = {}
+        for name in reusable:
+            source_output = job_dir(job_id) / state["agent_outputs"][name]
+            if not source_output.exists():
+                continue
+            target_output = job_dir(new_job_id) / "agent_outputs" / source_output.name
+            target_output.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source_output, target_output)
+            reused_relative[name] = f"agent_outputs/{source_output.name}"
+        if reused_relative:
+            new_state = store.load(new_job_id)
+            new_state["completed_nodes"] = list(reused_relative.keys())
+            new_state["agent_outputs"] = reused_relative
+            new_state["resume_from"] = "Validator"
+            new_state["progress"] = 64
+            store.save(new_job_id, new_state)
+            store.append_audit(
+                job_id,
+                {"action": "incremental_reuse", "reused_nodes": list(reused_relative.keys()), "child_job_id": new_job_id},
+            )
+    queue_client.enqueue(new_job_id)
+    return ReplanResponse(
+        job_id=new_job_id,
+        parent_job_id=job_id,
+        status=JobStatus.QUEUED.value,
+        replan_mode="incremental_by_request",
+        diff_summary=diff_summary,
+    )

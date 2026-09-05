@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 旅行规划产品竞品调研报告 · v3.0</title>
+<style>
+:root{
+  --bg:#0d1117; --bg2:#11161d; --panel:#161b22; --panel2:#1b222c;
+  --line:#252c37; --line2:#2f3743;
+  --tx:#e6edf3; --tx2:#b3bcc8; --tx3:#7d8896;
+  --ac:#4ec9b0; --ac2:#58a6ff; --warn:#e3b341; --bad:#ff7b72; --good:#56d364;
+  --pur:#bc8cff; --org:#ffa657;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--tx);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px; line-height:1.75; -webkit-font-smoothing:antialiased;
+}
+.wrap{display:flex; max-width:1600px; margin:0 auto}
+
+/* ---- TOC ---- */
+#toc{
+  width:236px; flex:0 0 236px; position:sticky; top:0; height:100vh;
+  overflow-y:auto; padding:26px 14px 60px 22px; border-right:1px solid var(--line);
+  background:var(--bg2);
+}
+#toc::-webkit-scrollbar{width:5px}
+#toc::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
+#toc h4{font-size:11px;color:var(--tx3);letter-spacing:1.4px;margin-bottom:14px;font-weight:600}
+#toc a{
+  display:block; color:var(--tx3); text-decoration:none; font-size:12.8px;
+  padding:5px 10px; border-left:2px solid transparent; transition:.16s; line-height:1.5;
+}
+#toc a:hover{color:var(--tx2); background:rgba(255,255,255,.03)}
+#toc a.on{color:var(--ac); border-left-color:var(--ac); background:rgba(78,201,176,.08)}
+#toc a.sub{padding-left:22px; font-size:12px}
+.main{flex:1; min-width:0; padding:0 44px 120px}
+
+/* ---- header ---- */
+header{padding:56px 0 30px; border-bottom:1px solid var(--line); margin-bottom:38px}
+.eyebrow{font-size:12px;color:var(--ac);letter-spacing:2px;font-weight:600;margin-bottom:12px}
+h1{font-size:30px;line-height:1.35;margin-bottom:16px;font-weight:700}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{
+  font-size:11.5px;padding:4px 11px;border:1px solid var(--line2);border-radius:20px;
+  color:var(--tx2);background:var(--panel);
+}
+.chip.hi{border-color:var(--ac);color:var(--ac);background:rgba(78,201,176,.08)}
+.chip.bad{border-color:var(--bad);color:var(--bad);background:rgba(255,123,114,.08)}
+
+/* ---- typography ---- */
+h2{
+  font-size:21px;margin:52px 0 20px;padding-bottom:11px;font-weight:700;
+  border-bottom:1px solid var(--line); scroll-margin-top:20px;
+}
+h2 .n{color:var(--ac);margin-right:10px;font-size:15px;font-weight:600;opacity:.85}
+h3{font-size:16.5px;margin:30px 0 13px;font-weight:650;color:var(--tx);scroll-margin-top:20px}
+h4{font-size:14px;margin:20px 0 9px;font-weight:650;color:var(--tx2)}
+p{margin-bottom:13px;color:var(--tx2)}
+strong{color:var(--tx);font-weight:650}
+ul,ol{margin:0 0 14px 20px;color:var(--tx2)}
+li{margin-bottom:6px}
+code{
+  background:var(--panel2);padding:1.5px 6px;border-radius:4px;font-size:12.6px;
+  font-family:"SF Mono",Consolas,Monaco,monospace;color:var(--org);
+}
+a{color:var(--ac2)}
+
+/* ---- table ---- */
+.tw{overflow-x:auto;margin:16px 0 22px;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:13.2px;min-width:600px}
+th{
+  background:var(--panel2);color:var(--tx2);text-align:left;padding:10px 13px;
+  font-weight:600;font-size:12.4px;border-bottom:1px solid var(--line2);white-space:nowrap;
+}
+td{padding:9px 13px;border-bottom:1px solid var(--line);color:var(--tx2);vertical-align:top}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.022)}
+td.c,th.c{text-align:center}
+tr.me{background:rgba(78,201,176,.075)}
+tr.me td{color:var(--tx)}
+tr.rival{background:rgba(255,123,114,.06)}
+
+/* ---- callout ---- */
+.box{
+  border-left:3px solid var(--ac); background:var(--panel);
+  padding:14px 18px; margin:16px 0 22px; border-radius:0 7px 7px 0;
+}
+.box.warn{border-left-color:var(--warn);background:rgba(227,179,65,.055)}
+.box.bad{border-left-color:var(--bad);background:rgba(255,123,114,.06)}
+.box.ok{border-left-color:var(--good);background:rgba(86,211,100,.055)}
+.box .t{font-weight:650;color:var(--tx);margin-bottom:7px;font-size:13.6px}
+.box .t .i{margin-right:7px}
+.box p:last-child,.box ul:last-child{margin-bottom:0}
+
+/* ---- verdict pills ---- */
+.v{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.v.y{background:rgba(86,211,100,.16);color:var(--good)}
+.v.n{background:rgba(255,123,114,.16);color:var(--bad)}
+.v.p{background:rgba(227,179,65,.16);color:var(--warn)}
+
+/* ---- big number ---- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px;margin:18px 0 24px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:15px 16px}
+.stat .k{font-size:25px;font-weight:700;color:var(--ac);line-height:1.15;font-variant-numeric:tabular-nums}
+.stat .k.bad{color:var(--bad)} .stat .k.warn{color:var(--warn)} .stat .k.pur{color:var(--pur)}
+.stat .l{font-size:11.8px;color:var(--tx3);margin-top:5px;line-height:1.5}
+
+/* ---- landscape map (CSS grid) ---- */
+.map{
+  position:relative;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  padding:20px 22px;margin:18px 0 24px;
+  display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:14px;
+}
+.map::before{
+  content:'';position:absolute;left:50%;top:16px;bottom:16px;width:1px;background:var(--line2);
+}
+.map::after{
+  content:'';position:absolute;top:50%;left:16px;right:16px;height:1px;background:var(--line2);
+}
+.quad{padding:8px 14px;min-height:168px}
+.qlab{font-size:11px;color:var(--tx3);letter-spacing:.6px;margin-bottom:11px;font-weight:600}
+.dot{
+  display:inline-block;font-size:12.4px;padding:5px 11px;margin:0 6px 7px 0;
+  border:1px solid var(--line2);border-radius:6px;background:var(--panel2);color:var(--tx2);
+}
+.dot.me{border-color:var(--ac);color:var(--ac);background:rgba(78,201,176,.1);font-weight:600}
+.dot.rv{border-color:var(--bad);color:var(--bad);background:rgba(255,123,114,.08)}
+.axis{position:absolute;font-size:10.5px;color:var(--tx3);letter-spacing:.5px}
+.axis.top{top:5px;right:20px} .axis.bot{bottom:5px;left:20px}
+.axis.lft{left:5px;top:20px;writing-mode:vertical-rl} .axis.rgt{right:5px;bottom:20px;writing-mode:vertical-rl}
+
+/* ---- timeline ---- */
+.tl{border-left:2px solid var(--line2);margin:18px 0 24px;padding-left:0}
+.ti{position:relative;padding:0 0 16px 22px}
+.ti::before{
+  content:'';position:absolute;left:-6px;top:7px;width:9px;height:9px;border-radius:50%;
+  background:var(--tx3);border:2px solid var(--bg);
+}
+.ti.key::before{background:var(--bad);box-shadow:0 0 0 3px rgba(255,123,114,.18)}
+.ti .d{font-size:11.5px;color:var(--ac);font-weight:650;font-variant-numeric:tabular-nums}
+.ti .n{font-size:13.4px;color:var(--tx);font-weight:600;margin:1px 0 2px}
+.ti .x{font-size:12.6px;color:var(--tx3);line-height:1.6}
+
+/* ---- bars ---- */
+.bars{margin:16px 0 24px}
+.bar{display:flex;align-items:center;gap:12px;margin-bottom:9px}
+.bar .nm{width:190px;flex:0 0 190px;font-size:12.8px;color:var(--tx2);text-align:right}
+.bar .tr{flex:1;height:20px;background:var(--panel2);border-radius:4px;overflow:hidden}
+.bar .fl{height:100%;border-radius:4px;transition:width .6s}
+.bar .sc{width:42px;flex:0 0 42px;font-size:12.5px;color:var(--tx);font-weight:650;font-variant-numeric:tabular-nums}
+.bar.me .nm{color:var(--ac);font-weight:650}
+.bar.rv .nm{color:var(--bad);font-weight:650}
+
+/* ---- moat cards ---- */
+.moats{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:14px;margin:18px 0 24px}
+.moat{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:17px 19px}
+.moat .hd{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.moat .no{
+  width:24px;height:24px;flex:0 0 24px;border-radius:6px;background:rgba(78,201,176,.15);
+  color:var(--ac);font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;
+}
+.moat .ti{font-size:14px;font-weight:650;color:var(--tx)}
+.moat p{font-size:12.8px;margin-bottom:9px;line-height:1.7}
+.moat .wh{font-size:12.2px;color:var(--tx3);border-top:1px dashed var(--line2);padding-top:9px;margin-top:auto}
+.moat .wh b{color:var(--warn);font-weight:600}
+
+/* ---- code block ---- */
+pre{
+  background:var(--panel2);border:1px solid var(--line);border-radius:7px;
+  padding:13px 16px;overflow-x:auto;margin:14px 0 20px;
+  font-family:"SF Mono",Consolas,Monaco,monospace;font-size:12.4px;line-height:1.7;color:var(--tx2);
+}
+
+footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--line);font-size:12.2px;color:var(--tx3);line-height:1.9}
+
+@media(max-width:1080px){
+  #toc{display:none} .main{padding:0 22px 80px}
+  .map{grid-template-columns:1fr} .map::before,.map::after{display:none}
+  .bar .nm{width:120px;flex:0 0 120px}
+}
+@media print{
+  #toc{display:none} body{background:#fff;color:#000}
+  .main{padding:0} h2{page-break-after:avoid} table{page-break-inside:auto}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav id="toc">
+  <h4>目录 CONTENTS</h4>
+  <a href="#s0">0 · 一页纸结论</a>
+  <a href="#s1">1 · 调研方法与纪律</a>
+  <a href="#s2">2 · 市场大盘</a>
+  <a href="#s3">3 · 竞品全景图谱</a>
+  <a href="#s31" class="sub">3.1 三层圈定</a>
+  <a href="#s32" class="sub">3.2 定位坐标系</a>
+  <a href="#s33" class="sub">3.3 多Agent军备竞赛</a>
+  <a href="#s4">4 · 主表 12 家 × 21 维</a>
+  <a href="#s5">5 · 逐家深度剖析</a>
+  <a href="#s6">6 · 六维专项矩阵</a>
+  <a href="#s7">7 · 评分与排名（双口径）</a>
+  <a href="#s8">8 · 可防御性检验 ★</a>
+  <a href="#s81" class="sub">8.1 检验总表</a>
+  <a href="#s82" class="sub">8.2 三条护城河</a>
+  <a href="#s83" class="sub">8.3 最高优先级风险</a>
+  <a href="#s9">9 · 机会点与切入策略</a>
+  <a href="#s10">10 · 威胁清单</a>
+  <a href="#s11">11 · 待核实与缺口</a>
+  <a href="#s12">附录 · 变更记录</a>
+</nav>
+
+<main class="main">
+
+<header>
+  <div class="eyebrow">COMPETITIVE RESEARCH · AI TRAVEL PLANNING</div>
+  <h1>AI 旅行规划产品竞品调研报告</h1>
+  <p style="font-size:14.5px;color:var(--tx2);max-width:900px">
+    面向「山水有约」多 Agent 文旅系统（toC 游客端 + toB 企业端工作台，6 Agent + Reporter 固定 DAG）
+    的竞品对标调研。<strong>12 家竞品 × 21 个维度</strong>，含 v2 模板重大补漏：
+    <strong style="color:var(--bad)">携程商旅·程星途（7 Agent + MCP）</strong>——本方 toB 端最重量级正面竞品。
+  </p>
+  <div class="meta">
+    <span class="chip hi">v3.0</span>
+    <span class="chip">调研日期 2026-08-31</span>
+    <span class="chip">基准模板 v2（2026-08-29）</span>
+    <span class="chip bad">更正：飞猪问一问 → 帮帮</span>
+    <span class="chip bad">补漏：toB 正面竞品</span>
+    <span class="chip">桌面调研 · 未做实测试用</span>
+  </div>
+</header>
+
+<!-- ============ 0 ============ -->
+<h2 id="s0"><span class="n">00</span>一页纸结论</h2>
+
+<div class="box bad">
+  <div class="t"><span class="i">🔴</span>结论一：Multi-Agent 已经从卖点降级为入场券</div>
+  <p>飞猪「帮帮」、携程商旅「程星途」（<strong>7 个 Agent</strong>）、美团 CatPaw（<strong>3 万+ Agent</strong>）全部是多智能体架构。
+  再拿"我们用了多 Agent"当差异化，在答辩和路演上<strong>已经不成立</strong>。</p>
+</div>
+
+<div class="box ok">
+  <div class="t"><span class="i">✅</span>结论二：本方真正站得住的只剩三条</div>
+  <p><strong>说得清</strong>（决策过程可追溯、可辩论、可审计）／<strong>中立 + 可私有化</strong>（不绑供应链、不抽佣）／<strong>工程韧性</strong>（进程级断点续跑）。
+  这三条目前<strong>全赛道无人正面做</strong>。</p>
+</div>
+
+<div class="box bad">
+  <div class="t"><span class="i">⚠️</span>结论三：最危险的是「算得准」——它现在是未兑现的承诺</div>
+  <p>已知缺陷：北京 3 天 5000 元预算实测产出 <strong style="color:var(--bad)">5714 元</strong>（必然超支，根因在
+  <code>travel_context_service.recommend_hotel()</code> 未按人数放大交通成本、未预留门票与市内交通）。
+  而携程商旅敢承诺"AI 审批准确率 99.95%，<strong>出错由平台兜底赔付</strong>"。
+  <strong>在修掉这个 bug 之前，"算得准"不能对外讲。</strong></p>
+</div>
+
+<h3>定位建议（修正版）</h3>
+<div class="tw"><table>
+<tr><th style="width:88px">版本</th><th>表述</th></tr>
+<tr><td><strong>原定位</strong></td><td>给游客一份"算得准、说得清、可验证、走得通"的行程</td></tr>
+<tr class="me"><td><strong>建议改为</strong></td><td>给游客一份<strong>「每一步都能解释为什么」</strong>的行程；给企业一套<strong>「不绑供应链、可私有化、可审计」</strong>的 AI 生产闭环</td></tr>
+</table></div>
+<p><strong>为什么改：</strong>「走得通」「算得准」需要真实供应链与实时库存，本方 MVP 没有，讲了会被追问击穿；
+「说得清」是本方唯一有代码实证、且全赛道空白的能力。</p>
+
+<h3>竞品强度梯度（本方视角）</h3>
+<div class="tw"><table>
+<tr><th>梯度</th><th>竞品</th><th style="width:96px">威胁等级</th><th>说明</th></tr>
+<tr class="rival"><td>🔴 直接压制</td><td><strong>携程商旅·程星途</strong></td><td class="c"><span class="v n">高</span></td><td>toB 赛道正面撞车，且已有兜底、赔付、MCP 开放生态</td></tr>
+<tr class="rival"><td>🔴 直接压制</td><td><strong>飞猪·帮帮</strong></td><td class="c"><span class="v n">高</span></td><td>toC 体验最强，Multi-Agent + 交易闭环 + 全链路</td></tr>
+<tr><td>🟠 高度重叠</td><td>同程·程心 AI、携程·问道/Trip.Planner</td><td class="c"><span class="v p">中高</span></td><td>行程编辑与可视化已被占住</td></tr>
+<tr><td>🟡 侧翼挤压</td><td>豆包、DeepSeek、小红书点点、美团小团</td><td class="c"><span class="v p">中</span></td><td>抢的是"问一句"的入口，不是行程本身</td></tr>
+<tr><td>🟢 空白/可合作</td><td>沪小游（toG）、马蜂窝 AI 小蚂、途牛小牛</td><td class="c"><span class="v y">低</span></td><td>城市级/垂直内容，可做数据源或合作方</td></tr>
+</table></div>
+
+<!-- ============ 1 ============ -->
+<h2 id="s1"><span class="n">01</span>调研方法与信息纪律</h2>
+
+<div class="tw"><table>
+<tr><th style="width:70px">步骤</th><th>执行内容</th><th style="width:70px">状态</th></tr>
+<tr><td>① 明确目标</td><td>为本方找对标 / 找可借鉴功能 / 找切入机会</td><td class="c">✅</td></tr>
+<tr><td>② 圈定清单</td><td>直接 6 + 间接 4 + 潜在 6（海外）+ toG 1 = 17 家候选</td><td class="c">✅</td></tr>
+<tr><td>③ 信息搜集</td><td>官方一手为主（官网/技术博客/发布会/API 文档/白皮书），第三方佐证</td><td class="c">✅</td></tr>
+<tr><td>④ 试用体验</td><td><strong>未执行</strong>——本轮为桌面调研，无实测记录</td><td class="c">⚠️</td></tr>
+<tr><td>⑤ 交叉验证</td><td>关键数据标注置信度；厂商宣称数据与第三方数据分列</td><td class="c">✅</td></tr>
+<tr><td>⑥ 输出结论</td><td>第 8、9、10 章</td><td class="c">✅</td></tr>
+</table></div>
+
+<h3>置信度标注规范（全文通用）</h3>
+<div class="tw"><table>
+<tr><th style="width:130px">标记</th><th>含义</th></tr>
+<tr><td><strong>【官方】</strong></td><td>厂商官网 / 官方技术博客 / 官方发布会 / 官方 API 文档 / 官方白皮书，一手信源</td></tr>
+<tr><td><strong>【官方宣称】</strong></td><td>厂商自己发布的业绩数字，未经第三方审计，可能存在口径美化</td></tr>
+<tr><td><strong>【第三方】</strong></td><td>行业媒体、评测机构、数据公司发布，非厂商口径</td></tr>
+<tr><td><strong>【推断】</strong></td><td>调研方基于公开信息的分析判断，非事实陈述</td></tr>
+<tr><td><strong>【待核实】</strong></td><td>信息不完整或来源不足，需进一步验证</td></tr>
+</table></div>
+
+<div class="box warn">
+  <div class="t"><span class="i">📌</span>一条硬纪律</div>
+  <p>厂商宣称的效率提升数字（"效率提升 10 倍""可用率提升 70%"）<strong>全部标注为【官方宣称】，不得当作客观事实引用</strong>。
+  这类数字普遍缺少对照组定义、样本量与统计口径，作为趋势参考可用，作为论据不可用。</p>
+</div>
+
+<!-- ============ 2 ============ -->
+<h2 id="s2"><span class="n">02</span>市场大盘：赛道正在发生什么</h2>
+
+<h3>2.1 需求侧：知道的人多，真用的人少，敢让它下单的人极少</h3>
+<div class="stats">
+  <div class="stat"><div class="k">40%</div><div class="l">全球旅客已用 AI 工具规划旅行（另有 62% 愿尝试）<br>Industry AI-In-Travel Research 2026</div></div>
+  <div class="stat"><div class="k">90%</div><div class="l">听说过 AI 能规划旅行<br>TakeUp AI 300 人调查（2026）</div></div>
+  <div class="stat"><div class="k warn">38%</div><div class="l">实际用过 AI 规划旅行<br>TakeUp AI（2026）</div></div>
+  <div class="stat"><div class="k bad">8%</div><div class="l"><strong>愿意让 AI 代为完成预订</strong><br>Expedia「AI Trust Gap」，YouGov，5700+ 人，2026-03</div></div>
+  <div class="stat"><div class="k pur">34.63<span style="font-size:14px">亿</span></div><div class="l">2026 上半年国内出游人次，花费 3.21 万亿元<br>文化和旅游部</div></div>
+</div>
+
+<div class="box ok">
+  <div class="t"><span class="i">💡</span>这张表里最重要的数字是 8%</div>
+  <p>90% 听说过、38% 试过、<strong>只有 8% 敢让它下单</strong>——中间这 30 个百分点的落差，就是<strong>信任缺口</strong>。</p>
+  <p>全行业都在卷"生成得更快、覆盖得更广、能不能直接下单"，<strong>几乎没有人在卷"让你相信这份方案是对的"</strong>。
+  本方产品里"决策辩论 + 翻车预演 + 溯源引用"这套东西，恰好打在这 8% 的缺口上——<strong>这是整个调研最有力的一个发现</strong>。</p>
+</div>
+
+<h3>2.2 供给侧：OTA 集体转型，动作密集到按周计</h3>
+<div class="tl">
+  <div class="ti"><div class="d">2023-07-17</div><div class="n">携程发布旅游行业首个垂直大模型「问道」</div><div class="x">筛选 200 亿旅游数据；07-26 上线 TripGenie</div></div>
+  <div class="ti"><div class="d">2025-03-07</div><div class="n">同程程心 AI 与 DeepSeek 融合</div><div class="x">首批 210 万用户，首家接入 DeepSeek 的 OTA；03-24 DeepTrip 国际版 9 语种</div></div>
+  <div class="ti"><div class="d">2025-04-17</div><div class="n">飞猪「问一问」上线</div><div class="x">业内首个 Multi-Agent 旅行 AI；同期途牛小牛（已开源）、马蜂窝 AI 小蚂</div></div>
+  <div class="ti"><div class="d">2025-09</div><div class="n">去哪儿 AI 旅行工具箱</div><div class="x">AI 行程规划助手（内置数十万篇真实游记）+ 机票助手「小驼」+ 酒店售后 AI</div></div>
+  <div class="ti"><div class="d">2026-03</div><div class="n">携程 Trip.Planner</div><div class="x">答目的地/天数/偏好风格 3 个问题，数十秒生成完整行程</div></div>
+  <div class="ti key"><div class="d">2026-04-23</div><div class="n">携程商旅「程星途」AI 生态 ★</div><div class="x"><strong style="color:var(--bad)">4 大场景 · 7 个 AI Agent · MCP 共享平台</strong> —— 本方 toB 端正面竞品正式入场</div></div>
+  <div class="ti"><div class="d">2026-07-27</div><div class="n">美团「小团 2.0」</div><div class="x">核心突破为「行动代理」——从"问小团"升级为"让小团帮忙"（代下单/打车/订位）</div></div>
+  <div class="ti key"><div class="d">2026-08-10</div><div class="n">飞猪「问一问」升级为「飞猪帮帮」★</div><div class="x">App 首页三大入口「帮我想/帮我订/帮我办」，覆盖从攻略到报销全链路；结果可用率 +70%（官方宣称）</div></div>
+  <div class="ti"><div class="d">2026-08</div><div class="n">豆包对跳转酒店订单收独立佣金</div><div class="x">国内首个 AI 对话入口明码收费案例——AI 对话框本身已成为可定价的流量资产</div></div>
+</div>
+
+<h3>2.3 三个结构性判断</h3>
+<div class="box">
+  <div class="t"><span class="i">①</span>竞争维度已从"供应链能力"转向"决策效率 + 信任机制"</div>
+  <p>网经社分析师观点：OTA 的 AI 既是机会也是陷阱——"如果 AI 推荐不能真正做到更懂用户，它可能只是一个昂贵的智能客服"。
+  <strong>算法透明度正在成为新的信任基础。</strong></p>
+</div>
+<div class="box">
+  <div class="t"><span class="i">②</span>通用 AI 正在截流 OTA 的入口，且开始明码标价</div>
+  <p>用户以前打开携程是搜索比价下单，现在打开豆包问"五一去哪玩"然后直接跳转预订——OTA 从"决策起点"退向"履约环节"。</p>
+</div>
+<div class="box ok">
+  <div class="t"><span class="i">③</span>信源偏好是结构性的，中立性无法被平台型 AI 提供</div>
+  <p>QuestMobile 五一旅游 AI 信源研究（2026-04）：豆包旅游问答中信源引用携程 <strong>82.6%</strong>、通义千问 75.9%、DeepSeek 64.0%；
+  豆包推荐类问题中抖音内容矩阵被引用 <strong>96.9%</strong>、攻略类 98.5%。</p>
+  <p><strong>每个 AI 都把自己生态的内容当主信源，这件事不会因品牌方努力而改变。</strong>
+  → 这直接证明：<strong>一个"不绑任何供应链的中立规划器"有独立存在的空间。这是本方 toB 路线最硬的一块地基。</strong></p>
+</div>
+
+<!-- ============ 3 ============ -->
+<h2 id="s3"><span class="n">03</span>竞品全景图谱</h2>
+
+<h3 id="s31">3.1 三层圈定</h3>
+<div class="tw"><table>
+<tr><th style="width:100px">类别</th><th style="width:210px">定义</th><th>本轮入选</th></tr>
+<tr><td><strong>直接竞品</strong></td><td>功能与目标用户高度重合，直接争夺同一批用户</td><td>飞猪帮帮、携程问道/Trip.Planner、同程程心 AI、马蜂窝 AI 小蚂、途牛小牛、去哪儿 AI 工具箱、美团小团 2.0</td></tr>
+<tr><td><strong>间接竞品</strong></td><td>解决同类需求但形态不同</td><td>豆包、小红书点点、支付宝出行助手、DeepSeek、腾讯智慧文旅</td></tr>
+<tr><td><strong>潜在替代品</strong></td><td>新兴/跨界，可能改变赛道格局</td><td><strong>携程商旅·程星途（toB）</strong>、沪小游（toG）、Layla、Mindtrip、Wanderlog、Tabbit Browser、Google Gemini、Expedia Romie、Booking.com AI Trip Planner</td></tr>
+</table></div>
+
+<h3 id="s32">3.2 定位坐标系</h3>
+<div class="map">
+  <span class="axis top">▲ 强交易闭环（能直接下单）</span>
+  <span class="axis lft">◀ 弱规划深度</span>
+  <span class="axis rgt">强规划深度 ▶</span>
+  <span class="axis bot">▼ 弱交易闭环（只给建议）</span>
+
+  <div class="quad">
+    <div class="qlab">左上 · 强交易 · 偏执行</div>
+    <span class="dot rv">飞猪帮帮</span><span class="dot">携程问道 / Trip.Planner</span>
+    <span class="dot">同程程心（拖拽编辑+打包下单）</span><span class="dot">美团小团 2.0（行动代理）</span>
+    <span class="dot">去哪儿 AI 工具箱</span><span class="dot">支付宝出行（行中交通/票证/支付）</span>
+  </div>
+  <div class="quad">
+    <div class="qlab">右上 · 强交易 · 深规划</div>
+    <span class="dot rv">携程商旅·程星途（7 Agent + MCP）</span>
+    <span class="dot">马蜂窝 AI 小蚂</span><span class="dot">途牛小牛（已开源）</span>
+    <span class="dot">沪小游（toG 城市智能体）</span>
+  </div>
+  <div class="quad">
+    <div class="qlab">左下 · 无交易 · 偏内容</div>
+    <span class="dot">小红书点点（真 UGC/避坑）</span>
+    <span class="dot">豆包</span><span class="dot">DeepSeek</span>
+    <span class="dot">腾讯智慧文旅（数字人/AR 行中导览）</span>
+    <span class="dot me">★ 本方 toC（可解释/可辩论/无交易闭环）</span>
+  </div>
+  <div class="quad">
+    <div class="qlab">右下 · 无交易 · 深规划</div>
+    <span class="dot me">★ 本方 toB（HITL 审核台 / 审计 / 白标 / 私有化）</span>
+    <span class="dot">Wanderlog · Mindtrip · Layla（海外）</span>
+    <span class="dot">Tabbit Browser（真实站点实时比价）</span>
+  </div>
+</div>
+<p style="font-size:12.8px;color:var(--tx3)">
+注意本方 toC 落在左下（无交易闭环），toB 落在右下——<strong>本方是靠"治理深度"而不是"交易便利"进入牌桌的</strong>，
+这正是与所有 OTA 系产品的根本分野。</p>
+
+<h3 id="s33">3.3 多 Agent 架构的"军备竞赛"</h3>
+<div class="tw"><table>
+<tr><th>产品</th><th>Agent 数量与分工</th><th style="width:110px">时间</th><th style="width:140px">架构透明度</th></tr>
+<tr class="rival"><td><strong>携程商旅·程星途</strong></td><td><strong>7 个</strong>：差旅问答 / 行程预订 / 差旅审批 / 差旅洞察 / 合规风控（程信）/ 财务结算 / 资源采购 + MCP 共享平台</td><td>2026-04-23</td><td>官方公布全景图与分工</td></tr>
+<tr><td>飞猪·问一问 → 帮帮</td><td>多智能体：行程助手 / 路线定制师 / 智慧交通顾问 / 酒店顾问 / 攻略达人</td><td>2025-04 → 2026-08</td><td>官方技术博客披露</td></tr>
+<tr><td>美团 CatPaw</td><td>全场景 Agent 平台，覆盖 9 万员工、搭建超 3 万个 Agent</td><td>2026</td><td>平台型，非单一产品</td></tr>
+<tr class="me"><td><strong>本方「山水有约」</strong></td><td><strong>6 个 + Reporter</strong>：固定 DAG（intake → planner → web_research → sentiment → itinerary → budget → human_review → report）</td><td>MVP</td><td><strong>代码级可查，逐节点契约公开</strong></td></tr>
+</table></div>
+<div class="box warn">
+  <div class="t"><span class="i">📌</span>读法</div>
+  <p>Agent 数量已经<strong>不构成任何优势</strong>。真正能构成优势的是<strong>架构透明度</strong>——
+  本方是唯一可以把 6 个节点的输入输出契约、故障影响、状态机 11 态全部摊开给人看的。
+  这一条要变成产品语言，叫<strong>「可审计的 Agent 编排」</strong>，而不是"我们也有多智能体"。</p>
+</div>
+
+<!-- ============ 4 ============ -->
+<h2 id="s4"><span class="n">04</span>主表：12 家竞品 × 21 维度对比</h2>
+<p>原模板 8 家保留；第 9、10 行补入 OTA 阵营遗漏的两家直接竞品；第 11、12 行为<strong>重大补漏</strong>——
+其中<strong style="color:var(--bad)">「携程商旅·程星途」是本方 toB 端最重量级的正面竞品，v2 模板完全遗漏</strong>。</p>
+
+<div class="tw"><table>
+<tr>
+  <th style="width:32px">#</th><th style="width:150px">产品</th><th style="width:110px">厂商</th>
+  <th style="width:160px">定位</th><th>核心痛点（从 X → Y）</th>
+  <th class="c" style="width:56px">交易</th><th class="c" style="width:76px">编辑</th>
+  <th style="width:100px">定价</th><th class="c" style="width:78px">评分※</th>
+</tr>
+<tr><td class="c">1</td><td>豆包</td><td>字节跳动</td><td>通用 AI 对话助手</td><td>攻略从零手写 → 一句话生成结构化行程</td><td class="c">❌</td><td class="c">弱</td><td>免费+会员</td><td class="c">671.98</td></tr>
+<tr class="rival"><td class="c">2</td><td><strong>飞猪帮帮</strong><br><span style="font-size:11px;color:var(--tx3)">（原问一问）</span></td><td>飞猪（阿里）</td><td>OTA 内 Multi-Agent 旅行 AI</td><td>规划与预订割裂 → 边聊边生成边下单</td><td class="c">✅强</td><td class="c">定点+预算</td><td>免费+抽佣</td><td class="c"><strong>724.92</strong></td></tr>
+<tr><td class="c">3</td><td>程心 AI</td><td>同程旅行</td><td>OTA 供应链打包推荐</td><td>多日行程编排繁琐 → 拖拽 + 一键打包</td><td class="c">✅强</td><td class="c"><strong>拖拽式</strong></td><td>免费+抽佣</td><td class="c">723.56</td></tr>
+<tr><td class="c">4</td><td>支付宝出行助手</td><td>支付宝（蚂蚁）</td><td>超级 App 出行组织工具</td><td>出行交通碎片化 → 一个 App 查交通/打车/值机</td><td class="c">✅强</td><td class="c">无</td><td>免费+抽佣</td><td class="c">711.44</td></tr>
+<tr><td class="c">5</td><td>小红书点点</td><td>小红书</td><td>UGC 笔记聚合式"怎么玩"</td><td>攻略不真实 → 真实笔记聚合 + 避坑</td><td class="c">❌</td><td class="c">无</td><td>免费+广告</td><td class="c">699.97</td></tr>
+<tr><td class="c">6</td><td>携程问道 / Trip.Planner</td><td>携程</td><td>覆盖最广的 OTA 全品类 AI</td><td>一站式旅行服务 → 问答到签证保险全链路</td><td class="c">✅强</td><td class="c">基础</td><td>免费+抽佣</td><td class="c">687.26</td></tr>
+<tr><td class="c">7</td><td>腾讯智慧文旅 / 数字人导览</td><td>腾讯</td><td>景区数字人/AR 导览（B/G 端）</td><td>行中导览枯燥 → 数字人/AR 智能讲解</td><td class="c">❌</td><td class="c">无</td><td>B/G 项目制</td><td class="c">682.72</td></tr>
+<tr><td class="c">8</td><td>DeepSeek</td><td>深度求索</td><td>通用推理大模型</td><td>复杂推理 → 提示词式行程生成</td><td class="c">❌</td><td class="c">无</td><td>免费+API</td><td class="c">618.71</td></tr>
+<tr><td class="c">9</td><td><strong>AI 旅行工具箱</strong> <span class="v p">新增</span></td><td>去哪儿</td><td>OTA 内统一 AI 工具入口</td><td>AI 功能分散找不着 → 一个入口集合规划/机票/售后</td><td class="c">✅中</td><td class="c">基础</td><td>免费+抽佣</td><td class="c">—</td></tr>
+<tr><td class="c">10</td><td><strong>AI 小蚂 / AI 路书</strong> <span class="v p">新增</span></td><td>马蜂窝</td><td>UGC 内容驱动的垂直旅行 AI</td><td>攻略不真实 → 十几年真实旅行数据 + 路书</td><td class="c">⚠️弱</td><td class="c">基础</td><td>免费</td><td class="c">—</td></tr>
+<tr class="rival"><td class="c">11</td><td><strong>程星途 AI 生态</strong> <span class="v n">重大补漏</span></td><td><strong>携程商旅</strong></td><td><strong>企业差旅管理 AI 生态</strong></td><td><strong>差旅管理全靠人工 → 7 Agent 覆盖全流程 + AI 责任兜底</strong></td><td class="c">✅强</td><td class="c">对话+4 策略</td><td><strong>企业版</strong></td><td class="c">—</td></tr>
+<tr><td class="c">12</td><td><strong>沪小游</strong> <span class="v p">新增</span></td><td>上海城市生活智能体</td><td>toG 城市级文旅智能体</td><td>城市文旅资源分散 → 36 大类 107 小类统一问答</td><td class="c">⚠️部分</td><td class="c">无</td><td>政府项目</td><td class="c">—</td></tr>
+</table></div>
+<p style="font-size:12.4px;color:var(--tx3)">※ 综合评分沿用中国旅游研究院《AI旅行助手评价体系》口径，与 v2 模板一致；第 9~12 家未纳入该体系，<strong>不擅自估分</strong>。</p>
+
+<!-- ============ 5 ============ -->
+<h2 id="s5"><span class="n">05</span>逐家深度剖析</h2>
+<p>每家按统一三段式组织：<strong>是什么 → 在赛道里的角色 → 对本方的启示（可借鉴 / 可规避 / 可切入）</strong>。
+完整 21 列数据见配套 Excel。</p>
+
+<h3>5.1 飞猪·帮帮（原「问一问」）—— toC 体验天花板</h3>
+<p><strong>是什么：</strong>2025-04-17 上线的「问一问」是业内首个 Multi-Agent 架构旅行 AI；2026-08-10 在杭州升级为「飞猪帮帮」，
+CEO 庄卓然用三个 E 定义战略：AI for Experience / Ecosystem / Enterprise。</p>
+<p><strong>角色：</strong>最强的一点是<strong>AI 长在交易链路的每个环节，而不是缩在聊天框里</strong>——智能面板直接落在 App 首页下方，
+能力同时嵌入搜索栏、行程页、订单页，以及机票/酒店/民宿/度假每个细分频道。搜机票时说"不要过境签、中转别隔夜"→ 直接在结果里筛；
+酒店列表里说"想要一间能看到东方明珠夜景的"→ 从全量供给里找出真正符合的房间。App 首页三大入口「帮我想/帮我订/帮我办」。</p>
+<p><strong>官方数据【官方宣称】：</strong>结果可用率较上一代提升超 70%，可比任务平均耗时减少近 10%；3 个月核心开发周期上线 148 个复杂需求，
+AI 生成代码占比超 85%；2026 春节 AI 订单量环比 +800%、门票单量 +24 倍、AI 咨询量占比超 60%。</p>
+<div class="box ok">
+  <div class="t"><span class="i">✅</span>对本方的启示</div>
+  <ul>
+    <li><strong>可切入 · 中立性</strong>：飞猪不可能做不抽佣的中立推荐，推荐偏向返佣伙伴是<strong>结构性</strong>的，不是努力问题。</li>
+    <li><strong>可切入 · toB 私有化</strong>：飞猪的 B 端是"商家工具"（AI 发品/优化/营销/服务四大智能体），不是"企业自己的行程生产与治理平台"。</li>
+    <li><strong>⚠️ 必须区分</strong>：飞猪的「弱网断点续传」是<strong>移动端网络层序号化续接</strong>；本方是<strong>服务端 kill -9 进程级续传 + CheckpointStore（state.json + sha256）</strong>。两者不是一回事，答辩时若被追问必须讲清层级差异。</li>
+    <li><strong>📌 可借鉴</strong>：把 AI 能力嵌进具体业务环节（而非单独聊天入口）这一产品思路。</li>
+  </ul>
+</div>
+
+<h3>5.2 携程商旅·程星途 —— 本方 toB 端最重量级正面竞品 ★</h3>
+<p><strong>是什么：</strong>2026-04-23 携程商旅首届全球商旅伙伴大会发布「携程商旅 AI 生态」全景图及《2025-2026 商旅管理市场白皮书》。
+包含 <strong>4 大场景、7 个 AI Agent</strong>：差旅问答、行程预订、差旅审批、差旅洞察、合规风控（程信）、财务结算、资源采购，
+外加能力共享场景的 <strong>MCP 共享平台</strong>。</p>
+<p><strong>角色：</strong>这是<strong>唯一一个把"多 Agent + 审批 + 合规 + 审计 + 结算"做成完整 toB 闭环的旅行 AI 产品</strong>，
+与本方 toB 工作台（HITL 审核台 / 安全治理看板 / 合规审计 / 白标交付）正面撞车。</p>
+
+<div class="tw"><table>
+<tr><th style="width:110px">环节</th><th>传统模式</th><th>AI 模式</th><th style="width:130px">提升</th></tr>
+<tr><td>行程预订</td><td>手动搜索比价 30 分钟+</td><td>智能推荐 1~2 分钟</td><td><strong>效率提升近 10 倍</strong></td></tr>
+<tr><td>差旅审批</td><td>等审批人 1~3 天（平均等 30 分钟，实际审 3 秒）</td><td>合规订单自动通过</td><td><strong>周期缩短至实时</strong></td></tr>
+<tr><td>合规审计</td><td>事后抽查，覆盖 5%~10% 订单</td><td>程信 Agent 实时监控全量</td><td><strong>覆盖率 100%</strong></td></tr>
+<tr><td>风险拦截</td><td>事后</td><td>事前拦截，9 大合规模型</td><td>累计处理不合规订单 2 万+ 笔，<strong>挽损 2800 万+</strong></td></tr>
+<tr><td>财务结算</td><td>财务逐笔核对数十工时</td><td>自动对账结算</td><td>人工操作 <strong>-70%</strong></td></tr>
+<tr><td>差旅问答</td><td>翻手册 / 问行政</td><td>自然语言即时回答</td><td>客服自助解决率 <strong>70%</strong></td></tr>
+</table></div>
+<p style="font-size:12.4px;color:var(--tx3)">以上数据均为【官方宣称】，无第三方审计。</p>
+
+<div class="box bad">
+  <div class="t"><span class="i">🔥</span>最重要的一个设计：AI + 责任兜底</div>
+  <p>"虽然 AI 可以帮企业管理者做决策，但决策背后的责任，AI 却无法替企业承担。这也是为什么很多同类产品使用率不高的原因——
+  <strong>审批人不敢把审批权完全交给 AI，怕出了问题自己担责</strong>。"</p>
+  <p>携程商旅的做法：差旅审批 Agent 风险检测准确率超 <strong>99.95%</strong>；<strong>如果因为智能审批出错造成订单损失，将由携程商旅来兜底</strong>。【官方】</p>
+</div>
+
+<p><strong>技术底座【官方宣称】：</strong>携程集团 30 年酒旅经验 + 携程商旅 20 年差旅管理实践；直连四大 GDS、Travelfusion、NDC；
+整合欧铁/日铁/网约车/接送机/租车；100 万+ 企业客户、6000 万出行人实战数据；2921 项技术专利；每日 100TB 数据。</p>
+<p><strong>开放生态：</strong>MCP 共享平台——企业可将携程商旅的 AI 能力接入自有系统（OA/ERP），员工在自己系统中直接调用差旅问答与行程预订 Agent。
+<strong>已接入 15+ 家企业</strong>，成立「商旅 AI 蜂行联盟」。</p>
+
+<h4>★ 正面对照（本报告最重要的一张表）</h4>
+<div class="tw"><table>
+<tr><th style="width:110px">维度</th><th style="width:210px">程星途</th><th style="width:210px">本方 toB 工作台</th><th class="c" style="width:90px">判定</th></tr>
+<tr><td>Agent 编排</td><td>7 Agent + MCP</td><td>6 Agent + Reporter，固定 DAG</td><td class="c"><span class="v p">平手</span></td></tr>
+<tr><td>HITL 审批</td><td>合规自动过、超标触发审批</td><td>WAITING_BUDGET_APPROVAL 等 11 态</td><td class="c"><span class="v p">平手</span></td></tr>
+<tr><td>合规审计</td><td>9 大模型、100% 覆盖、挽损 2800 万+</td><td>审计流水 + CSV 导出（MVP 级）</td><td class="c"><span class="v n">落后</span></td></tr>
+<tr><td><strong>责任兜底</strong></td><td>出错平台赔付，准确率 99.95%</td><td>无</td><td class="c"><span class="v n">落后</span></td></tr>
+<tr><td>集成开放</td><td>MCP，15+ 企业接入</td><td>无 MCP</td><td class="c"><span class="v n">落后</span></td></tr>
+<tr><td>供应链</td><td>全球 GDS + 100 万企业</td><td>无（Mock）</td><td class="c"><span class="v n">结构性差距</span></td></tr>
+<tr class="me"><td><strong>中立性</strong></td><td>必须绑携程供应链</td><td><strong>不绑、不抽佣</strong></td><td class="c"><span class="v y">本方胜</span></td></tr>
+<tr class="me"><td><strong>私有化</strong></td><td>云端 SaaS</td><td><strong>可私有化部署</strong></td><td class="c"><span class="v y">本方胜</span></td></tr>
+<tr class="me"><td><strong>溯源可解释</strong></td><td>未公开</td><td><strong>agent_outputs/*.json 全留痕</strong></td><td class="c"><span class="v y">本方胜</span></td></tr>
+</table></div>
+
+<div class="box bad">
+  <div class="t"><span class="i">🎯</span>结论：正面硬碰打不过，必须换战场</div>
+  <p>程星途在"企业差旅"这个具体场景里已经把流程做穿了，还配了兜底赔付。<strong>本方若也讲"企业差旅管理"，会被逐条碾压。</strong></p>
+  <p>本方 toB 应该讲的不是"我也能管差旅"，而是：<strong>① 中立</strong>（不卖库存，推荐不受返佣影响——携程商旅永远做不到，它必须卖自己的库存）；
+  <strong>② 可私有化</strong>（文旅局、景区集团、大型旅行社的数据不出内网）；
+  <strong>③ 可审计到 Agent 级</strong>（每一个节点为什么这么决策，可回放、可追责——这恰好是"责任兜底"的另一种解法）。</p>
+</div>
+
+<div class="box ok">
+  <div class="t"><span class="i">💡</span>一个可以直接用的答辩话术</div>
+  <p><strong>问：</strong>"携程商旅都敢承诺出错赔付了，你凭什么让人信你？"</p>
+  <p><strong>答：</strong>"赔付是<strong>事后补偿</strong>，我们要做的是<strong>事前可追责</strong>。赔付解决'钱谁出'，审计留痕解决'责谁负、下次怎么改'。
+  在文旅局、国企这类对合规审计要求高于成本补偿的客户那里，后者才是刚需。而且<strong>我们不卖库存，推荐不掺返佣</strong>——
+  这是我们敢把每个 Agent 的决策过程全量摊开的前提，也是平台型玩家结构性地做不到的事。"</p>
+</div>
+
+<h3>5.3 同程·程心 AI —— 编辑体验最好，增量重规划的正面参照</h3>
+<p><strong>是什么：</strong>同程旅行自研旅游专属大模型，行业内<strong>首个完成深度合成算法备案和生成式大模型备案</strong>的 OTA（双重备案）。
+2025-03-07 完成与 DeepSeek 融合，首批面向 <strong>210 万用户</strong>开放测试。国际版 DeepTrip 2026-04 升级 2.0（<strong>17 语种</strong>）。</p>
+<p><strong>角色：</strong><strong>行程可视化编辑体验全赛道最佳</strong>——拖拽增删排序 + 一键打包同程供应链下单，另有「AI 手绘行程图」社交功能。
+一个有争议的选择：做独立 App「行程助手」而非嵌入主应用。</p>
+<p><strong>劣势：</strong>攻略分享弱；无实时交通/值机/数字人；<strong>改动后仍是整段重排逻辑</strong>。</p>
+<div class="box">
+  <p><strong>✅ 可切入：</strong>本方的<strong>增量重规划（局部 diff，改动不破坏整段）</strong>比它更细。但要讲清楚：同程是"改完重排"，
+  本方是"改哪动哪 + 保留未受影响段落的成本与时空约束"。</p>
+  <p><strong>📌 可借鉴：</strong>拖拽式编辑 + 手绘行程图的社交属性，是 toC 侧提升感知价值的高性价比功能。</p>
+  <p><strong>⚠️ 可规避：</strong>独立 App 路线需要单独获客，本方 MVP 阶段不应复制。</p>
+</div>
+
+<h3>5.4 携程·问道 / Trip.Planner —— 覆盖最广，但深度参差</h3>
+<p><strong>劣势（本方最应关注的部分）：</strong></p>
+<ul>
+  <li><strong>AI 还停留在聊天框形态</strong>：需先点搜索栏，再进入"旅行 AI"入口，体验路径繁琐</li>
+  <li>回答往往从携程榜单出发给标准路线，个性化调整能力不足</li>
+  <li><strong>澎湃新闻实测结论很直接</strong>："携程问道目前成不了 AI Agent。" 原因是大模型的发散性大于精确性，在需要精确规划和落地的任务上只能当 copilot。
+  实测让它出上海 10 月 2~6 日行程，<strong>只规划到 10 月 4 日，剩下两天让用户自己发挥</strong></li>
+</ul>
+<div class="box ok"><p><strong>✅ 可切入：</strong>"规划不完整 / 规划不落地"是头部产品的<strong>公开弱点</strong>，
+而"完整性 + 可行性校验"恰是本方 11 态状态机 + 出行要素估算引擎的设计目标。</p></div>
+
+<h3>5.5 豆包 —— 入口截流者，也是"可信"叙事的最佳靶子</h3>
+<p><strong>角色：</strong>最大的威胁不是它做行程，而是<strong>它抢走了"第一个问题"</strong>。用户以前打开携程是搜索比价下单，
+现在打开豆包问"五一去哪玩"然后直接跳转预订。2026-08 豆包正式对经其入口跳转的酒店订单收取独立佣金，国内首个 AI 对话入口明码收费案例。</p>
+<p><strong>劣势：</strong>无旅游产业数据、无实时库存、无交易闭环、无结构化编辑；旅行规划"瞎编能看不能走"，空间感缺失、黑盒不信任被诟病。</p>
+<div class="box"><p><strong>✅ 可切入：</strong>其"空间感缺失 + 黑盒不信任"正是本方时空约束 + 辩论可解释的靶子。
+<strong>⚠️ 不要拼通用问答</strong>，那是必输的战场。
+<strong>📌 新观察：</strong>豆包开始对跳转订单收佣金，说明"AI 入口"已是可定价资产；本方若能证明推荐"更可信"，
+toB 侧的商业逻辑（中立、不抽佣、可议价服务费）反而更清晰。</p></div>
+
+<h3>5.6 小红书·点点 —— 真实性壁垒最高，本方消费陷阱图谱的天花板</h3>
+<p><strong>角色：</strong><strong>内容真实度全赛道最高</strong>，避坑经验强。它解决的是"AI 瞎编"这个信任问题的<strong>另一半</strong>——
+不是让 AI 更会推理，而是让 AI 引用真人写的东西。攻略模式读取平台笔记（媒体称"啃 10 亿篇笔记"），接入 DeepSeek-R1。</p>
+<div class="box warn"><p><strong>⚠️ 这是本方最需要诚实的一条：</strong>本方的"消费陷阱图谱"若只靠种子数据，
+<strong>拼不过小红书的真 UGC</strong>。必须接真实点评/笔记 API 才成立。在接之前，这个功能应当<strong>降级为"演示能力"并明确标注</strong>。
+<strong>📌 可借鉴：</strong>引用溯源的产品形态——把每条建议挂到真实来源上。本方已有 agent_outputs 留痕，
+可进一步做成"每条建议 → 来源 → 置信度"的可视化卡片。</p></div>
+
+<h3>5.7 支付宝·出行助手 —— 行中最强，行前不参与</h3>
+<p><strong>唯一全支持值机/实时交通/打车/电子票证</strong>的产品，行中出行全链路无人能及。劣势：无结构化攻略规划、无编辑、无 UGC、无数字人。</p>
+<div class="box"><p><strong>✅ 互补而非竞争：</strong>本方聚焦行前规划，不抢其交通主场。
+<strong>📌 明确划界：</strong>本方 MVP 不含行中能力，应在对外材料中主动声明，避免被追问时失分。
+<span style="color:var(--tx3)">（注：官方产品页为 SPA 未直接抓取，功能描述来自媒体 + 应用描述，置信度中等。）</span></p></div>
+
+<h3>5.8 腾讯智慧文旅 / 数字人导览 —— 体验最炫，能力极偏</h3>
+<p>面向景区/博物馆/文旅局（B/G 端）：数字人导览、AR/扫码智能讲解、文博演艺推荐、智能客服。底座为混元大模型 + 数字孪生 + AR/VR。案例：AI 游云南数字人导览。</p>
+<div class="box warn"><p><strong>⚠️ 更正：</strong>v2 模板中的产品名<strong>「元家」未在官方资料确认</strong>，官方口径为"智慧文旅平台 / 数字人导览"，本版已更正，对外材料应停止使用该名称。</p>
+<p><strong>📌 注意：</strong>腾讯在 B/G 端文旅已有成熟方案，本方 toB 若面向文旅局/景区，<strong>这条赛道不是空白</strong>，
+需要说清差异（本方是"行程生产 + 治理"，腾讯是"行中导览 + 营销"）。其数字人/AR 是本方<strong>标注为演示</strong>的能力，不碰或明确标注。</p></div>
+
+<h3>5.9 DeepSeek —— 推理最强，旅行最弱，但可私有化思路相近</h3>
+<p>通用推理大模型，旅行仅为场景之一。官方 API 为云端 SaaS，按 token 分时计费；开源权重可本地部署（第三方证实，官方 API 文档未提供私有化托管条款）。
+北二外评测因个性化 + 多模态两项垫底。</p>
+<div class="box"><p><strong>⚠️ 注意：</strong>DeepSeek 的"可私有化"与本方 toB 思路相近，但它<strong>没有旅行专有数据</strong>。
+本方的私有化价值不在"能本地跑模型"，而在"带着文旅领域知识和编排逻辑一起私有化"。</p></div>
+
+<h3>5.10 去哪儿·AI 旅行工具箱 <span class="v p">新增</span></h3>
+<p>2025-09 在 App 首页上线，把多个 AI 功能整合为统一工具箱入口：AI 行程规划助手（<strong>内置数十万篇真实游记</strong>）、
+机票 AI 助手「小驼」、升级后的酒店售后 AI 客服。「小驼」日均服务 7 万用户，咨询类问题解决率 70%【官方宣称】。</p>
+<div class="box"><p><strong>📌 可借鉴：</strong>"内置数十万篇真实游记"是低成本提升可信度的做法——本方若要补真实性，接 UGC 语料比自建图谱更快。
+把分散的 AI 功能收拢成"一个入口"，比做成独立聊天框的转化率更高（对比携程问道被批评的"入口太深"）。
+<strong>📌 可切入：</strong>其规划深度弱于飞猪/同程，说明"入口聚合"不等于"规划能力"。</p></div>
+
+<h3>5.11 马蜂窝·AI 小蚂 / AI 路书 <span class="v p">新增</span></h3>
+<p>2025-04 上线，全量接入 DeepSeek，基于十几年积累的海量真实旅行数据训练，支持实时问答、行程规划、在线向导、个性化推荐。
+同期推出基于 UGC 内容生成的个性化「AI 路书」，已开放测试。2023-08 曾推出「AI 旅行助手」App（目的地"专属管家"）。</p>
+<div class="box"><p><strong>⚠️</strong> 与小红书点点同属"UGC 真实性"路线，两家已把"内容量"维度占住，<strong>本方不应在此竞争</strong>。
+<strong>📌 可合作：</strong>把马蜂窝/小红书的内容作为本方 web_research 节点的检索源，
+<strong>将对手的内容优势转化为我方可信度来源</strong>。可借鉴"路书"这种内容化、可分享的行程表达形态。</p></div>
+
+<h3>5.12 沪小游（toG 城市智能体）<span class="v p">新增</span></h3>
+<p>上海的城市生活智能体，整合 <strong>36 大类、107 小类文旅资源</strong>，支持十余种语言，自上线以来累计服务来沪游客<strong>近 2000 万人次</strong>
+【第三方/单一信源】。</p>
+<div class="box warn"><p><strong>⚠️ 它证明：</strong>城市级文旅 AI 是一条<strong>已经被验证的真实需求，且有政府买单</strong>。
+<strong>本方 toB 若面向文旅局/景区集团，不能再说"这条赛道没人做"。</strong></p>
+<p><strong>✅ 可切入：</strong>沪小游只做"资源问答"（游客问什么答什么），本方是"行程生产 + 治理"（产出一个可交付、可审计的方案）——
+<strong>从问答到交付，中间这一层是空的。</strong></p>
+<p><strong>📌 可借鉴：</strong>36 大类 107 小类的资源分类体系，可直接作为本方文旅资源图谱的分类参照。</p></div>
+
+<h3>5.13 海外标杆速览（潜在替代品 6 家）</h3>
+<div class="tw"><table>
+<tr><th style="width:130px">产品</th><th>定位 / 关键能力</th><th style="width:110px">定价</th><th>为何值得关注</th></tr>
+<tr><td><strong>Layla AI</strong></td><td>全链路规划 + 实时价格；Skyscanner/Booking.com/GetYourGuide 集成；PriceLock 24/7 盯降价</td><td>免费 / $49·年</td><td>自报 110 万+ 行程、4.9 星；被评"唯一像真人旅行策划"</td></tr>
+<tr><td><strong>Mindtrip</strong></td><td>1100 万+ POI；<strong>2026-05-06 上线 Mindtrip Flights</strong>——对话内 Agent 式机票预订，Sabre Mosaic + PayPal</td><td>免费 / Pro $9.99·月</td><td><strong>Agent 式代订的落地样板</strong>，"研究 + 预订合一"</td></tr>
+<tr><td><strong>Wanderlog</strong></td><td>最佳协作式行程组织器；地图 + 时间线</td><td>免费 / Pro $40·年</td><td>免费档最完整；"智能组织器"而非"AI 代理"的路线</td></tr>
+<tr><td><strong>Tabbit Browser</strong></td><td><strong>Agentic 浏览器</strong>：在真实旅行网站（Skyscanner/Booking/Google Maps）上实时规划并比价</td><td>免费</td><td>第三方横评第一（9.4）：<strong>唯一能在真实站点上比实时价——"不靠训练数据编"</strong></td></tr>
+<tr><td><strong>Google Gemini Travel</strong></td><td>Maps + Flights 直连，生态内闭环</td><td>免费 / Pro $19.99·月</td><td>主流用户默认入口</td></tr>
+<tr><td><strong>Expedia Romie</strong></td><td>2024-05 发布；<strong>可加入 SMS/WhatsApp 群聊</strong>旁听并给建议；邮箱行程自动识别</td><td>免费</td><td>年处理 <strong>1.43 亿次对话</strong>，<strong>50%+ 请求无需人工</strong>；自助用户满意度是电话客服 2 倍</td></tr>
+</table></div>
+<div class="box warn">
+  <div class="t"><span class="i">🌏</span>海外赛道给本方的两个提醒</div>
+  <p>1. <strong>"Agent 能不能真的替你下单"已经是海外 2026 的主战场</strong>（Mindtrip Flights × Sabre × PayPal、Tabbit 的浏览器代理）。
+  本方 MVP 完全不做交易，这个方向要么明确放弃并说明理由，要么列入路线图。</p>
+  <p>2. <strong>Expedia 的 Romie 只做到了 50% 自助解决率</strong>，而 Expedia 自己的调研说只有 8% 的人敢让 AI 下单。
+  <strong>这说明"代订"这条路的天花板不在技术，在信任。</strong> 本方做"可解释"，反而可能是对的路。</p>
+</div>
+
+<!-- ============ 6 ============ -->
+<h2 id="s6"><span class="n">06</span>六维专项对比矩阵</h2>
+<p style="font-size:12.8px;color:var(--tx3)">评分 1~5 分（5 最优）。<strong>权重按本方赛道视角设定</strong>，非通用排名；第 7 章给出另一视角的对照。</p>
+
+<h3>6.1 多 Agent 与编排能力</h3>
+<div class="tw"><table>
+<tr><th>产品</th><th class="c" style="width:90px">Agent 数</th><th style="width:170px">编排可见性</th><th>状态/容错</th><th class="c" style="width:80px">得分</th></tr>
+<tr class="rival"><td>携程商旅·程星途</td><td class="c">7 + MCP</td><td>官方全景图</td><td>企业级（细节未公开）</td><td class="c">⭐⭐⭐⭐⭐</td></tr>
+<tr><td>飞猪·帮帮</td><td class="c">多 Agent</td><td>技术博客披露</td><td>弱网续传（网络层）</td><td class="c">⭐⭐⭐⭐</td></tr>
+<tr><td>美团 CatPaw</td><td class="c">3 万+</td><td>平台型</td><td>—</td><td class="c">⭐⭐⭐⭐</td></tr>
+<tr class="me"><td><strong>本方「山水有约」</strong></td><td class="c"><strong>6 + Reporter</strong></td><td><strong>代码级全公开</strong></td><td><strong>进程级 kill-9 续跑 + sha256 校验</strong></td><td class="c">⭐⭐⭐⭐</td></tr>
+<tr><td>同程·程心</td><td class="c">未公开</td><td>未公开</td><td>未公开</td><td class="c">⭐⭐⭐</td></tr>
+<tr><td>豆包 / DeepSeek</td><td class="c">单模型</td><td>黑盒</td><td>—</td><td class="c">⭐⭐</td></tr>
+</table></div>
+<p style="font-size:12.6px;color:var(--tx3)">本方在"编排可见性 + 容错层级"上是唯一做到可验证的一家，但<strong>缺 MCP 开放集成</strong>，这是与程星途的实质差距。</p>
+
+<h3>6.2 可解释性与信任机制 ★本方主战场</h3>
+<div class="tw"><table>
+<tr><th>产品</th><th class="c" style="width:110px">决策过程可见</th><th class="c" style="width:110px">来源可溯源</th><th class="c" style="width:130px">不确定性披露</th><th class="c" style="width:80px">得分</th></tr>
+<tr class="me"><td><strong>本方「山水有约」</strong></td><td class="c">✅ Agent 级留痕</td><td class="c">✅ 引用来源</td><td class="c">✅ 辩论 + 翻车预演</td><td class="c"><strong>⭐⭐⭐⭐⭐</strong></td></tr>
+<tr><td>小红书·点点</td><td class="c">❌</td><td class="c">✅ 笔记来源</td><td class="c">❌</td><td class="c">⭐⭐⭐⭐</td></tr>
+<tr><td>马蜂窝·AI 小蚂</td><td class="c">❌</td><td class="c">✅ UGC 来源</td><td class="c">❌</td><td class="c">⭐⭐⭐⭐</td></tr>
+<tr><td>携程商旅·程星途</td><td class="c">⚠️ 合规规则可见</td><td class="c">✅</td><td class="c">✅ 风险高亮</td><td class="c">⭐⭐⭐</td></tr>
+<tr><td>飞猪·帮帮 / 携程问道</td><td class="c">❌ 黑盒</td><td class="c">部分</td><td class="c">❌</td><td class="c">⭐⭐</td></tr>
+<tr><td>豆包 / DeepSeek</td><td class="c">❌ 黑盒</td><td class="c">部分</td><td class="c">❌</td><td class="c">⭐⭐</td></tr>
+</table></div>
+<div class="box ok"><p><strong>这是全表唯一一个本方拿到 5 分的维度，也是本报告最重要的结论依据。</strong></p></div>
+
+<h3>6.3 编辑与重规划</h3>
+<div class="tw"><table>
+<tr><th>产品</th><th style="width:200px">编辑形态</th><th>重规划粒度</th><th class="c" style="width:80px">得分</th></tr>
+<tr><td>同程·程心 AI</td><td>拖拽增删排序（最佳）</td><td>整段重排</td><td class="c">⭐⭐⭐⭐</td></tr>
+<tr><td>飞猪·帮帮</td><td>定点修改 + 预算调节</td><td>定点</td><td class="c">⭐⭐⭐⭐</td></tr>
+<tr class="me"><td><strong>本方「山水有约」</strong></td><td>表单 + 体验中心</td><td><strong>增量 diff（局部改动不破坏整段）</strong></td><td class="c">⭐⭐⭐⭐</td></tr>
+<tr><td>携程·问道</td><td>基础增删</td><td>整段</td><td class="c">⭐⭐</td></tr>
+</table></div>
+<div class="box warn"><p><strong>⚠️ 诚实提示：</strong>本方"增量 diff"是设计目标，<strong>需确认代码中已真实实现</strong>。若未实现，此项应降为 ⭐⭐⭐ 且不得对外宣称。</p></div>
+
+<h3>6.4 可行性与"算得准" ★本方风险项</h3>
+<div class="tw"><table>
+<tr><th>产品</th><th class="c" style="width:130px">时空合理性</th><th class="c" style="width:130px">预算准确度</th><th class="c" style="width:150px">责任兜底</th><th class="c" style="width:80px">得分</th></tr>
+<tr class="rival"><td>携程商旅·程星途</td><td class="c">强（真实资源）</td><td class="c">强（真实报价）</td><td class="c">✅ <strong>出错平台赔付</strong></td><td class="c">⭐⭐⭐⭐⭐</td></tr>
+<tr><td>飞猪·帮帮</td><td class="c">强</td><td class="c">强（实时报价引擎）</td><td class="c">❌</td><td class="c">⭐⭐⭐⭐</td></tr>
+<tr><td>同程·程心</td><td class="c">强</td><td class="c">强</td><td class="c">❌</td><td class="c">⭐⭐⭐⭐</td></tr>
+<tr class="me"><td><strong>本方「山水有约」</strong></td><td class="c">中（时空约束）</td><td class="c"><strong style="color:var(--bad)">⚠️ 已知超支缺陷</strong></td><td class="c">❌</td><td class="c"><strong style="color:var(--bad)">⭐⭐</strong></td></tr>
+<tr><td>豆包 / DeepSeek</td><td class="c">弱（空间感缺失）</td><td class="c">弱（无实时数据）</td><td class="c">❌</td><td class="c">⭐</td></tr>
+</table></div>
+
+<h3>6.5 toB 治理与企业级能力</h3>
+<div class="tw"><table>
+<tr><th>产品</th><th class="c">HITL 审批</th><th class="c">合规审计</th><th class="c">集成开放</th><th class="c">中立性</th><th class="c">私有化</th><th class="c" style="width:80px">得分</th></tr>
+<tr class="rival"><td><strong>携程商旅·程星途</strong></td><td class="c">✅</td><td class="c">✅ 100% 覆盖 / 挽损 2800 万+</td><td class="c">✅ <strong>MCP，15+ 企业</strong></td><td class="c">❌ 绑供应链</td><td class="c">❌</td><td class="c">⭐⭐⭐⭐</td></tr>
+<tr class="me"><td><strong>本方「山水有约」</strong></td><td class="c">✅ 11 态</td><td class="c">⚠️ 审计流水 + CSV</td><td class="c">❌ 无 MCP</td><td class="c">✅ <strong>不抽佣</strong></td><td class="c">✅ <strong>可私有化</strong></td><td class="c">⭐⭐⭐</td></tr>
+<tr><td>腾讯智慧文旅</td><td class="c">❌</td><td class="c">⚠️</td><td class="c">⚠️ 方案集成</td><td class="c">✅</td><td class="c">✅ 政企项目</td><td class="c">⭐⭐⭐</td></tr>
+<tr><td>沪小游</td><td class="c">❌</td><td class="c">⚠️</td><td class="c">❌</td><td class="c">✅</td><td class="c">✅ 政务云</td><td class="c">⭐⭐</td></tr>
+</table></div>
+
+<h3>6.6 工程韧性（可观测 / 容错 / 成本）</h3>
+<div class="tw"><table>
+<tr><th>产品</th><th>断点续跑</th><th>可观测性</th><th>成本控制</th><th class="c" style="width:80px">得分</th></tr>
+<tr class="me"><td><strong>本方「山水有约」</strong></td><td>✅ <strong>服务端进程级 + sha256</strong></td><td>✅ Prometheus + 审计日志</td><td>✅ Mock LLM 零计费</td><td class="c">⭐⭐⭐⭐⭐</td></tr>
+<tr><td>飞猪·帮帮</td><td>⚠️ 弱网序号化续接（<strong>网络层，不同层级</strong>）</td><td>未公开</td><td>—</td><td class="c">⭐⭐⭐</td></tr>
+<tr><td>携程商旅·程星途</td><td>未公开</td><td>未公开</td><td>—</td><td class="c">⭐⭐⭐</td></tr>
+</table></div>
+<div class="box warn">
+  <div class="t"><span class="i">📌</span>答辩必须区分的层级差异</div>
+  <p>飞猪的"断点续传"解决的是<strong>移动端弱网下请求断了重发</strong>（网络层、有序号即可续接）；
+  本方解决的是<strong>服务端进程被 kill -9 后从 CheckpointStore 恢复执行状态</strong>（进程级、需状态持久化 + 幂等 + 产物校验）。
+  <strong>两者不在同一层，不能混为一谈，也不应声称"我们也有断点续传所以打平"。</strong></p>
+</div>
+
+<!-- ============ 7 ============ -->
+<h2 id="s7"><span class="n">07</span>评分与排名（双口径）</h2>
+
+<h3>7.1 口径 A：沿用《AI旅行助手评价体系》（v2 模板口径）</h3>
+<div class="bars">
+  <div class="bar"><div class="nm">飞猪（问一问→帮帮）</div><div class="tr"><div class="fl" style="width:100%;background:linear-gradient(90deg,#ff7b72,#ffa657)"></div></div><div class="sc">724.92</div></div>
+  <div class="bar"><div class="nm">同程·程心 AI</div><div class="tr"><div class="fl" style="width:99.8%;background:linear-gradient(90deg,#58a6ff,#79c0ff)"></div></div><div class="sc">723.56</div></div>
+  <div class="bar"><div class="nm">支付宝出行助手</div><div class="tr"><div class="fl" style="width:98.1%;background:linear-gradient(90deg,#58a6ff,#79c0ff)"></div></div><div class="sc">711.44</div></div>
+  <div class="bar"><div class="nm">小红书点点</div><div class="tr"><div class="fl" style="width:96.5%;background:linear-gradient(90deg,#58a6ff,#79c0ff)"></div></div><div class="sc">699.97</div></div>
+  <div class="bar"><div class="nm">携程·问道</div><div class="tr"><div class="fl" style="width:94.8%;background:linear-gradient(90deg,#58a6ff,#79c0ff)"></div></div><div class="sc">687.26</div></div>
+  <div class="bar"><div class="nm">腾讯智慧文旅</div><div class="tr"><div class="fl" style="width:94.2%;background:linear-gradient(90deg,#8b949e,#b3bcc8)"></div></div><div class="sc">682.72</div></div>
+  <div class="bar"><div class="nm">豆包</div><div class="tr"><div class="fl" style="width:92.7%;background:linear-gradient(90deg,#8b949e,#b3bcc8)"></div></div><div class="sc">671.98</div></div>
+  <div class="bar"><div class="nm">DeepSeek</div><div class="tr"><div class="fl" style="width:85.4%;background:linear-gradient(90deg,#8b949e,#b3bcc8)"></div></div><div class="sc">618.71</div></div>
+</div>
+<p style="font-size:12.6px;color:var(--tx3)">⚠️ 该体系面向 toC 通用 AI 旅行助手，<strong>不含 toB 维度</strong>。用它给本方产品打分会系统性低估 toB 治理能力。</p>
+
+<h3>7.2 口径 B：本方赛道视角六维评分（自建，用于战略决策）</h3>
+<p style="font-size:12.8px;color:var(--tx3)">权重：规划质量 15% ／ <strong>可解释与可信 25%</strong> ／ 编辑与重规划 15% ／ 交易与供应链 10% ／ <strong>toB 治理 20%</strong> ／ 工程韧性 15%</p>
+<div class="tw"><table>
+<tr><th>产品</th><th class="c">规划质量</th><th class="c">可解释</th><th class="c">编辑</th><th class="c">供应链</th><th class="c">toB 治理</th><th class="c">韧性</th><th class="c" style="width:100px">加权总分</th></tr>
+<tr class="rival"><td>携程商旅·程星途</td><td class="c">4</td><td class="c">3</td><td class="c">3</td><td class="c">5</td><td class="c">4</td><td class="c">3</td><td class="c"><strong>3.60</strong></td></tr>
+<tr class="me"><td><strong>本方「山水有约」</strong></td><td class="c">3</td><td class="c"><strong style="color:var(--ac)">5</strong></td><td class="c">4</td><td class="c">1</td><td class="c">3</td><td class="c"><strong style="color:var(--ac)">5</strong></td><td class="c"><strong>3.55</strong></td></tr>
+<tr><td>飞猪·帮帮</td><td class="c">5</td><td class="c">2</td><td class="c">4</td><td class="c">5</td><td class="c">1</td><td class="c">3</td><td class="c">3.35</td></tr>
+<tr><td>同程·程心 AI</td><td class="c">5</td><td class="c">2</td><td class="c">4</td><td class="c">5</td><td class="c">1</td><td class="c">2</td><td class="c">3.20</td></tr>
+<tr><td>携程·问道</td><td class="c">4</td><td class="c">2</td><td class="c">2</td><td class="c">5</td><td class="c">1</td><td class="c">2</td><td class="c">2.70</td></tr>
+<tr><td>小红书点点</td><td class="c">2</td><td class="c">4</td><td class="c">1</td><td class="c">1</td><td class="c">1</td><td class="c">2</td><td class="c">2.05</td></tr>
+<tr><td>豆包 / DeepSeek</td><td class="c">2</td><td class="c">2</td><td class="c">1</td><td class="c">1</td><td class="c">1</td><td class="c">2</td><td class="c">1.60</td></tr>
+</table></div>
+<div class="box">
+  <div class="t"><span class="i">📖</span>读法</div>
+  <ul>
+    <li>本方在口径 A 里<strong>排不上号</strong>（没有交易闭环、没有供应链），在口径 B 里<strong>逼近第一</strong>。</li>
+    <li>差距集中在<strong>供应链（1 分）</strong>和<strong>toB 治理（3 分）</strong>两栏。</li>
+    <li><strong>这不是"换了个评分口径就赢了"的自我安慰</strong>——它说明的是：如果市场只按"能不能下单"来评判，本方必输；
+    但如果按"值不值得信、能不能管"来评判，本方有真实的竞争位。<strong>战略含义是：本方必须主动选择赛道，而不是在所有维度上应战。</strong></li>
+  </ul>
+</div>
+
+<!-- ============ 8 ============ -->
+<h2 id="s8"><span class="n">08</span>差异化优势「可防御性」检验 ★核心章节</h2>
+<p>方法：把 v2 模板与产品文档中宣称的每一项差异化优势，逐条拿去和<strong>最新竞品实况</strong>对照，判定它是否还成立。</p>
+
+<h3 id="s81">8.1 检验结果总表</h3>
+<div class="tw"><table>
+<tr><th style="width:36px">#</th><th style="width:150px">宣称的差异化</th><th>竞品实况对照</th><th class="c" style="width:96px">判定</th><th style="width:200px">处置建议</th></tr>
+<tr><td class="c">1</td><td><strong>Multi-Agent 架构</strong></td><td>飞猪帮帮、携程商旅 7 Agent、美团 CatPaw 3 万+ Agent 全是多智能体</td><td class="c"><span class="v n">不成立</span></td><td><strong>降格为入场券</strong>，只作为技术底座陈述，不作为卖点</td></tr>
+<tr><td class="c">2</td><td><strong>算得准</strong></td><td>携程商旅 99.95% + 平台兜底赔付；飞猪实时报价引擎；本方已知超支缺陷</td><td class="c"><span class="v n">未兑现</span></td><td><strong>修 bug 前不得对外宣称</strong></td></tr>
+<tr><td class="c">3</td><td><strong>说得清（可解释）</strong></td><td>全赛道黑盒；小红书/马蜂窝只有内容溯源，无决策溯源</td><td class="c"><span class="v y">成立且唯一</span></td><td><strong>升为第一卖点</strong></td></tr>
+<tr><td class="c">4</td><td><strong>可验证 / 走得通</strong></td><td>无真实库存与实时价，无法端到端验证</td><td class="c"><span class="v p">部分成立</span></td><td>改为"可验证的<strong>推理过程</strong>"，而非"可验证的行程"</td></tr>
+<tr><td class="c">5</td><td><strong>断点续跑 / 工程韧性</strong></td><td>飞猪是弱网续传（网络层），与进程级不是一回事</td><td class="c"><span class="v y">成立</span></td><td>保留，但需<strong>转译为用户语言</strong>（SLA/可靠性），否则用户无感</td></tr>
+<tr><td class="c">6</td><td><strong>增量重规划</strong></td><td>同程拖拽（整段重排）、飞猪定点修改</td><td class="c"><span class="v y">成立</span></td><td>保留，需确认代码真实实现</td></tr>
+<tr><td class="c">7</td><td><strong>toB 治理闭环</strong></td><td>携程商旅已做到审批 + 100% 合规覆盖 + 2800 万挽损 + MCP 开放</td><td class="c"><span class="v p">大幅削弱</span></td><td><strong>换战场</strong>：不比"谁能管差旅"，改比"谁中立、谁能私有化、谁能审计到 Agent 级"</td></tr>
+<tr><td class="c">8</td><td><strong>中立不抽佣</strong></td><td>所有 OTA 系必然绑自家供应链，结构性不可为</td><td class="c"><span class="v y">成立且不可复制</span></td><td><strong>升为核心商业壁垒</strong></td></tr>
+<tr><td class="c">9</td><td><strong>可私有化</strong></td><td>DeepSeek 可本地部署但无文旅数据；腾讯/沪小游为项目制</td><td class="c"><span class="v y">成立</span></td><td>保留，需明确部署形态与交付边界</td></tr>
+</table></div>
+
+<h3 id="s82">8.2 三条真正站得住的护城河</h3>
+<div class="moats">
+  <div class="moat">
+    <div class="hd"><div class="no">1</div><div class="ti">说得清 · 决策过程可追溯</div></div>
+    <p><strong>实证：</strong><code>agent_outputs/*.json</code> 逐节点留痕、决策辩论、翻车预演、11 态状态机可回放。</p>
+    <p><strong>为什么对手做不到：</strong>平台型玩家的推荐逻辑与返佣策略耦合，<strong>摊开决策过程等于摊开商业利益</strong>。推荐偏向返佣伙伴是结构性的，不是 bug。</p>
+    <div class="wh"><b>外部佐证：</b>Expedia 调研显示仅 <b>8% 旅客敢让 AI 代订</b>——行业缺的不是生成能力，是信任。</div>
+  </div>
+  <div class="moat">
+    <div class="hd"><div class="no">2</div><div class="ti">中立 + 可私有化</div></div>
+    <p><strong>实证：</strong>本方不接任何 OTA 库存，无交易抽佣。</p>
+    <p><strong>为什么对手做不到：</strong>携程商旅的存在价值就是卖携程的库存，飞猪的价值是卖飞猪的库存。<strong>中立 = 自我否定</strong>，这在商业上不可能发生。</p>
+    <div class="wh"><b>外部佐证：</b>QuestMobile 显示豆包 82.6% 引携程、96.9% 引抖音内容矩阵——<b>每家 AI 都优先引用自己生态</b>，中立性无法从平台内部产生。</div>
+  </div>
+  <div class="moat">
+    <div class="hd"><div class="no">3</div><div class="ti">工程韧性 · 可验证的可靠性</div></div>
+    <p><strong>实证：</strong>CheckpointStore（state.json + sha256）、<code>kill -9</code> 进程级恢复、Prometheus 指标 + 审计日志。</p>
+    <p><strong>为什么对手不做：</strong>这是"不出事时没人看见"的能力，对 C 端转化率没有直接贡献，商业优先级天然靠后。</p>
+    <div class="wh"><b>⚠️ 风险：</b>用户无感。必须转译为 SLA 语言——"任务中断后可从中断节点继续，<b>不重复计费、不丢中间产物</b>"，而不是"我们有断点续跑"。</div>
+  </div>
+</div>
+
+<h3 id="s83">8.3 🔴 最高优先级风险：「算得准」目前是未兑现的承诺</h3>
+<div class="box bad">
+  <div class="t"><span class="i">🔴</span>问题实证</div>
+  <p><code>scripts/smoke_test</code> 第一条 happy path：「北京 3 天 5000 元 + origin 上海」实测预估 <strong>5714 元</strong>
+  → 进 <code>WAITING_BUDGET_APPROVAL</code>，等不到 COMPLETED。</p>
+</div>
+<h4>根因</h4>
+<pre>travel_context_service.recommend_hotel()
+
+allowance = budget - intercity_cost - days*150
+
+1. intercity_cost 用的是<strong>单人</strong>往返价，实际支出要 × travelers
+2. allowance 只扣餐饮，<strong>没扣门票与市内交通</strong>
+
+→ per_night_allowance 虚高 → 住宿总是顶格选「品质型 1000 元/晚」
+→ 预算被吃光 → <strong>必然超支</strong></pre>
+<div class="box bad">
+  <div class="t"><span class="i">⚠️</span>连带伤害</div>
+  <p><code>README.md</code> 演示脚本第 1 条「北京 3 天 5000 元 → COMPLETED」<strong>实际不成立</strong>。
+  <strong>如果答辩现场按 README 跑，会当众翻车。</strong></p>
+  <p><strong>对照：</strong>携程商旅敢说"AI 审批准确率超 99.95%，出错由平台兜底赔付"。本方在预算这一项上连自洽都做不到。</p>
+</div>
+<h4>处置（按优先级）</h4>
+<div class="tw"><table>
+<tr><th style="width:70px">优先级</th><th>动作</th></tr>
+<tr><td><span class="v n">P0</span></td><td><strong>立即修：</strong><code>recommend_hotel</code> 增加 <code>travelers</code> 参数，<code>fixed = intercity_cost*travelers + days*150*travelers</code>，再为门票/市内交通预留约 25% 额度后才分档。需同步改 <code>validator.py</code> 两处调用</td></tr>
+<tr><td><span class="v n">P0</span></td><td><strong>立即改文案：</strong>README 与对外材料中暂停"算得准"表述，或改为"成本可拆解、可追溯"（这是真话）</td></tr>
+<tr><td><span class="v p">P1</span></td><td><strong>把缺陷变成演示亮点：</strong>主动展示"预算超支 → 触发审批 → 人介入 → 重规划通过"，把缺陷讲成"人在回路"的价值证明</td></tr>
+</table></div>
+
+<!-- ============ 9 ============ -->
+<h2 id="s9"><span class="n">09</span>机会点地图与切入策略</h2>
+
+<h3>9.1 四个真空白（按可行性排序）</h3>
+<div class="tw"><table>
+<tr><th style="width:32px">#</th><th style="width:150px">空白</th><th>证据</th><th class="c" style="width:70px">可行性</th><th class="c" style="width:100px">优先级</th></tr>
+<tr><td class="c">A</td><td><strong>决策可解释</strong><br><span style="font-size:11.5px;color:var(--tx3)">无人做"为什么推荐这个"的溯源</span></td><td>6.2 全表仅本方 5 分；仅 8% 敢让 AI 下单</td><td class="c">高<br><span style="font-size:11px;color:var(--tx3)">已有代码实证</span></td><td class="c"><span class="v n">P0 立刻做</span></td></tr>
+<tr><td class="c">B</td><td><strong>中立规划器</strong><br><span style="font-size:11.5px;color:var(--tx3)">不绑供应链的第三方规划</span></td><td>各平台信源偏好结构性偏移（豆包 82.6% 引携程）</td><td class="c">高<br><span style="font-size:11px;color:var(--tx3)">架构天然中立</span></td><td class="c"><span class="v n">P0 立刻讲</span></td></tr>
+<tr><td class="c">C</td><td><strong>toG/toB 从"问答"到"交付"的中间层</strong></td><td>沪小游只做资源问答；腾讯只做行中导览</td><td class="c">中<br><span style="font-size:11px;color:var(--tx3)">需合规与交付能力</span></td><td class="c"><span class="v p">P1 验证</span></td></tr>
+<tr><td class="c">D</td><td><strong>可验证可靠性的产品化</strong></td><td>全赛道无人提及工程韧性</td><td class="c">中<br><span style="font-size:11px;color:var(--tx3)">需转译为用户语言</span></td><td class="c"><span class="v p">P2 择机</span></td></tr>
+</table></div>
+
+<h3>9.2 两个必须放弃的战场</h3>
+<div class="tw"><table>
+<tr><th style="width:180px">战场</th><th>为什么放弃</th><th>替代说法</th></tr>
+<tr><td><strong>交易闭环 / 实时库存</strong></td><td>无供应链，做不了也不该做。飞猪、携程、同程已有 10 年以上积累</td><td>"我们做规划与治理，不碰交易——<strong>这保证了我们的中立性</strong>"</td></tr>
+<tr><td><strong>通用问答 / 入口流量</strong></td><td>豆包、DeepSeek、千问的流量与生态优势不可撼动；且豆包已开始对跳转订单收佣</td><td>"入口不是我们的战场，<strong>可信度才是</strong>"</td></tr>
+</table></div>
+
+<h3>9.3 一个必须说清的边界</h3>
+<div class="box warn">
+  <p><strong>"走得通"目前无法证明。</strong>没有真实库存与实时价格，无法端到端验证行程可执行。</p>
+  <p>建议改为：<strong>"推理过程可验证，行程落地需人工确认"</strong>——并把它包装成人在回路的设计价值，而不是能力短板。</p>
+</div>
+
+<!-- ============ 10 ============ -->
+<h2 id="s10"><span class="n">10</span>威胁清单与应对</h2>
+<div class="tw"><table>
+<tr><th style="width:36px">#</th><th style="width:250px">威胁</th><th style="width:110px">触发条件</th><th>应对</th></tr>
+<tr><td class="c">T1</td><td><strong>携程商旅把 toB 治理做穿并开放 MCP</strong></td><td>已发生<br>（15+ 企业接入）</td><td>换战场到"中立 + 私有化 + Agent 级审计"，不比差旅管理深度</td></tr>
+<tr><td class="c">T2</td><td>飞猪帮帮"结果可用率 +70%"成为行业标尺</td><td>已发生</td><td>主动把议题拉到"可用但不可信"的代价上（8% 数据）</td></tr>
+<tr><td class="c">T3</td><td>美团小团 2.0 的"行动代理"重新定义预期</td><td>2026-07 已发生</td><td>明确分层：本方做"决策"，执行交给伙伴；不做执行代理</td></tr>
+<tr><td class="c">T4</td><td>通用 AI 入口截流（豆包开始收佣金）</td><td>2026-08 已发生</td><td>toC 侧降低预期，重心移到 toB/toG</td></tr>
+<tr><td class="c">T5</td><td><strong>预算缺陷在演示/答辩现场暴露</strong></td><td>按 README 脚本跑第一条即触发</td><td><span class="v n">P0 修复 + P0 改文案</span></td></tr>
+<tr><td class="c">T6</td><td>"多 Agent"卖点被质疑</td><td>追问"飞猪也是多 Agent，你强在哪"</td><td>已降级，改讲"可审计的 Agent 编排"</td></tr>
+<tr><td class="c">T7</td><td>"断点续跑"被指与飞猪雷同</td><td>追问</td><td>准备层级对比：网络层续接 vs 进程级状态恢复 + sha256 校验</td></tr>
+<tr><td class="c">T8</td><td>UGC 真实性拼不过小红书/马蜂窝</td><td>消费陷阱图谱被追问数据来源</td><td>主动标注为演示能力，或接点评/笔记 API 后再宣称</td></tr>
+</table></div>
+
+<!-- ============ 11 ============ -->
+<h2 id="s11"><span class="n">11</span>待核实项与调研缺口</h2>
+
+<h3>11.1 必须核实的疑点</h3>
+<div class="tw"><table>
+<tr><th style="width:36px">#</th><th style="width:280px">疑点</th><th>建议动作</th></tr>
+<tr><td class="c">Q1</td><td>《AI旅行助手评价体系》中携程对应产品名为「程小游」，与「问道」是何关系？</td><td>查中国旅游研究院原始报告</td></tr>
+<tr><td class="c">Q2</td><td>腾讯文旅产品名「元家」未在官方资料确认</td><td><strong>对外材料中停止使用该名称</strong>（本版已更正）</td></tr>
+<tr><td class="c">Q3</td><td>飞猪 724.92 分是「问一问」版本，升级为「帮帮」后未重测</td><td>引用时注明"2026-08 前版本评分"</td></tr>
+<tr><td class="c">Q4</td><td>支付宝出行助手官方页为 SPA 未直接抓取</td><td>标注为半官方，或补实测</td></tr>
+<tr><td class="c">Q5</td><td>携程商旅 MCP 共享平台的具体协议细节</td><td>若本方要做集成，需定向调研</td></tr>
+</table></div>
+
+<h3>11.2 本轮调研的缺口（诚实声明）</h3>
+<div class="box warn">
+  <ul>
+    <li><strong>⚠️ 未做实测试用</strong>：本轮为桌面调研，无注册试用记录、无截图、无响应时间实测。模板填写指南第 4 步"试用体验"<strong>未执行</strong>。</li>
+    <li><strong>⚠️ 海外 6 家数据来自第三方横评与评测博客</strong>，未逐一访问官方页面核实。特别是第三方横评站点（如 Tabbit 的对比页）本身是竞品的营销内容，其排名需谨慎对待。</li>
+    <li><strong>⚠️ 厂商宣称数据未审计</strong>：所有"效率提升 10 倍""可用率 +70%""挽损 2800 万+"均为【官方宣称】，无第三方核实。</li>
+    <li><strong>⚠️ 本方"增量 diff"能力未做代码验证</strong>。</li>
+  </ul>
+</div>
+
+<h3>11.3 需要代码侧确认的三件事（决定文档能否对外）</h3>
+<div class="tw"><table>
+<tr><th style="width:36px">#</th><th style="width:300px">待确认</th><th>影响</th></tr>
+<tr><td class="c">C1</td><td>预算缺陷是否已修</td><td>决定"算得准"能否对外讲 <span class="v n">P0</span></td></tr>
+<tr><td class="c">C2</td><td>「增量重规划（局部 diff）」是否真实实现，还是仅设计目标</td><td>决定 6.3 维度得分与对外表述</td></tr>
+<tr><td class="c">C3</td><td>README 演示脚本第一条能否跑通至 COMPLETED</td><td>决定答辩现场是否翻车 <span class="v n">P0</span></td></tr>
+</table></div>
+
+<!-- ============ 附录 ============ -->
+<h2 id="s12"><span class="n">附录</span>本版相对 v2 模板的变更记录</h2>
+<div class="tw"><table>
+<tr><th style="width:100px">类型</th><th style="width:280px">变更内容</th><th>理由</th></tr>
+<tr><td><span class="v n">更正</span></td><td>「飞猪问一问」→ <strong>「飞猪帮帮」</strong>，补充 2026-08-10 升级信息</td><td>原条目已过时；升级后产品形态、入口、架构均有实质变化</td></tr>
+<tr><td><span class="v n">重大补漏</span></td><td>新增 <strong>携程商旅·程星途</strong>（7 Agent + MCP）</td><td>v2 模板完全遗漏 toB 赛道最强竞品，而 toB 恰是本方一半的业务面</td></tr>
+<tr><td><span class="v y">补充</span></td><td>新增去哪儿 AI 旅行工具箱、马蜂窝 AI 小蚂</td><td>补齐 OTA 五强与垂直 UGC 路线</td></tr>
+<tr><td><span class="v y">补充</span></td><td>新增沪小游（toG 城市智能体）</td><td>证明 toG 需求真实存在但空白已被占</td></tr>
+<tr><td><span class="v y">补充</span></td><td>新增海外 6 家潜在替代品</td><td>模板"潜在替代品"分类此前为空</td></tr>
+<tr><td><span class="v y">补充</span></td><td>新增市场大盘、可防御性检验、威胁清单</td><td>模板只有数据，缺判断</td></tr>
+<tr><td><span class="v p">修正</span></td><td>腾讯产品名「元家」标注为<strong>未确认</strong>，改用官方口径</td><td>v2 已标注待核实，本轮仍未证实</td></tr>
+<tr><td><span class="v p">补充</span></td><td>全文增加【官方】/【官方宣称】/【第三方】/【待核实】标注</td><td>落实模板"填写指南"第 5 条与"调研记录纪律"第 2 条</td></tr>
+<tr><td><span class="v n">新增风险</span></td><td>「算得准」未兑现 + README 演示脚本第一条跑不通</td><td>来源于项目代码走查，非竞品调研，但直接影响对外表述</td></tr>
+<tr><td><span class="v p">新增</span></td><td>口径 B 自建六维评分</td><td>原评价体系不含 toB 维度，无法用于本方战略决策</td></tr>
+</table></div>
+
+<footer>
+  <strong>文档版本</strong>：v3.0 ｜ <strong>生成日期</strong>：2026-08-31<br>
+  <strong>配套文件</strong>：<code>竞品调研报告_AI旅行规划.md</code>（完整版，含信息源清单）、<code>AI产品竞品调研表_官方核实v3.xlsx</code>（可编辑主表，12 行 × 21 列）<br>
+  <strong>诚实声明</strong>：本轮为桌面调研，未做实测试用；所有厂商宣称的效率数据均标注为【官方宣称】；第 11 章列出了全部已知缺口，未做掩饰。
+</footer>
+
+</main>
+</div>
+
+<script>
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+  var targets = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); });
+  function onScroll(){
+    var y = window.scrollY + 130, cur = 0;
+    for (var i = 0; i < targets.length; i++){
+      if (targets[i] && targets[i].offsetTop <= y) cur = i;
+    }
+    links.forEach(function(a, i){ a.classList.toggle('on', i === cur); });
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# 开发/工程工具依赖 —— 不进生产镜像（生产仅装 requirements.txt）
+# 用法：pip install -r requirements-dev.txt
+# 版本策略：下限（>=）基线；首次全量安装后可 pip freeze 收紧为 ==
+
+# 测试
+pytest>=8.0
+pytest-asyncio>=0.23
+httpx>=0.27          # AsyncClient / TestClient；后续 LLM 客户端从 urllib 迁移时复用
+
+# 代码质量
+ruff>=0.6            # lint + format（ruff check app scripts / ruff format）
+mypy>=1.11           # 首轮只覆盖 app/services 与 app/models
+pre-commit>=3.8
+
+# 依赖安全
+pip-audit>=2.7

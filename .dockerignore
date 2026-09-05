@@ -1,0 +1,40 @@
+# 密钥与环境（绝不能进构建上下文/镜像）
+.env
+.env.*
+!.env.example
+
+# 运行时数据（compose 以挂载方式提供 ./data:/data）
+data/
+logs/
+*.log
+
+# 版本管理 / CI
+.git/
+.github/
+.gitignore
+
+# Python 本地产物
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# 前端本地依赖与构建产物
+node_modules/
+frontend/node_modules/
+
+# 文档 / 观测配置不影响镜像，但排除减少上下文
+docs/
+observability/
+v8版本/
+
+# 临时脚本 / 会话产物
+.tmp_*
+*.tmp
+111.py
+_retheme.py
+
+# Docker 自身
+docker-compose.override.yml
