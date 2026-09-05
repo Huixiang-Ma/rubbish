@@ -83,7 +83,8 @@ def verify(realm: str, username: str, password: str) -> dict | None:
         account = _TOB_DEMO_ROLES.get(username)
         expected = creds.get(f"{username}_password")
         if account and expected and hmac.compare_digest(password, expected):
-            return {"username": username, "display": account["display"], "role": account["role"]}
+            tenant = getattr(settings, f"tob_{username}_tenant", "wl")
+            return {"username": username, "display": account["display"], "role": account["role"], "tenant": tenant}
         return None
     creds = _demo_credentials()
     if username == creds["toc_username"] and hmac.compare_digest(password, creds["toc_password"]):
@@ -95,9 +96,12 @@ def verify(realm: str, username: str, password: str) -> dict | None:
     return None
 
 
-def issue_token(username: str, role: str) -> str:
+def issue_token(username: str, role: str, tenant: str | None = None) -> str:
+    claims = {"u": username, "r": role, "exp": int(time.time()) + 7 * 24 * 3600}
+    if tenant:
+        claims["t"] = tenant
     payload = base64.urlsafe_b64encode(
-        json.dumps({"u": username, "r": role, "exp": int(time.time()) + 7 * 24 * 3600}).encode()
+        json.dumps(claims).encode()
     ).decode().rstrip("=")
     sig = hmac.new(_secret().encode(), payload.encode(), hashlib.sha256).hexdigest()[:32]
     return f"{payload}.{sig}"

@@ -1843,6 +1843,28 @@ document.addEventListener('click', e => {
       }
     }
     fillChapter("chLedger", cleanMd, /费用|预算|账/, "本次生成未包含费用账本章节，可在生成弹层查看预算执行情况。");
+    /* P1.8：账本列表升级为分项表格（项目 | 口径/金额），小计/合计行加粗 */
+    try {
+      var led = $("chLedger");
+      if (led) {
+        led.querySelectorAll(".md-doc ul").forEach(function (ul) {
+          var rows = [];
+          ul.querySelectorAll("li").forEach(function (li) {
+            var txt = li.textContent.trim().replace(/\*\*/g, "");
+            var m = txt.match(/^(.+?)：(.+)$/);
+            rows.push({ item: m ? m[1] : txt, amount: m ? m[2] : "" });
+          });
+          if (!rows.length) return;
+          var table = '<table class="ledger"><tr><th>项目</th><th class="r">口径 / 金额</th></tr>' + rows.map(function (r) {
+            var total = /小计|合计|重估|预算上限/.test(r.item + r.amount);
+            return '<tr' + (total ? ' class="total"' : "") + '><td>' + escapeHtml(r.item) + '</td><td class="r">' + escapeHtml(r.amount) + '</td></tr>';
+          }).join("") + "</table>";
+          var div = document.createElement("div");
+          div.innerHTML = table;
+          ul.replaceWith(div);
+        });
+      }
+    } catch (e) { /* 表格化失败保留列表口径 */ }
     fillChapter("chDebate", cleanMd, /辩论|裁决/, "本次生成未包含辩论实录章节。");
     /* P1.8：第 ④ 章优先用结构化接口渲染双栏对质卡；失败时保留上面的 Markdown 提取结果 */
     try {

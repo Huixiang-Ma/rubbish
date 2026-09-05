@@ -29,9 +29,10 @@ def login(payload: LoginRequest) -> dict:
     if not user:
         raise HTTPException(status_code=401, detail="用户名或密码错误")
     return {
-        "token": auth_service.issue_token(user["username"], user["role"]),
+        "token": auth_service.issue_token(user["username"], user["role"], user.get("tenant")),
         "role": user["role"],
         "name": user["display"],
+        "tenant": user.get("tenant"),
     }
 
 

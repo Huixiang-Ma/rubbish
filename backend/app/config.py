@@ -69,7 +69,9 @@ class Settings(BaseSettings):
     toc_demo_password: str = "123456"
     tob_supervisor_password: str = "sv2026"
     tob_consultant_password: str = "ct2026"
-    free_plan_per_day: int = 3  # 每账号/每 IP 每日免费规划单数（P2 成本治理）
+    free_plan_per_day: int = 3
+    tob_supervisor_tenant: str = "wl"  # toB 主管归属租户（多租户做实：顾问/主管只看本租户方案）
+    tob_consultant_tenant: str = "wl"  # 每账号/每 IP 每日免费规划单数（P2 成本治理）
 
     # 外部适配器（明确不接第三方，只留扩展点）
     external_map_provider: str = "local"

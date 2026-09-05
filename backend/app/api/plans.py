@@ -205,12 +205,20 @@ def claim_plans(payload: PlanClaimRequest, user: dict = Depends(require_traveler
 
 @router.get("", response_model=PlanListResponse)
 def list_plans(
+    request: Request,
     status: str | None = None,
     customer: str | None = None,
     tenant: str | None = None,
     limit: int = 100,
 ) -> PlanListResponse:
-    """B1 顾问工作台：本地任务索引列表（状态/客户/租户筛选，按更新时间倒序）。"""
+    """B1 顾问工作台：本地任务索引列表（状态/客户/租户筛选，按更新时间倒序）。
+    P2.3 多租户隔离：AUTH_ENABLED=true 时，携带主管/顾问 token 的请求被强制限定在本租户，仅管理员可见全部。"""
+    settings = get_settings()
+    if settings.auth_enabled:
+        import app.services.auth_service as _auth
+        payload = _auth.verify_token(bearer_token(request))
+        if payload and payload.get("r") in ("supervisor", "consultant") and payload.get("t"):
+            tenant = payload["t"]  # 数据隔离：覆盖查询参数，防止越权查看其他租户
     items: list[dict] = []
     for state in job_index.iter_states(DATA_ROOT):
         if status and state.get("status") != status:
