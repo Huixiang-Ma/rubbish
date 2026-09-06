@@ -574,6 +574,17 @@
 .hist-chip em.dim, .hist-chip.dim { opacity: .65; }
 .hist-empty { font-size: 13px; color: var(--ink-faint, #8b857a); }
 .map-panel .sub-h { margin-top: 30px; }
+/* ⑧ 住宿选择 */
+.hotel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; margin-top: 10px; }
+.hotel-card { position: relative; border: 1px solid var(--hairline); border-radius: 12px; background: var(--card, #fffdf7); padding: 14px 16px; cursor: pointer; transition: .15s; }
+.hotel-card:hover { border-color: var(--teal, #2f5d50); box-shadow: var(--shadow-md); }
+.hotel-card.picked { border-color: var(--teal, #2f5d50); box-shadow: 0 0 0 2px rgba(47,93,80,.18); }
+.hotel-card.picked::after { content: "✓ 已选"; position: absolute; top: 10px; right: 12px; font-size: 11.5px; color: var(--teal, #2f5d50); font-weight: 600; }
+.hotel-card h5 { margin: 0 0 6px; font-size: 14.5px; line-height: 1.4; padding-right: 44px; }
+.hotel-card .h-meta { font-size: 12.5px; color: var(--ink-soft, #5b6a63); line-height: 1.7; }
+.hotel-card .h-price { margin-top: 6px; font-size: 13px; color: var(--gold, #a9863f); font-weight: 600; }
+.hotel-card .h-price small { color: var(--ink-faint, #8b857a); font-weight: 400; }
+.hotel-card .h-book { margin-top: 8px; display: inline-block; font-size: 12.5px; }
 /* P1.5 历史入口：跟随页面的气泡按钮 */
 .hist-bubble { position: fixed; right: 20px; bottom: 22px; z-index: 90; display: flex; flex-direction: column; align-items: center; gap: 2px;
   width: 58px; height: 58px; border-radius: 50%; border: 1px solid rgba(47,93,80,.35); background: var(--teal, #2f5d50); color: #f6f3ea;
@@ -881,6 +892,7 @@
           <button class="b-tab" data-ch="mood">⑤ 心情剧本</button>
           <button class="b-tab" data-ch="planb">⑥ B 计划</button>
           <button class="b-tab" data-ch="pack">⑦ 清单</button>
+          <button class="b-tab" data-ch="hotels">⑧ 住宿</button>
         </div>
 
         <!-- ② 逐日行程 -->
@@ -917,6 +929,11 @@
         <!-- ⑦ 出行清单 -->
         <div class="chapter" id="chPack">
           <p class="ch-empty">出行清单将按真实行程自动生成，可直接勾选。</p>
+        </div>
+
+        <!-- ⑧ 住宿选择 -->
+        <div class="chapter" id="chHotels">
+          <p class="ch-empty">住宿选择将在行程书载入后，按目的地实时检索填充（高德 POI + 飞猪实时报价）。</p>
         </div>
       </div>
 
@@ -1941,6 +1958,7 @@ document.addEventListener('click', e => {
       if (shareBtn) shareBtn.style.display = "block";
     }
     loadBookMap();  // 内嵌实时地图跟随当前行程书
+    loadHotelsChapter(ui);  // ⑧ 住宿：按目的地实时检索，多选一
   }
 
   /* ---------- 历史记录：本机留档 job_id，列表与回看全部取后端真实数据 ---------- */
@@ -2319,6 +2337,57 @@ document.addEventListener('click', e => {
     document.getElementById("expGuideSend").addEventListener("click", send);
     document.getElementById("expGuideInput").addEventListener("keydown", function (e) { if (e.key === "Enter") send(); });
   }
+  /* ---------- ⑧ 住宿选择：高德 POI + 飞猪实时报价，多选一 ---------- */
+  async function loadHotelsChapter(ui) {
+    var box = $("chHotels");
+    if (!box) return;
+    var destination = (ui && ui.destination) || (window.currentPlanMeta && window.currentPlanMeta.destination);
+    if (!destination) { box.innerHTML = '<p class="ch-empty">请先生成或载入一本行程书，再查看住宿选择。</p>'; return; }
+    box.innerHTML = '<p class="vote-hint">正在检索 ' + escapeHtml(destination) + ' 的实时住宿…</p>';
+    var travelers = Math.max(1, Number(ui && ui.travelers) || 2);
+    var nights = Math.max(1, (Number(ui && ui.days) || 2) - 1);
+    var rooms = Math.ceil(travelers / 2);
+    var cards = [];
+    try {
+      var d = await expGet("/api/plans/" + jobId + "/result");
+      (d.hotels || []).slice(0, 6).forEach(function (h) {
+        cards.push({ name: h.name, meta: [h.tier || h.category, h.position ? "距市中心约 " + h.distance_km + " 公里" : "", h.position || ""].filter(Boolean).join(" · "), price: null, booking_url: "", src: "高德实时 POI" });
+      });
+    } catch (e) { /* 高德档缺失时仅展示飞猪档 */ }
+    try {
+      var m = await expGet("/api/services/merchant?destination=" + encodeURIComponent(destination));
+      (m.hotels || []).slice(0, 8).forEach(function (h) {
+        if (cards.some(function (c) { return c.name === h.name; })) return;
+        var num = parseFloat(String(h.price_hint || "").replace(/[^\d.]/g, ""));
+        cards.push({ name: h.name, meta: [h.category, h.position || h.address || ""].filter(Boolean).join(" · "), price: isNaN(num) ? null : num, booking_url: h.booking_url || "", src: "飞猪实时报价" });
+      });
+    } catch (e) { /* 飞猪档缺失 */ }
+    if (!cards.length) { box.innerHTML = '<p class="ch-empty">暂未检索到实时住宿数据（数据源未启用），可稍后重试。</p>'; return; }
+    var pickKey = "hotelPick:" + jobId;
+    var picked = localStorage.getItem(pickKey) || "";
+    box.innerHTML = '<p class="ch-intro">按目的地实时检索的住宿候选（' + cards.length + ' 家，每晚价 × ' + nights + ' 晚 × ' + rooms + ' 间为参考总价）。点击卡片标记你的选择，选择会留存在本设备。</p>' +
+      '<div class="hotel-grid">' + cards.map(function (c, i) {
+        var total = c.price ? c.price * nights * rooms : null;
+        return '<div class="hotel-card' + (picked === c.name ? " picked" : "") + '" data-hotel="' + escapeHtml(c.name) + '">' +
+          '<h5>' + escapeHtml(c.name) + '</h5>' +
+          '<div class="h-meta">' + escapeHtml(c.meta) + '<br>来源：' + escapeHtml(c.src) + '</div>' +
+          (c.price ? '<div class="h-price">¥' + c.price + '/晚 <small>· 参考总价 ¥' + Math.round(total).toLocaleString() + '（' + nights + ' 晚 × ' + rooms + ' 间）</small></div>'
+                   : '<div class="h-price"><small>价格以预订平台公示为准</small></div>') +
+          (c.booking_url ? '<a class="h-book" href="' + escapeHtml(c.booking_url) + '" target="_blank" rel="noopener" data-hotel-book>前往预订 ↗</a>' : '') +
+          '</div>';
+      }).join("") + '</div>' +
+      '<p class="vote-hint" style="margin-top:10px">价格为检索时点的供应商报价，下单以对方实时公示为准；此处的选择仅作为你的行程偏好记录。</p>';
+    box.onclick = function (e) {
+      if (e.target.closest("[data-hotel-book]")) return;  // 预订链接不触发选择
+      var card = e.target.closest("[data-hotel]");
+      if (!card) return;
+      box.querySelectorAll(".hotel-card").forEach(function (x) { x.classList.remove("picked"); });
+      card.classList.add("picked");
+      localStorage.setItem(pickKey, card.dataset.hotel);
+      toast("已选住宿：" + card.dataset.hotel);
+    };
+  }
+
   /* ---------- 行程书内嵌实时地图（跟随当前行程书） ---------- */
   var bookMapState = { map: null, layer: null, data: null, day: 0, job: null };
   async function loadBookMap() {
