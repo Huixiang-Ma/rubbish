@@ -268,6 +268,8 @@
     margin-top: 40px; display: grid; grid-template-columns: 300px 1fr; gap: 26px;
     align-items: stretch;
   }
+  /* 实时地图面板独占整行（横跨封面列与内容列） */
+  .map-panel { grid-column: 1 / -1; }
   .book-cover {
     background:
       radial-gradient(400px 200px at 80% -40px, rgba(201,106,63,.18), transparent 60%),
