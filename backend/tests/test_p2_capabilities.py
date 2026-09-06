@@ -64,12 +64,42 @@ def test_rows_flight_maps_real_fields_and_drops_dirty():
     assert row["booking_url"].startswith("https://")
 
 
-def test_enrich_train_keeps_official_channel():
-    """飞猪 MCP 无火车票工具：train 窗口必须维持 12306 官方渠道口径。"""
+TRAIN_SAMPLE = {
+    "data": {"itemList": [
+        {"price": "541.00", "jumpUrl": "https://router.feizhu.com/ws/x",
+         "journeys": [{"journeyType": "直达", "totalDuration": "366", "segments": [
+             {"marketingTransportNo": "G876", "marketingTransportName": "高铁",
+              "depDateTime": "2026-09-17 15:17:00", "arrDateTime": "2026-09-17 21:23:00",
+              "depStationName": "杭州东站", "arrStationName": "北京南站", "seatClassName": "二等座"}]}]}
+    ]}
+}
+
+
+def test_enrich_train_falls_back_when_no_data(monkeypatch: pytest.MonkeyPatch):
+    """飞猪无返回时：train 窗口维持 12306 官方渠道口径。"""
     base = {"kind": "train", "tickets": [], "guide": {"channels": [{"name": "12306 官方"}]}}
+    monkeypatch.setattr(ticketing, "_fliggy_call", lambda kind, tool, args: [])
     out = ticketing.enrich_train_flight(base, "train", "杭州", "北京")
     assert out["source"] == "local"
     assert out["guide"]["channels"][0]["name"] == "12306 官方"
+
+
+def test_rows_train_maps_real_fields():
+    rows = ticketing._rows_train(ticketing._find_items(TRAIN_SAMPLE))
+    assert len(rows) == 1
+    row = rows[0]
+    assert "G876" in row["train_no"] and "高铁" in row["train_no"]
+    assert row["price"] == "541.00" and row["seat"] == "二等座"
+    assert row["duration"] == "6小时06分" and row["booking_url"].startswith("https://")
+
+
+def test_enrich_train_overrides_with_real_rows(monkeypatch: pytest.MonkeyPatch):
+    base = {"kind": "train", "tickets": [], "guide": {"channels": [{"name": "12306 官方"}]}}
+    monkeypatch.setattr(ticketing, "_fliggy_call", lambda kind, tool, args: ticketing._find_items(TRAIN_SAMPLE))
+    out = ticketing.enrich_train_flight(base, "train", "杭州", "北京")
+    assert out["source"] == "fliggy"
+    assert out["tickets"][0]["train_no"].startswith("G876")
+    assert out["guide"]["channels"]  # 官方渠道建议保留
 
 
 def test_enrich_flight_overrides_with_real_rows(monkeypatch: pytest.MonkeyPatch):

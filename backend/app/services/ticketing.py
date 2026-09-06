@@ -169,24 +169,49 @@ def _rows_flight(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return rows
 
 
+def _rows_train(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """飞猪 search_domestic_train 实测：price/jumpUrl 在 item 级，班次详情在 journeys[0].segments[0]。"""
+    rows: list[dict[str, Any]] = []
+    for item in items[:8]:
+        journey = (item.get("journeys") or [{}])[0]
+        seg = (journey.get("segments") or [{}])[0]
+        no = str(_pick(seg, "marketingTransportNo") or "")
+        if not no:
+            continue
+        rows.append(
+            {
+                "train_no": no + " · " + str(_pick(seg, "marketingTransportName") or "列车"),
+                "tag": str(journey.get("journeyType") or "直达"),
+                "departure": " ".join(x for x in [str(_pick(seg, "depDateTime")), str(_pick(seg, "depStationName") or "")] if x and x != "None"),
+                "arrival": " ".join(x for x in [str(_pick(seg, "arrDateTime")), str(_pick(seg, "arrStationName") or "")] if x and x != "None"),
+                "duration": _fmt_duration(journey.get("totalDuration")),
+                "seat": str(_pick(seg, "seatClassName") or "二等座"),
+                "price": _pick(item, "price") or "",
+                "status": "可预订" if item.get("jumpUrl") else "查询班次",
+                "booking_url": _booking_url(item.get("jumpUrl")),
+            }
+        )
+    return rows
+
+
 def enrich_train_flight(base: dict[str, Any], kind: str, origin: str | None, destination: str) -> dict[str, Any]:
-    """大交通窗口：本地建议（guide）保留，flights 有飞猪真实数据则覆盖；火车票无搜索工具，维持 12306 官方渠道口径。"""
+    """大交通窗口：本地建议（guide）保留，飞猪真实车次/航班覆盖（source=fliggy）。"""
     is_train = kind == "train"
     base.setdefault("source", "local")
-    if is_train:
-        return base  # 探测结论：飞猪 MCP 无火车票搜索工具（train/12306 仅代理商履约接口）
-    items = _fliggy_call(kind, "search_flight", {"origin": (origin or "").removesuffix("市"), "destination": destination.removesuffix("市")})
+    tool = "search_domestic_train" if is_train else "search_flight"
+    items = _fliggy_call(kind, tool, {"origin": (origin or "").removesuffix("市"), "destination": destination.removesuffix("市")})
     if not items:
-        # 实测：飞猪航班查询必须带出发地——未填时引导用户补填，而不是只说官方渠道
-        if not origin and base.get("guide"):
+        if not is_train and not origin and base.get("guide"):
+            # 实测：飞猪航班查询必须带出发地——未填时引导用户补填，而不是只说官方渠道
             base["guide"]["advice"] = "填写出发地后，可实时查询该目的地航班与票价，并支持在线预订跳转。" + base["guide"].get("advice", "")
         return base
-    rows = _rows_flight(items)
+    rows = _rows_train(items) if is_train else _rows_flight(items)
     if not rows:
         return base
-    base["flights"] = rows
+    key = "tickets" if is_train else "flights"
+    base[key] = rows
     base["source"] = "fliggy"
-    base["note"] = "来源：飞猪AI 实时检索；票价需在供应商页面查询（未展示的价格以对方公示为准）。"
+    base["note"] = "来源：飞猪AI 实时检索；车次/航班与票价以 12306 及供应商页面公示为准。"
     return base
 
 
@@ -235,21 +260,23 @@ def enrich_attractions(base: dict[str, Any], destination: str) -> dict[str, Any]
 
 
 def fliggy_hotels(destination: str) -> list[dict[str, Any]]:
-    """酒店（本地商家窗口的住宿档）：飞猪真实酒店列表；失败返回空。"""
-    items = _fliggy_call("merchant", "search_hotel", {"destName": destination.removesuffix("市")})
+    """酒店（本地商家窗口的住宿档）：飞猪 search_hotels 实时列表；失败返回空。"""
+    items = _fliggy_call("merchant", "search_hotels", {"destName": destination.removesuffix("市")})
     rows: list[dict[str, Any]] = []
     for item in items[:8]:
         name = str(_pick(item, "name", "hotelName", "title"))
         if not name:
             continue
+        star = str(_pick(item, "star", "starName") or "")
+        brand = str(_pick(item, "brandName") or "")
         rows.append(
             {
-                "name": name,
-                "category": str(_pick(item, "starName", "star", "level", "category") or "酒店"),
-                "score": _pick(item, "score", "rating", "commentScore", "dsaScore") or "",
-                "price_hint": (f"¥{_pick(item, 'price', 'minPrice', 'lowestPrice')}" if _pick(item, "price", "minPrice", "lowestPrice") else "以供应商页面为准"),
-                "position": str(_pick(item, "position", "address", "location", "regionName")),
-                "booking_url": _booking_url(_pick(item, "jumpUrl", "bookingUrl", "detailUrl", "url")),
+                "name": name + (f"（{brand}）" if brand else ""),
+                "category": star or "酒店",
+                "score": _pick(item, "rate", "score", "rating") or "",
+                "price_hint": str(_pick(item, "price") or "以供应商页面为准"),
+                "position": " ".join(x for x in [str(_pick(item, "interestsPoi") or ""), str(_pick(item, "address") or "")] if x),
+                "booking_url": _booking_url(_pick(item, "detailUrl", "jumpUrl", "bookingUrl")),
             }
         )
     return rows

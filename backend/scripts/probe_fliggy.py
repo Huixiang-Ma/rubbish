@@ -20,10 +20,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.services import fliggy_client  # noqa: E402
 
 PROBES: list[tuple[str, str, dict]] = [
-    ("train", "search_train", {"origin": "杭州", "destination": "北京"}),
+    ("train", "search_domestic_train", {"origin": "杭州", "destination": "北京"}),
     ("train-alt", "ai_search", {"query": "杭州到北京的高铁车次和二等座价格"}),
     ("flight", "search_flight", {"origin": "杭州", "destination": "北京"}),
-    ("hotel", "search_hotel", {"destName": "北京"}),
+    ("hotel", "search_hotels", {"destName": "北京"}),
     ("attraction", "search_poi", {"cityName": "北京", "keyword": "景点"}),
     ("entertainment", "keyword_search", {"query": "北京 演出 展览"}),
 ]
