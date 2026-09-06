@@ -1243,7 +1243,12 @@ document.addEventListener('click', e => {
     toast('未连接后端：服务大厅数据来自实时接口，请先启动后端服务'); return;
   }
   const ag = e.target.closest('.agent');
-  if (ag && !ag.closest('#genOverlay')) { toast('各智能体的真实产出随行程生成；生成完成后可在行程书各章回看'); return; }
+  if (ag && !ag.closest('#genOverlay')) {
+    var name = (ag.querySelector('h3') || {}).textContent?.trim();
+    var node = ({ '情报员': 'Researcher', '路线师': 'Planner', '排期师': 'Itinerary', '质检官': 'Validator', '舆情分析师': 'Sentiment', '辩论席': 'Debate', '心情导演': 'Mood', '主笔': 'Reporter' })[name];
+    if (node && window.openAgentOutput) { window.openAgentOutput(node, name); }
+    return;
+  }
   const sb = e.target.closest('[data-svc-book]');
   if (sb) {
     if (sb.tagName === 'A' && sb.href) {
@@ -1333,16 +1338,18 @@ document.addEventListener('click', e => {
     var kind = SVC_KIND_MAP[svcKey];
     window._currentSvcKind = kind;  // 预订点击埋点用
     var title = SVC_TITLES[svcKey] || [svcKey, "实时窗口"];
+    // P1.5：载入行程书后，服务大厅跟随行程书的目的地/出发地（历史回看尤其需要）；表单值仅作兜底
     var destInput = document.getElementById("fDest") || document.getElementById("destination");
-    var destination = destInput && destInput.value.trim();
+    var destination = (window.currentPlanMeta && window.currentPlanMeta.destination) || (destInput && destInput.value.trim()) || "";
+    var originValue = (window.currentPlanMeta && window.currentPlanMeta.origin) || ((document.getElementById("fFrom") || {}).value || "").trim() || "";
     if (!destination) {
       openDetail(title[0], title[1], '<p class="vote-hint">请先在上方填写目的地，再查看实时服务数据。</p>');
       return;
     }
-    var fromInput = document.getElementById("fFrom");
-    var originParam = (fromInput && fromInput.value.trim()) ? "&origin=" + encodeURIComponent(fromInput.value.trim()) : "";
+    var originParam = originValue ? "&origin=" + encodeURIComponent(originValue) : "";
     // 先开浮层展示加载态，避免点击后无响应
-    openDetail(title[0], title[1], '<p class="vote-hint">正在获取实时数据…</p>');
+    var scopeNote = (window.currentPlanMeta && window.currentPlanMeta.destination) ? " · 跟随行程书：" + window.currentPlanMeta.destination : "";
+    openDetail(title[0], title[1] + scopeNote, '<p class="vote-hint">正在获取实时数据…</p>');
     try {
       var resp = await fetch(apiBase + "/api/services/" + kind + "?destination=" + encodeURIComponent(destination) + originParam);
       var data = await resp.json();
@@ -1821,6 +1828,7 @@ document.addEventListener('click', e => {
     var cleanMd = stripEngineeringSections(md);
     /* 口径来源：后端落盘的原始入参；本地刚生成时与之等价，历史回看时 runPayload 为空也能正确渲染 */
     var ui = data.user_input || runPayload || {};
+    window.currentPlanMeta = { destination: ui.destination || "", origin: ui.origin || "" };  // 服务大厅/角色卡跟随当前行程书
     if (itin.length) {
       renderRealDays(itin);
       var spots = itin.reduce(function (n, d) { return n + (d.items || []).length; }, 0);
@@ -2279,6 +2287,90 @@ document.addEventListener('click', e => {
     document.getElementById("expGuideSend").addEventListener("click", send);
     document.getElementById("expGuideInput").addEventListener("keydown", function (e) { if (e.key === "Enter") send(); });
   }
+  /* ---------- P1.5 流水线角色卡：展示对应节点的真实产出 ---------- */
+  async function fmtKV(obj, keys) {
+    var lines = [];
+    keys.forEach(function (k) {
+      var v = obj[k];
+      if (v === undefined || v === null || v === "") return;
+      lines.push("- " + k + "：" + (typeof v === "object" ? JSON.stringify(v) : v));
+    });
+    return lines;
+  }
+  var AGENT_BUILD = {
+    Researcher: function (p) {
+      if (p.summary) return "- " + escapeHtml(p.summary);
+      return mdKV(p);
+    },
+    Planner: function (p) {
+      if (p.selected_spots) {
+        return "<b>收录点位</b><ul>" + p.selected_spots.map(function (s) { return "<li>" + escapeHtml(typeof s === "string" ? s : s.name || JSON.stringify(s)); }) + "</ul>" +
+          (p.dropped_candidates && p.dropped_candidates.length ? "<b>剔除候选</b><ul>" + p.dropped_candidates.map(function (s) { return "<li>" + escapeHtml(typeof s === "string" ? s : s.name || JSON.stringify(s)); }) + "</ul>" : "");
+      }
+      return mdKV(p);
+    },
+    Itinerary: function (p) {
+      var days = p.itinerary || [];
+      if (!days.length) return mdKV(p);
+      return days.map(function (d) {
+        return '<b>Day ' + d.day + (d.theme ? " · " + escapeHtml(d.theme) : "") + '</b><ul>' +
+          (d.items || []).map(function (i) { return "<li>" + escapeHtml((i.time || "") + " " + (i.title || (i.spot || {}).name || "")); }).join("") + "</ul>";
+      }).join("");
+    },
+    Validator: function (p) {
+      var f = p.findings || [];
+      return f.length ? "<ul>" + f.map(function (x) { return "<li>" + escapeHtml(typeof x === "string" ? x : JSON.stringify(x)); }) + "</ul>" : "- 质检通过，无遗留硬伤";
+    },
+    Sentiment: function (p) {
+      var html = p.summary ? "<p>" + escapeHtml(p.summary) + "</p>" : "";
+      (p.risk_alerts || []).forEach(function (a) {
+        html += '<div class="db-verdict">⚠️ <b>' + escapeHtml(a.name) + '</b> [' + escapeHtml(a.risk_level) + '] ' + escapeHtml(a.message) + ' → ' + escapeHtml(a.suggestion) + '</div>';
+      });
+      (p.reviews || []).forEach(function (r) {
+        html += '<p>' + escapeHtml(r.name) + '：' + escapeHtml((r.highlights || []).join("；")) + '</p>';
+      });
+      return html || "- 未命中风险舆情";
+    },
+    Debate: function (p) { return expDebateCards(p.debates || []); },
+    Mood: function (p) {
+      if (!p || !p.phases) return "- 未指定心情词，心情导演跳过了本章。";
+      return "- 心情词：" + escapeHtml(p.mood) + "<br>- 主题：" + escapeHtml(p.theme) + "<ul>" + p.phases.map(function (ph) {
+        return "<li>Day " + ph.day + " · " + escapeHtml(ph.phase) + "：" + escapeHtml(ph.emotion) + "——" + escapeHtml(ph.narration) + "</li>";
+      }).join("") + "</ul>";
+    },
+    Reporter: function (p) {
+      return "- 行程书已汇编成稿并落盘（sha256 " + escapeHtml(String(p.sha256 || "").slice(0, 12)) + "…）<br>- 七章内容见上方行程书，可从历史行程或分享链接回看。";
+    }
+  };
+  function mdKV(p) {
+    return "<ul>" + Object.keys(p || {}).map(function (k) {
+      var v = p[k];
+      if (v === null || v === undefined || v === "" || typeof v === "object") return "";
+      return "<li>" + escapeHtml(k) + "：" + escapeHtml(String(v)) + "</li>";
+    }).join("") + "</ul>" || '<p class="vote-hint">该节点暂无可展示字段。</p>';
+  }
+  window.openAgentOutput = async function (node, cnName) {
+    if (!window.REAL_MODE) { toast("未连接后端：角色产出全部来自真实生成，请先启动后端"); return; }
+    if (!jobId) { openDetail(cnName + " · 产出", "来自当前行程", NEED_PLAN_HTML); return; }
+    var cacheKey = jobId + "|agent|" + node;
+    openDetail(cnName + " · 真实产出", "任务 " + jobId.slice(5, 13) + " · 该节点执行结果", '<p class="vote-hint">加载中…</p>');
+    var html;
+    if (EXP_CACHE[cacheKey]) html = EXP_CACHE[cacheKey];
+    else {
+      try {
+        var d = await expGet("/api/plans/" + jobId + "/agent-outputs");
+        var out = (d.outputs || {})[node];
+        if (!out) html = '<p class="vote-hint">该节点在本次生成中未执行（如心情导演未选心情词时跳过）。</p>';
+        else {
+          var build = AGENT_BUILD[node];
+          html = build ? build(out.payload || {}) : '<p class="vote-hint">状态：' + escapeHtml(out.status || "") + '</p>';
+        }
+        EXP_CACHE[cacheKey] = html;
+      } catch (e) { html = '<p class="vote-hint">加载失败：' + escapeHtml(String(e && e.message || e)) + '</p>'; }
+    }
+    openDetail(cnName + " · 真实产出", "任务 " + jobId.slice(5, 13), html);
+  };
+
   window.openExperience = async function (key) {
     if (!window.REAL_MODE) { toast("未连接后端：体验内容全部来自真实生成，请先启动后端"); return; }
     var meta = EXP_META[key];

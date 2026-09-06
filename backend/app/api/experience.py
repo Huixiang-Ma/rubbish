@@ -70,6 +70,20 @@ def get_nearby(job_id: str, kind: str = "food") -> dict[str, Any]:
     return {"job_id": job_id, "kind": kind, "pois": pois}
 
 
+@router.get("/{job_id}/agent-outputs")
+def get_agent_outputs(job_id: str) -> dict[str, Any]:
+    """P1.5 流水线角色卡数据源：返回各节点真实产出（名称 → {status, payload}）。"""
+    state = _load_job(job_id)
+    outputs = experience.load_outputs(job_id, state)
+    return {
+        "job_id": job_id,
+        "outputs": {
+            name: {"agent": name, "status": out.get("status"), "payload": out.get("payload")}
+            for name, out in outputs.items()
+        },
+    }
+
+
 @router.get("/{job_id}/debates")
 def get_debates(job_id: str) -> dict[str, Any]:
     """C2 双栏渲染数据源：决策辩论结构化内容。"""

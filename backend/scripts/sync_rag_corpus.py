@@ -116,12 +116,14 @@ def rows_from_amap(city: str, keywords: str, size: int) -> list[dict[str, Any]]:
     rows = []
     for poi in pois:
         ptype = poi.get("type", "")
+        # level 仅对景区类 POI 有意义；餐饮/商店等类型硬填会产出"景区等级：中餐厅"这类病句
+        is_scenic = any(k in ptype for k in ("风景名胜", "景点", "博物馆", "公园", "寺庙", "文物"))
         rows.append(
             {
                 "name": poi.get("name", ""),
                 "city": city,
                 "address": poi.get("address", ""),
-                "level": ptype.split(";")[-1] if ptype else "",
+                "level": ptype.split(";")[-1] if (ptype and is_scenic) else "",
                 "open_time": poi.get("open_time", ""),
                 "description": f"类型：{ptype}" + (f"；评分：{poi['rating']}" if poi.get("rating") else ""),
             }
