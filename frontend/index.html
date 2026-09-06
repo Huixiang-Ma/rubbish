@@ -1688,9 +1688,12 @@ document.addEventListener('click', e => {
     openRealOverlay(runPayload);
     logRow("已提交规划请求，排队中…");
     try {
+      var headers = { "Content-Type": "application/json" };
+      var tok = localStorage.getItem("tocToken");
+      if (tok) headers["Authorization"] = "Bearer " + tok;  // 登录态：按账号计配额并直接归属
       var resp = await fetch(apiBase + "/api/plans", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: headers,
         body: JSON.stringify(runPayload)
       });
       var data = await resp.json();
