@@ -571,7 +571,16 @@
 .hist-chip em.ok { color: var(--teal); }
 .hist-chip em.dim, .hist-chip.dim { opacity: .65; }
 .hist-empty { font-size: 13px; color: var(--ink-faint, #8b857a); }
-.history-bar .sub-h { margin-top: 30px; }
+.map-panel .sub-h { margin-top: 30px; }
+/* P1.5 历史入口：跟随页面的气泡按钮 */
+.hist-bubble { position: fixed; right: 20px; bottom: 22px; z-index: 90; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  width: 58px; height: 58px; border-radius: 50%; border: 1px solid rgba(47,93,80,.35); background: var(--teal, #2f5d50); color: #f6f3ea;
+  box-shadow: 0 6px 18px rgba(35,60,52,.35); cursor: pointer; transition: .15s; font-family: inherit; }
+.hist-bubble:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(35,60,52,.45); }
+.hist-bubble .hb-ico { font-size: 20px; line-height: 1; margin-top: 8px; }
+.hist-bubble .hb-txt { font-size: 11px; letter-spacing: 1px; }
+.hist-bubble .hb-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; border-radius: 99px;
+  background: var(--gold, #a9863f); color: #fff; font-size: 11px; line-height: 20px; padding: 0 5px; }
 /* P1.5 体验中心动态弹层 */
 .exp-map { height: 300px; border-radius: 10px; border: 1px solid var(--hairline); margin: 8px 0; }
 .exp-nearby { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 4px; }
@@ -909,9 +918,17 @@
         </div>
       </div>
 
-      <div class="history-bar" id="historyBar">
-        <div class="sub-h">历史行程</div>
-        <div class="hist-chips" id="histChips"><span class="hist-empty">暂无历史；生成的行程会自动留档在本机，点击可随时回看。</span></div>
+      <div class="map-panel" id="mapPanel">
+        <div class="sub-h">实时地图 · 全程动线</div>
+        <div class="day-tabs" id="bookMapTabs"></div>
+        <div class="exp-map" id="bookMap" style="height:380px"></div>
+        <div class="exp-nearby">
+          <button class="btn-s ghost" data-bnear="food">🍜 附近美食</button>
+          <button class="btn-s ghost" data-bnear="parking">🅿️ 附近车位</button>
+          <button class="btn-s ghost" data-bnear="toilet">🚻 附近洗手间</button>
+        </div>
+        <div id="bookMapPois"></div>
+        <p class="ch-empty" id="bookMapEmpty">载入或生成一本行程书后，此处展示全程真实动线与周边设施。</p>
       </div>
     </div>
   </div>
@@ -1053,6 +1070,10 @@
     <div class="d-body" id="dBody"></div>
   </div>
 </div>
+<button class="hist-bubble" id="histBubble" title="历史行程">
+  <span class="hb-ico">🕘</span><span class="hb-txt">历史</span>
+  <span class="hb-badge" id="histBadge" style="display:none">0</span>
+</button>
 <div class="toast" id="toast"></div>
 <link rel="stylesheet" href="/vendor/leaflet.css" />
 <script src="/vendor/leaflet.js"></script>
@@ -1751,13 +1772,14 @@ document.addEventListener('click', e => {
   });
 
   /* ---------- 历史行程交互 ---------- */
-  $("histChips").addEventListener("click", function (e) {
+  document.addEventListener("click", function (e) {
     var chip = e.target.closest("[data-hist]");
     if (!chip) return;
-    var entries = $("histChips")._entries || [];
+    var entries = ($("histChips") || {})._entries || [];
     var en = entries[Number(chip.dataset.hist)];
-    if (en) loadHistoryPlan(en);
+    if (en) { loadHistoryPlan(en); closeDetail(); }
   });
+  $("histBubble").addEventListener("click", openHistoryPopup);
 
   /* ---------- 行程书真实渲染 ---------- */
   function bindRealDayTabs() {
@@ -1916,6 +1938,7 @@ document.addEventListener('click', e => {
       var shareBtn = $("shareBtn");
       if (shareBtn) shareBtn.style.display = "block";
     }
+    loadBookMap();  // 内嵌实时地图跟随当前行程书
   }
 
   /* ---------- 历史记录：本机留档 job_id，列表与回看全部取后端真实数据 ---------- */
@@ -1941,6 +1964,11 @@ document.addEventListener('click', e => {
 
   /* ---------- 历史行程列表 + 回看 ---------- */
   var HISTORY_STATUS_CN = { COMPLETED: "已完成", RUNNING: "规划中", QUEUED: "排队中", FAILED: "生成失败", WAITING_BUDGET_APPROVAL: "待预算确认", WAITING_SAFETY_REVIEW: "待安全确认" };
+  function openHistoryPopup() {
+    openDetail("🕘 历史行程", "点击任意一条载入到当前页面", '<div class="hist-chips" id="histChips"><span class="hist-empty">加载中…</span></div>');
+    loadHistory();
+  }
+  window.openHistoryPopup = openHistoryPopup;
   async function loadHistory() {
     var box = $("histChips");
     if (!box) return;
@@ -1988,19 +2016,21 @@ document.addEventListener('click', e => {
         };
       }));
     }
+    var badge = $("histBadge");
+    if (badge) { badge.textContent = entries.length; badge.style.display = entries.length ? "block" : "none"; }
     if (!entries.length) {
       box.innerHTML = '<span class="hist-empty">暂无历史；生成的行程会自动留档，登录后可跨设备查看。</span>';
       return;
     }
     box.innerHTML = entries.map(function (en, i) {
-      var stCn = HISTORY_STATUS_CN[en.status] || en.status;
+      var stCn = HISTORY_STATUS_CN[en.status] || (en.status === "UNKNOWN" ? "" : en.status);
       var done = en.status === "COMPLETED";
       var timeTxt = en.updated_at ? new Date(en.updated_at).toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : en.saved_at;
       return '<button class="hist-chip' + (done ? "" : " dim") + '" data-hist="' + i + '" title="载入这本行程书">' +
         "<b>" + escapeHtml(en.destination) + "</b>" +
         (en.days ? "<span> · " + en.days + " 天</span>" : "") +
         (en.travelers ? "<span> · " + en.travelers + " 人</span>" : "") +
-        '<em class="' + (done ? "ok" : "dim") + '">' + stCn + (timeTxt ? " · " + timeTxt : "") + "</em></button>";
+        '<em class="' + (done ? "ok" : "dim") + '">' + (stCn ? stCn + " · " : "") + (timeTxt || "") + "</em></button>";
     }).join("");
     box._entries = entries;
   }
@@ -2134,7 +2164,7 @@ document.addEventListener('click', e => {
     }).join("");
   }
   var NEED_PLAN_HTML = '<p class="vote-hint">体验内容全部来自真实生成的行程数据。请先点击「AI 规划旅程」生成一本，或在「历史行程」中载入一本。</p>' +
-    '<button class="btn-s ghost" onclick="document.getElementById(\'historyBar\').scrollIntoView({behavior:\'smooth\'})">去历史行程 →</button>';
+    '<button class="btn-s ghost" onclick="window.openHistoryPopup && window.openHistoryPopup()">去历史行程 →</button>';
   async function expGet(path) {
     var resp = await fetch(apiBase + path);
     if (!resp.ok) throw new Error("接口返回 " + resp.status);
@@ -2287,6 +2317,69 @@ document.addEventListener('click', e => {
     document.getElementById("expGuideSend").addEventListener("click", send);
     document.getElementById("expGuideInput").addEventListener("keydown", function (e) { if (e.key === "Enter") send(); });
   }
+  /* ---------- 行程书内嵌实时地图（跟随当前行程书） ---------- */
+  var bookMapState = { map: null, layer: null, data: null, day: 0, job: null };
+  async function loadBookMap() {
+    var empty = $("bookMapEmpty"), tabs = $("bookMapTabs"), box = $("bookMap");
+    if (!box) return;
+    if (!jobId) { empty.style.display = "block"; tabs.innerHTML = ""; if (bookMapState.map) { bookMapState.map.remove(); bookMapState.map = null; } return; }
+    empty.style.display = "none";
+    try {
+      var d = await expGet("/api/plans/" + jobId + "/map");
+      var days = (d.days || []).filter(function (x) { return (x.spots || []).length; });
+      bookMapState.data = days; bookMapState.day = 0; bookMapState.job = jobId;
+      if (!days.length) { empty.style.display = "block"; empty.textContent = "本次行程的点位缺少坐标（旧任务），暂无法画图；逐日动线见第 ② 章。"; tabs.innerHTML = ""; return; }
+      tabs.innerHTML = days.map(function (x, i) {
+        return '<button class="day-tab' + (i === 0 ? " on" : "") + '" data-md="' + i + '">Day ' + x.day + (x.theme ? " · " + escapeHtml(x.theme.slice(0, 6)) : "") + '</button>';
+      }).join("");
+      drawBookMap();
+    } catch (e) {
+      empty.style.display = "block"; empty.textContent = "地图数据加载失败：" + String(e && e.message || e);
+    }
+  }
+  function drawBookMap() {
+    var state = bookMapState;
+    var day = state.data[state.day];
+    var pts = day.spots.filter(function (s) { return s.lat && s.lng; }).map(function (s) { return [Number(s.lat), Number(s.lng)]; });
+    if (!window.L || !pts.length) return;
+    if (!state.map) {
+      state.map = L.map("bookMap", { scrollWheelZoom: true });
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" }).addTo(state.map);
+    }
+    setTimeout(function () { state.map.invalidateSize(); }, 60);
+    if (state.layer) state.map.removeLayer(state.layer);
+    state.layer = L.layerGroup().addTo(state.map);
+    if (pts.length > 1) L.polyline(pts, { color: "#a9863f", dashArray: "6 6" }).addTo(state.layer);
+    day.spots.forEach(function (s, i) {
+      if (!s.lat || !s.lng) return;
+      L.circleMarker([Number(s.lat), Number(s.lng)], { radius: 7, color: "#2f5d50", fillOpacity: 0.85 })
+        .bindPopup((i + 1) + ". " + (s.name || "") + (s.time ? " · " + s.time : ""))
+        .addTo(state.layer);
+    });
+    state.map.fitBounds(pts, { padding: [26, 26] });
+  }
+  $("bookMapTabs").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-md]");
+    if (!b) return;
+    $("bookMapTabs").querySelectorAll(".day-tab").forEach(function (x) { x.classList.remove("on"); });
+    b.classList.add("on");
+    bookMapState.day = Number(b.dataset.md);
+    drawBookMap();
+  });
+  $("mapPanel").addEventListener("click", async function (e) {
+    var nb = e.target.closest("[data-bnear]");
+    if (!nb || !jobId) return;
+    var out = $("bookMapPois");
+    out.innerHTML = '<p class="vote-hint">检索中…</p>';
+    try {
+      var d = await expGet("/api/plans/" + jobId + "/nearby?kind=" + nb.dataset.bnear);
+      var pois = d.pois || [];
+      out.innerHTML = pois.length
+        ? pois.slice(0, 6).map(function (p) { return '<div class="exp-poi">' + escapeHtml(p.name || p.title || "点位") + ' · 约 ' + Math.round(p.distance_m || 0) + ' 米' + (p.address ? ' · ' + escapeHtml(p.address) : "") + '</div>'; }).join("")
+        : '<p class="vote-hint">附近暂无检索结果。</p>';
+    } catch (err) { out.innerHTML = '<p class="vote-hint">检索失败：' + escapeHtml(String(err && err.message || err)) + '</p>'; }
+  });
+
   /* ---------- P1.5 流水线角色卡：展示对应节点的真实产出 ---------- */
   async function fmtKV(obj, keys) {
     var lines = [];
