@@ -177,6 +177,9 @@ def enrich_train_flight(base: dict[str, Any], kind: str, origin: str | None, des
         return base  # 探测结论：飞猪 MCP 无火车票搜索工具（train/12306 仅代理商履约接口）
     items = _fliggy_call(kind, "search_flight", {"origin": (origin or "").removesuffix("市"), "destination": destination.removesuffix("市")})
     if not items:
+        # 实测：飞猪航班查询必须带出发地——未填时引导用户补填，而不是只说官方渠道
+        if not origin and base.get("guide"):
+            base["guide"]["advice"] = "填写出发地后，可实时查询该目的地航班与票价，并支持在线预订跳转。" + base["guide"].get("advice", "")
         return base
     rows = _rows_flight(items)
     if not rows:
