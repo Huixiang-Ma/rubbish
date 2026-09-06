@@ -1,0 +1,17 @@
+route:
+  receiver: feishu
+  group_by: ["alertname", "severity"]
+  group_wait: 10s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  - name: feishu
+    webhook_configs:
+      # 桥接端点：backend 把 Alertmanager 事件转成飞书群机器人消息（send_resolved 一起推）
+      - url: http://backend:8000/internal/alerts/feishu
+        send_resolved: true
+        http_config:
+          authorization:
+            type: Bearer
+            credentials: "alert-bridge-change-me"

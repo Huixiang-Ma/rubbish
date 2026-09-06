@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from app.agents.base import AgentBase
-from app.services import amap_client, fliggy_client, qweather_client
+from app.services import amap_client, fliggy_client, weather_client
 from app.services.llm_client import LLMClient
 from app.services.scenic_spot_service import ScenicSpotService
 from app.services.travel_context_service import CITY_CENTER, TravelContextService
@@ -67,13 +67,13 @@ class ItineraryAgent(AgentBase):
         self.llm = LLMClient()
 
     def _day_forecasts(self, destination: str) -> list[dict[str, str]]:
-        """和风逐日预报（date/text_day/temp_min/temp_max）；未配置或失败时为空。"""
-        if not (amap_client.is_ready() and qweather_client.is_ready()):
+        """双源逐日预报（和风主 + Open-Meteo 备，date/text_day/temp_min/temp_max）；均失败时为空。"""
+        if not (amap_client.is_ready() and weather_client.is_ready()):
             return []
         geo = amap_client.geocode(destination)
         if not geo:
             return []
-        return qweather_client.weather_3d(f"{geo['lng']},{geo['lat']}") or []
+        return weather_client.weather_3d(f"{geo['lng']},{geo['lat']}") or []
 
     def _enrich_with_fliggy(self, destination: str, itinerary: list[dict[str, Any]]) -> None:
         """飞猪AI 补充：按最终景点名精确查询榜单/预订链接/实拍图（并发查询，客户端 10 分钟缓存）。"""

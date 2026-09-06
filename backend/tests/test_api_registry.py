@@ -47,23 +47,29 @@ def test_core_providers_declared() -> None:
 
 
 def test_no_redundant_category_duplicates() -> None:
-    """同一能力只保留一个 API：地图类/天气类不允许出现重复 provider。"""
+    """同一能力只保留一个 API：地图类/天气类不允许出现重复 provider。
+
+    显式例外：open_meteo 是 qweather 的灾备双源（weather_backup 类目），非遗漏冗余。
+    """
     seen: dict[str, str] = {}
     for name, config in api_registry.API_PROVIDERS.items():
-        if config.category in {"map", "weather"}:
+        if config.category in {"map", "weather", "weather_backup"}:
             assert config.category not in seen, (
                 f"{config.category} 能力重复：{seen[config.category]} 与 {name}"
             )
             seen[config.category] = name
     assert seen["map"] == "amap"
     assert seen["weather"] == "qweather"
+    assert seen["weather_backup"] == "open_meteo"
 
 
 def test_all_providers_have_mock_fallback_and_docs() -> None:
+    # 免密钥公开服务无需声明凭证环境变量（Open-Meteo 非商用免费无 key）
+    keyless_providers = {"open_meteo"}
     for name, config in api_registry.API_PROVIDERS.items():
         assert config.fallback == "mock", name
         assert config.base_url.startswith("https://"), name
-        assert config.key_envs, name
+        assert config.key_envs or name in keyless_providers, name
         assert config.description, name
 
 

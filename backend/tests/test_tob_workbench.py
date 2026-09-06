@@ -12,6 +12,7 @@ if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
 from app.main import app
+from app.services import auth_service
 from app.services import paths as paths_mod
 from app.services.checkpoint_store import CheckpointStore
 
@@ -102,7 +103,9 @@ def test_feedbacks_aggregates_from_audit(data_root):
     store.append_audit("plan_fb0001", {"action": "feedback", "kind": "praise", "operator": "顾问A", "content": "行程很贴心"})
     store.append_audit("plan_fb0002", {"action": "feedback", "kind": "complaint", "operator": "顾问B", "content": "第二天太赶"})
 
-    resp = client.get("/api/feedbacks")
+    # P0 安全基线后 AUTH_ENABLED=true：admin 路由组（含客户之声聚合）需要管理员 token
+    headers = {"Authorization": f"Bearer {auth_service.issue_token('admin', 'admin')}"}
+    resp = client.get("/api/feedbacks", headers=headers)
 
     assert resp.status_code == 200
     body = resp.json()
@@ -110,7 +113,7 @@ def test_feedbacks_aggregates_from_audit(data_root):
     assert body["complaint_count"] == 1
     assert {item["customer"] for item in body["items"]} == {"客户甲", "客户乙"}
 
-    only_praise = client.get("/api/feedbacks", params={"kind": "praise"}).json()
+    only_praise = client.get("/api/feedbacks", params={"kind": "praise"}, headers=headers).json()
     assert only_praise["total"] == 1
     assert only_praise["complaint_count"] == 0
 

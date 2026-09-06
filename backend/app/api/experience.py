@@ -102,6 +102,10 @@ def get_guides(job_id: str) -> dict[str, Any]:
 
 @router.post("/{job_id}/dialogue")
 def post_dialogue(job_id: str, payload: DialogueRequest) -> dict[str, Any]:
+    """P2.5 合规：UGC 输入先过 Prompt 注入/风险扫描，拦截直接 400。"""
+    scan = SafetyService().scan_user_input(payload.message)
+    if scan.action == "block":
+        raise HTTPException(status_code=400, detail="输入包含高风险内容，已被安全策略拦截")
     """C5 名人对话：多轮追问。"""
     state = _load_job(job_id)
     return experience.dialogue(job_id, state, payload.guide_id, payload.message, payload.history)

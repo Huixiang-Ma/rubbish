@@ -10,3 +10,6 @@ psycopg[binary]>=3.1
 prometheus-client>=0.20
 cryptography>=42.0
 python-dotenv>=1.0
+# 文档摄取（app/services/document_ingest.py：PDF/DOCX → 文本 → RAG 入库）
+pypdf>=5.0
+python-docx>=1.1

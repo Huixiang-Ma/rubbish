@@ -35,6 +35,7 @@ from app.services.metrics import APPROVALS, PLAN_SUBMITS
 from app.services.markdown_reporter import MarkdownReporter
 from app.services.paths import DATA_ROOT, job_dir
 from app.services.queue_client import queue_client
+from app.services.safety_service import SafetyService
 from app.services.travel_context_service import TravelContextService
 
 router = APIRouter(prefix="/api/plans", tags=["plans"])
@@ -255,6 +256,9 @@ def get_plan_audit(job_id: str) -> dict:
 
 @router.post("/{job_id}/feedback")
 def submit_feedback(job_id: str, payload: FeedbackRequest, _role: dict = Depends(require_role("consultant", "supervisor", "admin"))) -> dict:
+    scan = SafetyService().scan_user_input(payload.content)
+    if scan.action == "block":
+        raise HTTPException(status_code=400, detail="反馈内容包含高风险内容，已被安全策略拦截")
     """B4 反馈通道（吸收原型"填写好评/填写投诉"），落审计日志。"""
     try:
         store.load(job_id)

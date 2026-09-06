@@ -8,6 +8,7 @@ import time
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.config import get_settings
 from app.services import auth_service
 
 
@@ -39,11 +40,15 @@ def _make_hold_job(client: TestClient, suffix: str) -> str:
 
 
 def test_role_tokens_issue():
+    # P0 安全基线后口令走 .env 配置，测试同步从设置读取，不再硬编码
+    settings = get_settings()
     with TestClient(app) as client:
-        supervisor = _login_tob(client, "supervisor", "sv2026")
-        consultant = _login_tob(client, "consultant", "ct2026")
+        supervisor = _login_tob(client, "supervisor", settings.tob_supervisor_password)
+        consultant = _login_tob(client, "consultant", settings.tob_consultant_password)
     assert supervisor["role"] == "supervisor"
     assert consultant["role"] == "consultant"
+    # P2.3：主管 token 应携带租户声明
+    assert supervisor.get("tenant") == settings.tob_supervisor_tenant
 
 
 def test_traveler_token_forbidden_on_approval():

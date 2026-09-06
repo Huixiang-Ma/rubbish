@@ -33,6 +33,24 @@ def notify_hold(job_id: str, status: str, reason: str) -> bool:
         return False
 
 
+def send_feishu_text(text: str) -> bool:
+    """P3.2 告警桥接：向飞书群机器人发送任意文本；未配置 webhook 时静默跳过。"""
+    settings = get_settings()
+    if not settings.feishu_webhook_url:
+        logger.info("feishu webhook 未配置，告警文本仅记日志：%s", text[:200])
+        return False
+    try:
+        response = httpx.post(
+            settings.feishu_webhook_url,
+            json={"msg_type": "text", "content": {"text": text}},
+            timeout=5,
+        )
+        return response.status_code == 200
+    except Exception as exc:
+        logger.warning("feishu notify failed: %s", exc)
+        return False
+
+
 def send_email(to: str, subject: str, body: str) -> bool:
     """邮件通道扩展点：接入 SMTP 前占位（明确不接清单之外，按触发条件启用）。"""
     raise NotImplementedError("邮件通知未启用：配置 SMTP 后在本扩展点实现。")

@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     embedding_ollama_url: str = "http://host.docker.internal:11434"  # 容器内访问宿主机 Ollama
     embedding_model: str = "dengcao/bge-m3:567m"
     embedding_dim: int = 1024  # BGE-M3 输出 1024 维；换模型需同步此值
-    embedding_timeout_seconds: float = 10.0
+    embedding_timeout_seconds: float = 30.0  # BGE-M3 冷启动/批量高峰单次推理可超 10s，放宽防误杀
 
     # 生产演进：数据库 / 可观测 / 通知
     database_url: str | None = None  # 例 postgresql+psycopg://wl:wl@localhost:5432/wl_travel
@@ -70,6 +70,7 @@ class Settings(BaseSettings):
     tob_supervisor_password: str = "sv2026"
     tob_consultant_password: str = "ct2026"
     free_plan_per_day: int = 3
+    sms_provider: str = "mock"  # mock（验证码写日志/回显）| aliyun（P2.1 凭证到位后接真实通道）
     tob_supervisor_tenant: str = "wl"  # toB 主管归属租户（多租户做实：顾问/主管只看本租户方案）
     tob_consultant_tenant: str = "wl"  # 每账号/每 IP 每日免费规划单数（P2 成本治理）
 

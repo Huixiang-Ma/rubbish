@@ -3,7 +3,7 @@ import math
 from functools import lru_cache
 from typing import Any
 
-from app.services import amap_client, qweather_client
+from app.services import amap_client, weather_client
 from app.services.paths import STATIC_DATA_ROOT
 from app.services.scenic_spot_service import ScenicSpotService
 
@@ -179,14 +179,14 @@ class TravelContextService:
         }
 
     def weather_notes(self, destination: str | None = None) -> list[str]:
-        # 真实模式：高德地理编码 + 和风 3 天预报；任一步失败回退四季演示样例
-        if destination and amap_client.is_ready() and qweather_client.is_ready():
+        # 真实模式：高德地理编码 + 双源 3 天预报（和风主 + Open-Meteo 备）；任一步失败回退四季演示样例
+        if destination and amap_client.is_ready() and weather_client.is_ready():
             geo = amap_client.geocode(destination)
             if geo:
-                daily = qweather_client.weather_3d(f"{geo['lng']},{geo['lat']}")
+                daily = weather_client.weather_3d(f"{geo['lng']},{geo['lat']}")
                 if daily:
                     city_label = geo.get("city") or destination
-                    notes = [f"未来三天实时预报（和风天气 · {city_label}）："]
+                    notes = [f"未来三天实时预报（{weather_client.last_source_label()} · {city_label}）："]
                     notes.extend(
                         f"{day['date']}：{day['text_day']}，{day['temp_min']}~{day['temp_max']}℃"
                         for day in daily

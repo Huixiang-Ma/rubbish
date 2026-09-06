@@ -90,6 +90,17 @@ _API_DECLARATIONS: tuple[dict, ...] = (
         "base_url_env": "QWEATHER_API_HOST",
         "docs_url": "https://dev.qweather.com/docs/",
     },
+    # Open-Meteo：全球天气灾备双源（和风主源未配置/失败/超限时自动切换）。
+    # 非商用免密钥（1 万次/天，CC BY 4.0）；商用需订阅付费 endpoint。
+    {
+        "name": "open_meteo",
+        "category": "weather_backup",
+        "description": "Open-Meteo：免密钥全球天气灾备源，和风失败时自动切换（非商用免费，商用需订阅）",
+        "base_url": "https://api.open-meteo.com",
+        "key_envs": (),  # 免密钥公开服务，无凭证要求
+        "timeout_seconds": 10.0,
+        "docs_url": "https://open-meteo.com/en/docs",
+    },
     # 飞猪开放平台（淘宝开放平台 alitrip）：酒店查询/房价 + 门票商品（同一 appkey 覆盖）
     # 关键 API：taobao.xhotel.get（酒店查询）、taobao.xhotel.baseinfo.room.get（房型房价）、
     #          taobao.xhotel.rate.get / multiplerate.get（房价报价）、alitrip.ticket.scenic.query / product.query（门票商品）
@@ -169,7 +180,7 @@ def load_api_configs() -> dict[str, ApiConfig]:
             enabled = keys_ready
         configs[name] = replace(
             base,
-            api_key=keys[0] if keys_ready else "",
+            api_key=keys[0] if keys else "",
             enabled=enabled,
             base_url=base_url,
         )

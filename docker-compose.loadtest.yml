@@ -1,0 +1,19 @@
+# P0.5 容量压测隔离实例：LLM 走 mock（零 token 成本），端口错开主栈。
+# 用法：
+#   docker compose -p wl_loadtest -f docker-compose.yml -f docker-compose.loadtest.yml up -d backend redis
+#   python backend/scripts/load_test.py http://127.0.0.1:8010 ...
+#   docker compose -p wl_loadtest -f docker-compose.yml -f docker-compose.loadtest.yml down
+services:
+  backend:
+    ports: !override
+      - "8010:8000"
+    environment:
+      LLM_MODE: mock
+      FREE_PLAN_PER_DAY: "1000000"
+      DATA_ROOT: /data/jobs_loadtest
+      WORKER_COUNT: "2"
+    volumes:
+      - ./data:/data
+  redis:
+    ports: !override
+      - "6390:6379"

@@ -7,15 +7,23 @@ from app.services import auth_service
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
+class SmsCodeRequest(BaseModel):
+    phone: str = Field(..., pattern=r"^1\d{10}$")
+
+
 class LoginRequest(BaseModel):
     realm: str = Field(default="toc", pattern="^(toc|tob)$")
-    username: str = Field(..., min_length=1)
-    password: str = Field(..., min_length=1)
+    username: str | None = Field(default=None, min_length=1)
+    password: str | None = Field(default=None, min_length=1)
+    phone: str | None = Field(default=None, pattern=r"^1\d{10}$")
+    sms_code: str | None = Field(default=None, min_length=1)
 
 
 class RegisterRequest(BaseModel):
     username: str = Field(..., min_length=1)
-    password: str = Field(..., min_length=1)
+    password: str | None = Field(default=None, min_length=1)
+    phone: str | None = Field(default=None, pattern=r"^1\d{10}$")
+    sms_code: str | None = Field(default=None, min_length=1)
     display: str | None = None
 
 
@@ -23,9 +31,32 @@ def bearer_token(request: Request) -> str:
     return request.headers.get("authorization", "").removeprefix("Bearer ").strip()
 
 
+@router.post("/request-code")
+def request_code(payload: SmsCodeRequest) -> dict:
+    """P2.1 验证码签发；mock 通道回显 dev_code 供演示，真实通道上线后移除该字段。"""
+    import app.services.auth_service as svc
+
+    sent, dev_code = svc._send_sms(payload.phone)
+    if not sent:
+        raise HTTPException(status_code=500, detail="验证码发送失败")
+    result = {"sent": True}
+    from app.config import get_settings
+
+    if get_settings().sms_provider == "mock":
+        result["dev_code"] = dev_code
+    return result
+
+
 @router.post("/login")
 def login(payload: LoginRequest) -> dict:
-    user = auth_service.verify(payload.realm, payload.username, payload.password)
+    # P2.1 手机号+验证码登录（realm=toc 且带 phone/sms_code 时走短信链路）
+    if payload.realm == "toc" and payload.phone and payload.sms_code:
+        ok, err = auth_service.verify_sms_code(payload.phone, payload.sms_code)
+        if not ok:
+            raise HTTPException(status_code=401, detail=err or "验证码错误")
+        user = auth_service.login_or_register_phone(payload.phone)
+    else:
+        user = auth_service.verify(payload.realm, payload.username, payload.password)
     if not user:
         raise HTTPException(status_code=401, detail="用户名或密码错误")
     return {

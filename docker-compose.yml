@@ -30,6 +30,8 @@ services:
       DATA_ROOT: /data/jobs
       # DATABASE_URL 若指向本机 localhost 在容器内不可达，改为服务名（未启用 postgres profile 时保持为空）
       DATABASE_URL: ${DATABASE_URL:-}
+      # 告警桥接：Alertmanager webhook 回调鉴权（生产必改）
+      ALERT_BRIDGE_TOKEN: ${ALERT_BRIDGE_TOKEN:-alert-bridge-change-me}
     ports:
       - "${BACKEND_HOST_PORT:-8000}:8000"
     volumes:
@@ -62,8 +64,19 @@ services:
     profiles: ["observability"]
     volumes:
       - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
     ports:
       - "9091:9090"
+
+  # P3.2 告警分发：Alertmanager → backend 桥接端点 → 飞书群机器人
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    profiles: ["observability"]
+    restart: unless-stopped
+    volumes:
+      - ./observability/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    depends_on:
+      - backend
 
   grafana:
     image: grafana/grafana:11.3.0

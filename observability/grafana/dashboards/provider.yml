@@ -1,0 +1,11 @@
+apiVersion: 1
+providers:
+  - name: wl-travel
+    orgId: 1
+    folder: 文旅系统
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: false

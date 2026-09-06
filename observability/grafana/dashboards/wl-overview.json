@@ -1,0 +1,47 @@
+{
+  "title": "文旅系统 · 运营与成本总览",
+  "uid": "wl-overview",
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": { "from": "now-24h", "to": "now" },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "任务提交（24h）", "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "targets": [{ "expr": "increase(plan_submits_total[24h])", "refId": "A" }]
+    },
+    {
+      "id": 2, "type": "stat", "title": "完成 / 失败（24h）", "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "targets": [
+        { "expr": "increase(job_completed_total[24h])", "refId": "A" },
+        { "expr": "increase(job_failed_total[24h])", "refId": "B" }
+      ]
+    },
+    {
+      "id": 3, "type": "stat", "title": "队列积压", "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "targets": [{ "expr": "queue_depth", "refId": "A" }],
+      "fieldConfig": { "defaults": { "thresholds": { "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 20 }, { "color": "red", "value": 50 } ] } } }
+    },
+    {
+      "id": 4, "type": "stat", "title": "LLM 调用（24h）", "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "targets": [{ "expr": "increase(llm_calls_total[24h])", "refId": "A" }]
+    },
+    {
+      "id": 5, "type": "timeseries", "title": "LLM Token 消耗（按类型，1h 窗口）", "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "targets": [{ "expr": "sum by (kind) (increase(llm_tokens_total[1h]))", "legendFormat": "{{kind}}", "refId": "A" }]
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "任务处理耗时 P95（秒）", "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum by (le) (rate(job_process_seconds_bucket[1h])))", "refId": "A" }]
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "预订点击（按类型，1h 窗口）", "gridPos": { "x": 0, "y": 12, "w": 12, "h": 7 },
+      "targets": [{ "expr": "sum by (kind) (increase(booking_clicks_total[1h]))", "legendFormat": "{{kind}}", "refId": "A" }]
+    },
+    {
+      "id": 8, "type": "timeseries", "title": "飞猪 MCP 调用结果（1h 窗口）", "gridPos": { "x": 12, "y": 12, "w": 12, "h": 7 },
+      "targets": [{ "expr": "sum by (result) (increase(fliggy_requests_total[1h]))", "legendFormat": "{{result}}", "refId": "A" }]
+    }
+  ],
+  "schemaVersion": 39,
+  "version": 1
+}

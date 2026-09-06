@@ -137,6 +137,37 @@ def shutdown() -> None:
     plan_worker.stop()
 
 
+@app.post("/internal/alerts/feishu")
+async def alerts_feishu_bridge(request: Request) -> dict:
+    """P3.2 告警桥接：接收 Alertmanager webhook，转译为飞书群消息。
+
+    仅供 compose 内网 Alertmanager 调用；Bearer token 校验防公网滥用。
+    始终返回 200，避免 Alertmanager 对失败告警疯狂重试。
+    """
+    auth = request.headers.get("authorization", "")
+    import os as _os
+    expected = "Bearer " + _os.environ.get("ALERT_BRIDGE_TOKEN", "alert-bridge-change-me")
+    if auth != expected:
+        return {"status": "forbidden"}
+    try:
+        body = await request.json()
+    except Exception:
+        return {"status": "bad_request"}
+    from app.services.notify import send_feishu_text
+    lines = []
+    for alert in body.get("alerts", [])[:10]:
+        labels = alert.get("labels", {})
+        anno = alert.get("annotations", {})
+        raw_status = alert.get("status")
+        status = raw_status.get("state") if isinstance(raw_status, dict) else (raw_status or "firing")
+        lines.append(f"【{labels.get('severity', 'info').upper()}】{labels.get('alertname', 'Alert')} {status} | {anno.get('summary', '')}")
+    if lines:
+        text = "[文旅系统告警]\n" + "\n\n".join(lines)
+        delivered = send_feishu_text(text)
+        log_event("alert_bridge", alerts=len(lines), delivered=delivered)
+    return {"status": "ok"}
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}

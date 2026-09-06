@@ -1,0 +1,33 @@
+groups:
+  - name: wl-travel-core
+    rules:
+      - alert: BackendDown
+        expr: up{job="wl-travel-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "后端不可达（/metrics 抓取失败持续 1 分钟）"
+      - alert: QueueBacklog
+        expr: queue_depth > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "任务队列积压超过 50，持续 5 分钟——考虑扩 Worker（WORKER_COUNT）"
+      - alert: JobFailureRateHigh
+        expr: >
+          rate(job_failed_total[10m]) /
+          clamp_min(rate(job_completed_total[10m]) + rate(job_failed_total[10m]), 0.001) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "近 10 分钟任务失败率超过 20%"
+      - alert: ApprovalStuck
+        expr: increase(approval_total[6h]) == 0 and increase(plan_submits_total[6h]) > 5
+        for: 0m
+        labels:
+          severity: info
+        annotations:
+          summary: "6 小时内有提交但零审批——检查 HITL 审核台是否有人值守"

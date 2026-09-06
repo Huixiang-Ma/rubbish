@@ -72,6 +72,41 @@ _TOB_DEMO_ROLES: dict[str, dict[str, str]] = {
 }
 
 
+# ---------- P2.1 手机号验证码登录（mock 通道：验证码回显给页面，接入真实短信服务后仅替换 _send_sms） ----------
+_sms_codes: dict[str, tuple[str, float]] = {}
+_SMS_TTL_SECONDS = 300.0
+
+
+def _send_sms(phone: str) -> tuple[bool, str | None]:
+    """签发验证码。mock 通道：验证码回显（dev_code）供演示；aliyun 通道接入后返回 None。"""
+    settings = get_settings()
+    code = f"{secrets.randbelow(1000000):06d}"
+    _sms_codes[phone] = (code, time.time() + _SMS_TTL_SECONDS)
+    if settings.sms_provider == "mock":
+        return True, code
+    raise NotImplementedError("真实短信通道未接入：配置 SMS_PROVIDER 对应凭证后在此发送")
+
+
+def verify_sms_code(phone: str, code: str) -> tuple[bool, str | None]:
+    cached = _sms_codes.get(phone)
+    if not cached or time.time() > cached[1]:
+        return False, "验证码已过期，请重新获取"
+    if not hmac.compare_digest(cached[0], code or ""):
+        return False, "验证码错误"
+    _sms_codes.pop(phone, None)
+    return True, None
+
+
+def login_or_register_phone(phone: str) -> dict:
+    """手机号登录：新号自动注册（display 为脱敏手机号），老号直接登录。"""
+    users = _load_users()
+    if phone not in users:
+        salt = secrets.token_hex(8)
+        users[phone] = {"salt": salt, "hash": _hash(secrets.token_hex(16), salt), "display": phone[:3] + "****" + phone[-4:], "phone": phone}
+        _save_users(users)
+    return {"username": phone, "display": users[phone].get("display", phone), "role": "traveler"}
+
+
 def verify(realm: str, username: str, password: str) -> dict | None:
     settings = get_settings()
     if realm == "tob":
