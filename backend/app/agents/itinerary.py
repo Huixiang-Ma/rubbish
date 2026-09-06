@@ -184,7 +184,7 @@ class ItineraryAgent(AgentBase):
             "对每一天输出：\n"
             "1. fun_tip：结合当天天气与景点的一条有趣建议，40字内，具体可执行、有当地特色（如看日落的位置、必尝小吃、避雨方案）\n"
             "2. spot_reasons：每个景点的推荐理由，40字内，讲历史文化或体验亮点，禁止复述标签\n"
-            "3. meal_details：每餐的 signature（具体菜名组合，如\"瓦罐汤+拌粉\"，禁止写店铺类型）和 price_hint（写\"人均约 XX 元\"的估算）\n\n"
+            "3. meal_details：每餐的 signature 必须是当地特色菜名组合（如\"烤鸭+甜面酱+荷叶饼\"、\"热干面+蛋酒\"），突出本地味道，禁止写店铺类型或通用菜名；price_hint（写\"人均约 XX 元\"的估算）\n\n"
             '只输出 JSON：{"days": {"1": {"fun_tip": "...", "spot_reasons": {"景点名": "..."}, "meal_details": {"午餐": {"signature": "...", "price_hint": "人均约 XX 元"}}}}}'
         )
         result = self.llm.try_generate_json(prompt, max_tokens=2400)

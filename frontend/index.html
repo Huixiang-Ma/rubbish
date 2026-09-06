@@ -585,6 +585,12 @@
 .hotel-card .h-price { margin-top: 6px; font-size: 13px; color: var(--gold, #a9863f); font-weight: 600; }
 .hotel-card .h-price small { color: var(--ink-faint, #8b857a); font-weight: 400; }
 .hotel-card .h-book { margin-top: 8px; display: inline-block; font-size: 12.5px; }
+/* 精准修改 */
+.tl-edit { margin-left: 8px; font-size: 11px; padding: 1px 7px; border-radius: 99px; border: 1px solid rgba(47,93,80,.35); background: #fbf9f2; color: var(--teal-deep, #233c34); cursor: pointer; }
+.tl-edit:hover { background: var(--teal, #2f5d50); color: #f6f3ea; }
+.edit-cand { padding: 6px 4px; border-bottom: 1px dashed var(--hairline); font-size: 13px; cursor: pointer; }
+.edit-cand:hover { color: var(--teal, #2f5d50); }
+.edit-bar { position: sticky; bottom: 0; background: var(--card, #fffdf7); padding: 10px 0 4px; display: flex; gap: 10px; align-items: center; }
 /* P1.5 历史入口：跟随页面的气泡按钮 */
 .hist-bubble { position: fixed; right: 20px; bottom: 22px; z-index: 90; display: flex; flex-direction: column; align-items: center; gap: 2px;
   width: 58px; height: 58px; border-radius: 50%; border: 1px solid rgba(47,93,80,.35); background: var(--teal, #2f5d50); color: #f6f3ea;
@@ -1213,7 +1219,7 @@ function renderDay(i) {
   }
   box.innerHTML = DAYS[i].map(it => `
     <div class="tl-item">
-      <div class="tl-time">${it.t}</div>
+      <div class="tl-time">${it.t}${it.t !== "—" && it._ei !== undefined ? '<button class="tl-edit" data-ei="' + it._ei + '" title="精准修改这一项">改</button>' : ""}</div>
       <h4>${it.h}<span class="${tagCls(it)}">${it.tag}</span></h4>
       <p>${it.d}</p>
       <p style="margin-top:2px"><span class="cost">${it.c}</span></p>
@@ -1813,7 +1819,7 @@ document.addEventListener('click', e => {
     });
   }
   function renderRealDays(itinerary) {
-    var newDays = itinerary.map(function (day) {
+    var newDays = itinerary.map(function (day, dayIdx0) {
       var events = (day.items || []).map(function (it) {
         return {
           kind: "spot", t: it.time || "",
@@ -1834,6 +1840,9 @@ document.addEventListener('click', e => {
         };
       }));
       events.sort(function (a, b) { return String(a.t).localeCompare(String(b.t)); });
+      events.forEach(function (ev, ei) { ev._day = dayIdx0; ev._ei = ei; });
+      if (dayIdx0 === 0) window.__lastEvents = [];
+      window.__lastEvents = window.__lastEvents.concat(events);
       var head = [];
       if (day.weather) head.push({ t: "—", h: "🌤 当日天气", d: day.weather, c: "", tag: "天气" });
       if (day.fun_tip) head.push({ t: "—", h: "💡 今日建议", d: day.fun_tip, c: "", tag: "提示" });
@@ -1869,6 +1878,7 @@ document.addEventListener('click', e => {
     var cleanMd = stripEngineeringSections(md);
     /* 口径来源：后端落盘的原始入参；本地刚生成时与之等价，历史回看时 runPayload 为空也能正确渲染 */
     var ui = data.user_input || runPayload || {};
+    currentVersion = data.version || 1;  // 历史回看时同步版本号，精准修改的重规划需要
     window.currentPlanMeta = { destination: ui.destination || "", origin: ui.origin || "" };  // 服务大厅/角色卡跟随当前行程书
     if (itin.length) {
       renderRealDays(itin);
@@ -1986,7 +1996,12 @@ document.addEventListener('click', e => {
   var HISTORY_STATUS_CN = { COMPLETED: "已完成", RUNNING: "规划中", QUEUED: "排队中", FAILED: "生成失败", WAITING_BUDGET_APPROVAL: "待预算确认", WAITING_SAFETY_REVIEW: "待安全确认" };
   function openHistoryPopup() {
     openDetail("🕘 历史行程", "点击任意一条载入到当前页面", '<div class="hist-chips" id="histChips"><span class="hist-empty">加载中…</span></div>');
-    loadHistory();
+    loadHistory().then(function () {
+      // 后端冷启动时索引未热会返回空列表：3 秒后自动重试一次
+      if (!document.querySelectorAll("#histChips .hist-chip").length) {
+        setTimeout(function () { if (document.getElementById("histChips")) loadHistory(); }, 3000);
+      }
+    });
   }
   window.openHistoryPopup = openHistoryPopup;
   async function loadHistory() {
@@ -2449,6 +2464,77 @@ document.addEventListener('click', e => {
         ? pois.slice(0, 6).map(function (p) { return '<div class="exp-poi">' + escapeHtml(p.name || p.title || "点位") + ' · 约 ' + Math.round(p.distance_m || 0) + ' 米' + (p.address ? ' · ' + escapeHtml(p.address) : "") + '</div>'; }).join("")
         : '<p class="vote-hint">附近暂无检索结果。</p>';
     } catch (err) { out.innerHTML = '<p class="vote-hint">检索失败：' + escapeHtml(String(err && err.message || err)) + '</p>'; }
+  });
+
+  /* ---------- 精准修改逐日行程：换/删/加 → 增量重规划 ---------- */
+  window.__planEdits = [];
+  window.__lastEvents = [];
+  window.openItemEditor = async function (ei) {
+    var ev = (window.__lastEvents || [])[ei];
+    if (!ev) return;
+    if (!jobId || !window.currentPlanMeta) { openDetail("精准修改", "", NEED_PLAN_HTML); return; }
+    if (!localStorage.getItem("tocToken")) { openDetail("精准修改", "", '<p class="vote-hint">精准修改需要登录（修改会生成新版行程书并归属你的账号）。</p>'); return; }
+    var dest = window.currentPlanMeta.destination || "";
+    var oldName = (ev.h || "").replace(/<[^>]*>/g, "").trim();
+    openDetail("精准修改 · Day " + (ev._day + 1), oldName, '<p class="vote-hint">正在检索可替换的真实景点…</p>');
+    var cands = "";
+    try {
+      var d = await expGet("/api/services/attraction?destination=" + encodeURIComponent(dest));
+      cands = (d.attractions || []).filter(function (a) { return a.name && oldName.indexOf(a.name) < 0; }).slice(0, 10)
+        .map(function (a) { return '<div class="edit-cand" data-op="replace" data-name="' + escapeHtml(a.name) + '">替换为「' + escapeHtml(a.name) + '」<span style="color:var(--ink-faint,#8b857a)"> · ' + escapeHtml((a.tags || []).join("/")) + (a.ticket_price > 0 ? " · 门票¥" + a.ticket_price : " · 免费") + '</span></div>'; }).join("");
+    } catch (e) { cands = '<p class="vote-hint">候选检索失败，可直接选择移除。</p>'; }
+    var pending = window.__planEdits.length;
+    openDetail("精准修改 · Day " + (ev._day + 1), oldName,
+      '<p class="vote-hint">选择一种修改（可对多项连续操作，最后统一应用生成新版行程书）：</p>' +
+      '<div class="edit-cand" data-op="remove">移除该项</div>' + cands +
+      '<div class="edit-bar"><span>已累积 <b id="editCount">' + pending + '</b> 项修改</span>' +
+      '<button class="btn-s" id="applyEdits" ' + (pending ? "" : "disabled style='opacity:.5'") + '>应用修改 · 增量重规划</button></div>');
+  };
+  document.addEventListener("click", async function (e) {
+    var chip = e.target.closest(".tl-edit");
+    if (chip) { window.openItemEditor(Number(chip.dataset.ei)); return; }
+    var cand = e.target.closest("[data-op]");
+    if (cand) {
+      var op = cand.dataset.op, name = cand.dataset.name || "";
+      var dayTitle = (document.getElementById("dSub") || {}).textContent || "";
+      var day = (dayTitle.match(/Day (\d+)/) || [])[1] || "?";
+      var oldName = (document.getElementById("dSub") || {}).textContent || "";
+      var text = op === "remove" ? "Day " + day + "：移除「" + oldName + "」" : "Day " + day + "：将「" + oldName + "」替换为「" + name + "」";
+      if (!window.__planEdits.some(function (x) { return x === text; })) window.__planEdits.push(text);
+      toast("已记录：" + text);
+      var cnt = document.getElementById("editCount");
+      if (cnt) { cnt.textContent = window.__planEdits.length; var ab = document.getElementById("applyEdits"); ab.disabled = false; ab.style.opacity = 1; }
+      return;
+    }
+    if (e.target.closest("#applyEdits")) {
+      if (!window.__planEdits.length) return;
+      var token = localStorage.getItem("tocToken");
+      if (!token) { toast("精准修改需要先登录"); return; }
+      var resp = await fetch(apiBase + "/api/plans/" + jobId + "/replan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ change_request: window.__planEdits.join("；"), base_version: currentVersion })
+      });
+      var data = await resp.json();
+      if (!resp.ok) { toast("提交失败：" + (typeof data.detail === "string" ? data.detail : "状态已变化，请刷新后重试")); return; }
+      closeDetail();
+      toast("已提交精准修改，新版行程书生成中…");
+      var newId = data.job_id;
+      var timer = setInterval(async function () {
+        try {
+          var st = await (await fetch(apiBase + "/api/plans/" + newId)).json();
+          if (st.status === "COMPLETED") {
+            clearInterval(timer);
+            jobId = newId; currentVersion = st.version || 1;
+            try { await loadRealResult(newId); } catch (e) {}
+            saveHistory(newId); EXP_CACHE = {}; window.__planEdits = [];
+            document.getElementById("book").scrollIntoView({ behavior: "smooth" });
+            toast("新版行程书已按你的修改生成 ✓");
+          } else if (["FAILED", "CORRUPTED"].indexOf(st.status) >= 0) { clearInterval(timer); toast("新版生成失败：" + (st.error || st.status)); }
+        } catch (e) { /* 网络抖动下次再试 */ }
+      }, 6000);
+      return;
+    }
   });
 
   /* ---------- P1.5 流水线角色卡：展示对应节点的真实产出 ---------- */

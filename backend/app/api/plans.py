@@ -475,11 +475,20 @@ def approve_plan(job_id: str, payload: ApprovalRequest, _role: dict = Depends(re
 
 
 @router.post("/{job_id}/replan", response_model=ReplanResponse)
-def replan(job_id: str, payload: ReplanRequest, _role: dict = Depends(require_role("consultant", "supervisor", "admin"))) -> ReplanResponse:
+def replan(job_id: str, payload: ReplanRequest, request: Request) -> ReplanResponse:
     try:
         state = store.load(job_id)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail="job not found") from exc
+    # P2 精准修改权限：toB 角色，或该行程书的 toC 归属用户（无归属的老任务允许任意登录游客）
+    token = bearer_token(request)
+    actor = auth_service.verify_token(token) if token else None
+    if not actor:
+        raise HTTPException(status_code=401, detail="需要登录")
+    role_ok = actor.get("r") in ("consultant", "supervisor", "admin")
+    owner_ok = actor.get("r") == "traveler" and (not state.get("user_id") or state.get("user_id") == actor.get("u"))
+    if not (role_ok or owner_ok):
+        raise HTTPException(status_code=403, detail="FORBIDDEN_ROLE")
     if payload.base_version != state.get("version", 1):
         raise HTTPException(status_code=409, detail="VERSION_CONFLICT")
     new_input = dict(state["user_input"])
