@@ -2234,7 +2234,7 @@ document.addEventListener('click', e => {
       if (!window.L || !pts.length) return;
       if (!state.map) {
         state.map = L.map("expMap", { scrollWheelZoom: false });
-        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" }).addTo(state.map);
+        L.tileLayer("https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}", { subdomains: ["1", "2", "3", "4"], attribution: "© 高德地图", maxZoom: 18 }).addTo(state.map);
       }
       setTimeout(function () { state.map.invalidateSize(); }, 60);
       if (state.layer) state.map.removeLayer(state.layer);
@@ -2344,7 +2344,7 @@ document.addEventListener('click', e => {
     if (!window.L || !pts.length) return;
     if (!state.map) {
       state.map = L.map("bookMap", { scrollWheelZoom: true });
-      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" }).addTo(state.map);
+      L.tileLayer("https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}", { subdomains: ["1", "2", "3", "4"], attribution: "© 高德地图", maxZoom: 18 }).addTo(state.map);
     }
     setTimeout(function () { state.map.invalidateSize(); }, 60);
     if (state.layer) state.map.removeLayer(state.layer);
