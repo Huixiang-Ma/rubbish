@@ -948,8 +948,8 @@
       <div class="map-panel" id="mapPanel">
         <div class="sub-h">实时地图 · 全程动线</div>
         <div class="day-tabs" id="bookMapTabs"></div>
-        <div class="exp-map" id="bookMap" style="height:380px"></div>
-        <div class="exp-nearby">
+        <div class="exp-map" id="bookMap" style="height:380px;display:none"></div>
+        <div class="exp-nearby" id="bookMapTools" style="display:none">
           <button class="btn-s ghost" data-bnear="food">🍜 附近美食</button>
           <button class="btn-s ghost" data-bnear="parking">🅿️ 附近车位</button>
           <button class="btn-s ghost" data-bnear="toilet">🚻 附近洗手间</button>
@@ -2414,19 +2414,29 @@ document.addEventListener('click', e => {
   async function loadBookMap() {
     var empty = $("bookMapEmpty"), tabs = $("bookMapTabs"), box = $("bookMap");
     if (!box) return;
-    if (!jobId) { empty.style.display = "block"; tabs.innerHTML = ""; if (bookMapState.map) { bookMapState.map.remove(); bookMapState.map = null; } return; }
-    empty.style.display = "none";
+    var tools = $("bookMapTools");
+    function showMap(on) {
+      box.style.display = on ? "block" : "none";
+      tabs.style.display = on ? "block" : "none";
+      tools.style.display = on ? "flex" : "none";
+    }
+    if (!jobId) {
+      showMap(false); empty.style.display = "block"; empty.textContent = "载入或生成一本行程书后，此处展示全程真实动线与周边设施。";
+      tabs.innerHTML = ""; if (bookMapState.map) { bookMapState.map.remove(); bookMapState.map = null; }
+      return;
+    }
+    showMap(true); empty.style.display = "none";
     try {
       var d = await expGet("/api/plans/" + jobId + "/map");
       var days = (d.days || []).filter(function (x) { return (x.spots || []).length; });
       bookMapState.data = days; bookMapState.day = 0; bookMapState.job = jobId;
-      if (!days.length) { empty.style.display = "block"; empty.textContent = "本次行程的点位缺少坐标（旧任务），暂无法画图；逐日动线见第 ② 章。"; tabs.innerHTML = ""; return; }
+      if (!days.length) { showMap(false); empty.style.display = "block"; empty.textContent = "本次行程的点位缺少坐标（旧任务），暂无法画图；逐日动线见第 ② 章。"; tabs.innerHTML = ""; return; }
       tabs.innerHTML = days.map(function (x, i) {
         return '<button class="day-tab' + (i === 0 ? " on" : "") + '" data-md="' + i + '">Day ' + x.day + (x.theme ? " · " + escapeHtml(x.theme.slice(0, 6)) : "") + '</button>';
       }).join("");
       drawBookMap();
     } catch (e) {
-      empty.style.display = "block"; empty.textContent = "地图数据加载失败：" + String(e && e.message || e);
+      showMap(false); empty.style.display = "block"; empty.textContent = "地图数据加载失败：" + String(e && e.message || e);
     }
   }
   function amapNavUrl(name, lng, lat) {
