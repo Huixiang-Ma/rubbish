@@ -96,3 +96,6 @@ frontend/_opt_layer.css
 # ---- 其它内部文档 ----
 实训视频讲解文档*
 _style_cache.css
+
+# ---- CI 工作流（PAT 无 workflow scope 时先移出；需要时用网页端或换 token 恢复） ----
+.github/workflows/ci.yml
