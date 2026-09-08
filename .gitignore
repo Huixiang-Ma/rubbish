@@ -92,3 +92,7 @@ backend/scripts/*.png
 frontend/index_legacy_backup.html
 frontend/index_style_preview.html
 frontend/_opt_layer.css
+
+# ---- 其它内部文档 ----
+实训视频讲解文档*.md
+_style_cache.css
