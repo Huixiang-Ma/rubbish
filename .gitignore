@@ -32,3 +32,10 @@ Thumbs.db
 
 # ---- Docker / 编排本地状态 ----
 docker-compose.override.yml
+
+# ---- 会话产物 / 临时文件（不入库） ----
+.preview/
+.workbuddy/
+plans_tmp.json
+压测结果*.json
+压测终态.json
