@@ -62,6 +62,28 @@ def _to_coord(location: str) -> tuple[float, float] | None:
         return None
 
 
+def ip_location() -> dict[str, Any] | None:
+    """高德 IP 定位（城市级）：浏览器定位不可用/不可信时的兜底，返回矩形中心与城市名。"""
+    data = _get("/v3/ip", {})
+    if not data or data.get("rectangle") is None:
+        return None
+    try:
+        lng1, lat1 = _to_coord(data["rectangle"].split(";")[0])
+        lng2, lat2 = _to_coord(data["rectangle"].split(";")[1])
+        city = data.get("city")
+        if isinstance(city, list):
+            city = city[0] if city else ""
+        return {
+            "province": data.get("province") or "",
+            "city": city,
+            "lat": round((lat1 + lat2) / 2, 6),
+            "lng": round((lng1 + lng2) / 2, 6),
+            "precision": "city",
+        }
+    except (ValueError, IndexError):
+        return None
+
+
 def geocode(address: str) -> dict[str, Any] | None:
     """地理编码：地址 → 经纬度 + 行政区信息。未配置/失败返回 None。"""
     data = _get("/v3/geocode/geo", {"address": address})

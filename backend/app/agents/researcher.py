@@ -46,6 +46,21 @@ class ResearcherAgent(AgentBase):
                         spot["booking_rule"] = rules["booking_rule"]
                     spot["fetched_at"] = rules["fetched_at"]
                     spot["source_url"] = url
+        # RAG 知识增强（标品接入）：逐景点检索知识库，命中即挂 knowledge 卡片与来源
+        # ——行程书内容有据化：markdown_reporter 会按 source 字段渲染溯源行
+        for spot in spots:
+            try:
+                from app.services.semantic import search_similar
+
+                hit = search_similar(spot.get("name", ""), k=1)
+                results = hit.get("results") or []
+                if results:
+                    top = results[0]
+                    spot["knowledge"] = top["content"]
+                    spot["knowledge_source"] = top["job_id"]  # 语料来源组，可溯源
+                    spot["knowledge_distance"] = top["distance"]
+            except Exception:
+                continue  # RAG 失败不阻断行程主链路
         return {
             "agent": self.name,
             "status": "ok",

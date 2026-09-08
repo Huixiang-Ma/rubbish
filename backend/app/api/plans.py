@@ -1,11 +1,12 @@
 import difflib
 import json
+from typing import Any
 import shutil
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.api.auth import bearer_token, require_role, require_traveler
 from app.services import auth_service
@@ -25,8 +26,11 @@ from app.models.schemas import (
     ReplanRequest,
     ReplanResponse,
 )
+from fastapi import Depends
+
+from app.api.auth import require_role
 from app.models.states import JobStatus
-from app.services import job_index
+from app.services import job_index, memory_mutator
 from app.services.atomic_writer import AtomicWriter
 from app.services.checkpoint_store import CheckpointStore
 from app.services.hash_utils import request_hash
@@ -147,6 +151,22 @@ def create_plan(payload: PlanRequest, request: Request) -> PlanCreateResponse:
         store.save(job_id, state)
     queue_client.enqueue(job_id)
     PLAN_SUBMITS.inc()
+    # 工单 7 · 图记忆：提交后后台抽取实体三元组（LLM real 慢，不能阻塞提交响应）
+    import threading
+
+    def _extract_memory(job: str, ui: dict, tn: str | None) -> None:
+        try:
+            from app.services.memory_engine import MemoryEngine
+
+            text = " ".join(str(v) for v in [
+                ui.get("mood"), *ui.get("preferences", []), *ui.get("constraints", []),
+            ] if v)
+            MemoryEngine().extract(text, thread_id=job, job_id=job, tenant=tn)
+        except Exception:  # 记忆沉淀失败绝不影响主流程
+            pass
+
+    threading.Thread(target=_extract_memory, args=(job_id, data, payload.tenant), daemon=True,
+                     name=f"memory-extract-{job_id}").start()
     log_event(
         "job_created",
         job_id=job_id,
@@ -274,6 +294,51 @@ def submit_feedback(job_id: str, payload: FeedbackRequest, _role: dict = Depends
         },
     )
     return {"job_id": job_id, "recorded": True}
+
+
+class InterveneRequest(BaseModel):
+    field: str
+    new_value: Any
+    mode: str = "append"
+    reason: str = "人工运行态干预"
+    operator: str = "主管"
+    base_version: int = Field(ge=1)
+
+
+@router.post("/{job_id}/intervene")
+def intervene_plan(job_id: str, payload: InterveneRequest,
+                   role: dict = Depends(require_role("supervisor", "admin"))) -> dict:
+    """工单 7 · 运行态强干预：修正运行中/挂起任务的内部 State（防脏读+锁+审计）。"""
+    try:
+        store = CheckpointStore()
+        result = memory_mutator.apply_intervention(
+            store, job_id,
+            {"field": payload.field, "new_value": payload.new_value, "mode": payload.mode},
+            operator=payload.operator, reason=payload.reason, base_version=payload.base_version,
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="job not found") from exc
+    except ValueError as exc:
+        detail = str(exc)
+        code = 409 if detail in {"VERSION_CONFLICT", "INVALID_STATE"} else 400
+        raise HTTPException(status_code=code, detail=detail) from exc
+    log_event("intervene", job_id=job_id, field=payload.field, operator=payload.operator)
+    return result
+
+
+@router.get("/{job_id}/memory")
+def plan_memory(job_id: str) -> dict:
+    """该任务的图记忆三元组（thread_id = job_id，即任务自身会话记忆）。"""
+    from app.services.memory_engine import MemoryEngine
+
+    engine = MemoryEngine()
+    triples = engine.thread_triples(job_id)
+    return {"job_id": job_id, "count": len(triples), "triples": triples}
+
+
+@router.get("/{job_id}/interventions")
+def plan_interventions(job_id: str) -> dict:
+    return {"job_id": job_id, "items": memory_mutator.list_interventions(job_id)}
 
 
 @router.post("/{job_id}/export")

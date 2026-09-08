@@ -53,7 +53,13 @@ class Settings(BaseSettings):
     embedding_ollama_url: str = "http://host.docker.internal:11434"  # 容器内访问宿主机 Ollama
     embedding_model: str = "dengcao/bge-m3:567m"
     embedding_dim: int = 1024  # BGE-M3 输出 1024 维；换模型需同步此值
-    embedding_timeout_seconds: float = 30.0  # BGE-M3 冷启动/批量高峰单次推理可超 10s，放宽防误杀
+    embedding_timeout_seconds: float = 30.0
+    # 检索（rag_lab 回填）：hybrid=BM25+向量 RRF 混合；多意图分解失败自动回退单路
+    semantic_mode: str = "hybrid"  # dense | hybrid
+    multi_intent: bool = True  # BGE-M3 冷启动/批量高峰单次推理可超 10s，放宽防误杀
+    # 检索（rag_lab 回填）：hybrid=BM25+向量 RRF 混合；多意图分解失败自动回退单路
+    semantic_mode: str = "hybrid"  # dense | hybrid
+    multi_intent: bool = True
 
     # 生产演进：数据库 / 可观测 / 通知
     database_url: str | None = None  # 例 postgresql+psycopg://wl:wl@localhost:5432/wl_travel

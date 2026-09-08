@@ -60,15 +60,93 @@ _DDL = [
     """,
 ]
 
-# document_chunks 维度随 embedder 变化（mock=8 / BGE-M3=EMBEDDING_DIM），单独按维度建表
+# 工单 7 · 图记忆三表（与 alembic 0002_memory 一致；容器内无 alembic 目录，随 _ensure 幂等建立）
+_MEMORY_DDL = [
+    """
+    CREATE TABLE IF NOT EXISTS memory_entities (
+        id BIGSERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        etype TEXT NOT NULL DEFAULT 'concept',
+        tenant TEXT,
+        job_id TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE (name, etype, tenant)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS memory_triples (
+        id BIGSERIAL PRIMARY KEY,
+        head_id BIGINT NOT NULL REFERENCES memory_entities(id) ON DELETE CASCADE,
+        relation TEXT NOT NULL,
+        tail_id BIGINT NOT NULL REFERENCES memory_entities(id) ON DELETE CASCADE,
+        thread_id TEXT,
+        job_id TEXT,
+        source_round INTEGER,
+        status TEXT NOT NULL DEFAULT 'active',
+        created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_triples_head ON memory_triples(head_id, status)",
+    "CREATE INDEX IF NOT EXISTS idx_triples_thread ON memory_triples(thread_id, status)",
+    """
+    CREATE TABLE IF NOT EXISTS memory_interventions (
+        id BIGSERIAL PRIMARY KEY,
+        job_id TEXT NOT NULL,
+        thread_id TEXT,
+        operator TEXT,
+        field TEXT NOT NULL,
+        old_value JSONB,
+        new_value JSONB,
+        reason TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_interventions_job ON memory_interventions(job_id, created_at)",
+]
+
+# 线路标品 SKU（docs/行程规划标品方案.md §二）：骨架引用 POI/知识块，人工签发后才可发布
+_ROUTES_DDL = [
+    """
+    CREATE TABLE IF NOT EXISTS itinerary_routes (
+        route_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL DEFAULT 'default',
+        city TEXT NOT NULL,
+        theme TEXT,
+        days INTEGER NOT NULL,
+        pace TEXT,
+        audience TEXT,
+        season TEXT,
+        days_detail JSONB NOT NULL,
+        variants JSONB,
+        knowledge_refs JSONB,
+        status TEXT NOT NULL DEFAULT 'draft',
+        reviewer TEXT,
+        published_at TIMESTAMPTZ,
+        version INTEGER NOT NULL DEFAULT 1,
+        quality_report TEXT,
+        daily_check JSONB,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_routes_tenant ON itinerary_routes (tenant_id, city, status)",
+]
+
+# document_chunks 带租户列（检索强制租户过滤，标品多租户地基）；维度随 embedder 变化，单独按维度建表
 _DOCUMENT_CHUNKS_DDL = """
     CREATE TABLE IF NOT EXISTS document_chunks (
         id BIGSERIAL PRIMARY KEY,
         job_id TEXT,
+        tenant_id TEXT NOT NULL DEFAULT 'default',
         content TEXT,
         embedding vector({dim})
     )
     """
+
+# 旧版 document_chunks（无 tenant_id 列）幂等补列
+_DOCUMENT_CHUNKS_TENANT_MIGRATE = (
+    "ALTER TABLE document_chunks ADD COLUMN IF NOT EXISTS tenant_id TEXT NOT NULL DEFAULT 'default'"
+)
 
 
 class PgMirror:
@@ -97,6 +175,11 @@ class PgMirror:
             with self.engine.begin() as conn:
                 for ddl in _DDL:
                     conn.execute(text(ddl))
+                for ddl in _MEMORY_DDL:
+                    conn.execute(text(ddl))
+                for ddl in _ROUTES_DDL:
+                    conn.execute(text(ddl))
+                conn.execute(text(_DOCUMENT_CHUNKS_TENANT_MIGRATE))
                 self._ensure_chunks_table(conn)
             self.enabled = True
             logger.info("pg mirror ready")
@@ -183,31 +266,55 @@ class PgMirror:
             },
         )
 
-    def add_chunk(self, job_id: str, content: str, embedding: list[float]) -> int | None:
+    def add_chunk(
+        self, job_id: str, content: str, embedding: list[float], tenant_id: str = "default"
+    ) -> int | None:
         if not self._ensure():
             return None
         with self.engine.begin() as conn:
             row = conn.execute(
                 text(
-                    "INSERT INTO document_chunks (job_id, content, embedding) "
-                    "VALUES (:job_id, :content, :embedding) RETURNING id"
+                    "INSERT INTO document_chunks (job_id, tenant_id, content, embedding) "
+                    "VALUES (:job_id, :tenant_id, :content, :embedding) RETURNING id"
                 ),
-                {"job_id": job_id, "content": content, "embedding": str(embedding)},
+                {"job_id": job_id, "tenant_id": tenant_id, "content": content, "embedding": str(embedding)},
             )
             return row.scalar_one()
 
-    def search_chunks(self, query_embedding: list[float], k: int = 3) -> list[dict[str, Any]]:
+    def all_chunks(self, tenant_id: str | None = None) -> list[dict[str, Any]]:
+        """全量块（BM25 路的语料源；千级规模内存打分足够）。"""
         if not self._ensure():
             return []
+        sql = "SELECT id, job_id, tenant_id, content FROM document_chunks"
+        params: dict[str, Any] = {}
+        if tenant_id:
+            sql += " WHERE tenant_id = :tenant"
+            params["tenant"] = tenant_id
+        with self.engine.connect() as conn:
+            rows = conn.execute(text(sql), params)
+            return [{"id": r.id, "job_id": r.job_id, "tenant_id": r.tenant_id, "content": r.content} for r in rows]
+
+    def search_chunks(
+        self, query_embedding: list[float], k: int = 3, tenant_id: str | None = None
+    ) -> list[dict[str, Any]]:
+        if not self._ensure():
+            return []
+        tenant_filter = "WHERE tenant_id = :tenant" if tenant_id else ""
+        params: dict[str, Any] = {"emb": str(query_embedding), "k": k}
+        if tenant_id:
+            params["tenant"] = tenant_id
         with self.engine.connect() as conn:
             rows = conn.execute(
                 text(
-                    "SELECT job_id, content, embedding <=> :emb AS distance "
-                    "FROM document_chunks ORDER BY embedding <=> :emb LIMIT :k"
+                    f"SELECT job_id, tenant_id, content, embedding <=> :emb AS distance "
+                    f"FROM document_chunks {tenant_filter} ORDER BY embedding <=> :emb LIMIT :k"
                 ),
-                {"emb": str(query_embedding), "k": k},
+                params,
             )
-            return [{"job_id": r.job_id, "content": r.content, "distance": float(r.distance)} for r in rows]
+            return [
+                {"job_id": r.job_id, "tenant_id": r.tenant_id, "content": r.content, "distance": float(r.distance)}
+                for r in rows
+            ]
 
 
 pg_mirror = PgMirror()

@@ -70,6 +70,16 @@ def get_nearby(job_id: str, kind: str = "food") -> dict[str, Any]:
     return {"job_id": job_id, "kind": kind, "pois": pois}
 
 
+@router.get("/geo/ip")
+def geo_ip() -> dict[str, Any]:
+    """P2 定位兜底：高德 IP 定位（城市级，精度约数公里），供前端三层定位的第二层使用。"""
+    from app.services import amap_client
+    result = amap_client.ip_location()
+    if not result:
+        raise HTTPException(status_code=503, detail="IP 定位不可用")
+    return result
+
+
 @router.get("/{job_id}/agent-outputs")
 def get_agent_outputs(job_id: str) -> dict[str, Any]:
     """P1.5 流水线角色卡数据源：返回各节点真实产出（名称 → {status, payload}）。"""

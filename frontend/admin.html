@@ -884,10 +884,29 @@
       </div>
       <div id="tab-audit" class="hidden"><ul id="drawerAudit" class="timeline"></ul></div>
       <div id="tab-memory" class="hidden">
-        <div class="empty" style="padding-top:70px;">
-          <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.7z"/><path d="M12 22V12M3.3 7l8.7 5 8.7-5"/></svg>
-          <div><b>记忆中心建设中</b></div>
-          <div style="max-width:380px;">共享图记忆与运行态强干预由工单 7 独立批次交付。届时此处将呈现该任务 / 客户的记忆三元组（过敏禁忌、偏好、约束）与干预历史。</div>
+        <div class="trace-sec"><h4><span class="ic-mini"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a7 7 0 0 1 4 12.7V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.3A7 7 0 0 1 12 2z"/><path d="M10 22h4"/></svg></span>记忆三元组（过敏禁忌 / 偏好 / 约束）</h4><div id="memTriples"><div class="empty">加载中…</div></div></div>
+        <div class="trace-sec"><h4><span class="ic-mini"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20V10M18 20V4M6 20v-4"/></svg></span>干预历史</h4><div id="memInterventions"><div class="empty">加载中…</div></div></div>
+        <div class="trace-sec"><h4><span class="ic-mini"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>运行态强干预 <span class="muted" style="font-weight:400;">（对 挂起/执行中 任务开放，需主管权限）</span></h4>
+          <div class="controls" style="margin-top:6px;">
+            <div class="field"><label>干预字段</label>
+              <select id="ivField" class="input">
+                <option value="constraints">约束 constraints（追加/移除）</option>
+                <option value="preferences">偏好 preferences</option>
+                <option value="budget">预算 budget（改写）</option>
+                <option value="resume_from">恢复锚点 resume_from</option>
+              </select>
+            </div>
+            <div class="field"><label>操作</label>
+              <select id="ivMode" class="input"><option value="append">追加</option><option value="remove">移除</option></select>
+            </div>
+            <div class="field grow"><label>新值（约束/偏好可逗号分隔多个）</label><input id="ivValue" class="input" placeholder="如：禁海鲜，行程不得包含海鲜餐厅"></div>
+          </div>
+          <div class="controls">
+            <div class="field"><label>操作人</label><input id="ivOperator" class="input" value="主管" style="max-width:110px;"></div>
+            <div class="field grow"><label>原因</label><input id="ivReason" class="input" value="人工运行态干预" placeholder="干预原因（落审计）"></div>
+            <button id="ivSubmit" class="btn">提交干预</button>
+          </div>
+          <p class="meta-line" id="ivHint"></p>
         </div>
       </div>
     </div>
@@ -1346,6 +1365,63 @@
     ['plan', 'trace', 'audit', 'memory'].forEach(x => $('#tab-' + x).classList.toggle('hidden', x !== tab));
     if (tab === 'trace') loadTrace();
     if (tab === 'audit') loadDrawerAudit();
+    if (tab === 'memory') loadMemory();
+  }
+
+  /* ================= 工单 7 · 记忆与干预 ================= */
+  const REL_CN = {
+    HAS_ALLERGY: '过敏禁忌', DISLIKES: '不吃', PREFERS_AVOID: '避免',
+    AVOIDS: '回避', BUDGET_CAP: '预算上限', CONSTRAINT_ON: '约束',
+    TRAVELS_WITH: '同行', PREFERS: '偏好', VISITS: '到访'
+  };
+  async function loadMemory() {
+    if (!drawerJob) return;
+    try {
+      const [mem, inter] = await Promise.all([
+        json(await apiFetch(`${apiBase}/api/plans/${drawerJob}/memory`)),
+        json(await apiFetch(`${apiBase}/api/plans/${drawerJob}/interventions`)),
+      ]);
+      $('#memTriples').innerHTML = mem.count
+        ? mem.triples.map(t => `<span class="tag" style="margin:2px 4px 2px 0;display:inline-flex;gap:6px;align-items:center;background:${t.relation === 'HAS_ALLERGY' ? '#f5e4e1' : '#eef4f0'};color:${t.relation === 'HAS_ALLERGY' ? '#7c2d20' : '#2f5d50'};"><b>${REL_CN[t.relation] || t.relation}</b> ${esc(t.tail)}</span>`).join('')
+        : '<div class="empty">本任务暂无记忆三元组（多轮对话中提及的过敏/偏好/约束会自动沉淀到这里）</div>';
+      $('#memInterventions').innerHTML = inter.items.length
+        ? `<table class="tbl"><thead><tr><th>字段</th><th>旧值 → 新值</th><th>操作人</th><th>原因</th></tr></thead><tbody>` +
+          inter.items.map(x => `<tr><td><b>${esc(x.field)}</b></td><td class="sub">${esc(JSON.stringify(x.old_value ?? x.old)).slice(0, 60)} → ${esc(JSON.stringify(x.new_value ?? x.new)).slice(0, 60)}</td><td>${esc(x.operator || '-')}</td><td class="sub">${esc(x.reason || '')}</td></tr>`).join('') + '</tbody></table>'
+        : '<div class="empty">暂无干预记录</div>';
+      // 干预表单状态：终态任务禁用
+      const st = await json(await apiFetch(`${apiBase}/api/plans/${drawerJob}`));
+      const canIntervene = ['RUNNING', 'QUEUED', 'WAITING_BUDGET_APPROVAL', 'WAITING_SAFETY_REVIEW', 'WAITING_RATE_LIMIT', 'WAITING_PARSE_REVIEW'].includes(st.status);
+      $('#ivSubmit').disabled = !canIntervene;
+      $('#ivHint').textContent = canIntervene
+        ? `当前状态 ${cn(st.status)} · v${st.version}，干预立即落盘并写入审计；管线在下一节点边界生效。`
+        : `任务已终态（${cn(st.status)}），不可干预。`;
+      $('#ivSubmit').dataset.version = st.version;
+    } catch (e) {
+      $('#memTriples').innerHTML = `<div class="empty">加载失败：${esc(friendly(e))}</div>`;
+    }
+  }
+  async function submitIntervention() {
+    if (!drawerJob) return;
+    const field = $('#ivField').value;
+    const raw = $('#ivValue').value.trim();
+    if (!raw && field !== 'resume_from') return notify('请填写干预新值', true);
+    let newValue = raw;
+    if ((field === 'constraints' || field === 'preferences') && raw.includes(',')) newValue = raw.split(/[,，]/).map(x => x.trim()).filter(Boolean);
+    if (field === 'budget') newValue = Number(raw);
+    try {
+      const d = await json(await apiFetch(`${apiBase}/api/plans/${drawerJob}/intervene`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          field, new_value: newValue, mode: $('#ivMode').value,
+          reason: $('#ivReason').value || '人工运行态干预',
+          operator: $('#ivOperator').value || '主管',
+          base_version: Number($('#ivSubmit').dataset.version || 1),
+        }),
+      }));
+      notify(`干预已生效：${Object.keys(d.changes).join('、')}（v${d.version}）`);
+      loadMemory();
+    } catch (e) { notify(`干预失败：${friendly(e)}`, true); }
   }
 
   async function refreshDrawer(force = false) {
@@ -1813,6 +1889,7 @@
   $('#gateForm').addEventListener('submit', login);
   $('#adminLogout').addEventListener('click', logout);
   $('#loadPlans').addEventListener('click', loadPlans);
+  $('#ivSubmit').addEventListener('click', submitIntervention);
   $('#loadFlow').addEventListener('click', loadFlow);
   document.addEventListener('click', (e) => {
     const n = e.target.closest('[data-status]');

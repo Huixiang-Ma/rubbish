@@ -13,6 +13,8 @@ from app.api.auth import require_admin, router as auth_router
 from app.api.experience import router as experience_router
 from app.api.integrations import router as integrations_router
 from app.api.plans import router as plans_router
+from app.api.rag import router as rag_router
+from app.api.routes import router as routes_router
 from app.api.safety import router as safety_router
 from app.api.services import router as services_router
 from app.services.jsonlog import log_event
@@ -40,6 +42,8 @@ app.include_router(plans_router)
 app.include_router(safety_router)
 app.include_router(experience_router)
 app.include_router(integrations_router)
+app.include_router(routes_router)
+app.include_router(rag_router)
 app.include_router(auth_router)
 
 # toB 管理类路由：AUTH_ENABLED=true 时强制 Bearer 校验。
@@ -113,6 +117,20 @@ if _vendor_dir.exists():
 _media_dir = FRONTEND_DIR / "media"
 if _media_dir.exists():
     app.mount("/media", StaticFiles(directory=str(_media_dir)), name="media")
+
+
+# ----------------------------------------------------------------------------
+# 前端 v2（Vue3 + Vite 全新工程，hash 路由，构建产物 frontend-v2/dist）
+# 挂载在 /v2 前缀下，与旧版单文件前端并存，互不影响。
+# 访问入口：/v2/index.html#/ （toC）、/v2/index.html#/b （toB 工作台）
+# ----------------------------------------------------------------------------
+_frontend_v2_candidates = [
+    Path(__file__).resolve().parents[2] / "frontend-v2" / "dist",
+    Path(__file__).resolve().parents[1] / "frontend-v2" / "dist",
+]
+_frontend_v2_dir = next((p for p in _frontend_v2_candidates if p.exists()), None)
+if _frontend_v2_dir:
+    app.mount("/v2", StaticFiles(directory=str(_frontend_v2_dir), html=True), name="frontend_v2")
 
 
 @app.on_event("startup")

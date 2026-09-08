@@ -61,6 +61,7 @@
 - toC 体验区（`/` 页任务完成后解锁）：直播辩论 SSE 流式+投票（票数写回 travel_plan.md）、决策辩论双栏、名导团名人多轮对话、
   虚拟游客 swarm 踩点反馈、反事实后悔药对照卡；心情词（mood）触发 C7 人生剧本章节。
 - 心情剧本：`PlanRequest.mood` 可选字段，填写后管线追加 Mood 节点生成情绪弧线。
+- 工单 7 · 共享图记忆与运行态强干预：多轮对话实体三元组沉淀（`memory_entities/memory_triples`，LLM real 抽取 + 关键词 mock 兜底，同 head+relation 冲突自动 superseded 可追溯）；多层级检索（禁忌 > 约束 > 偏好，query 命中置顶）；运行态强干预 `POST /api/plans/{id}/intervene`（supervisor/admin 角色守卫 + Redis 分布式锁 + version 乐观锁防脏读 409，管线在节点边界消费干预队列热替换 user_input 并写审计）。验收：`tests/test_memory_intervention.py`（4 条红线用例）+ `scripts/simulate_conversation.py`（15 轮对话：第 8 轮注过敏、第 12 轮强干预、第 15 轮校验；检索 0.01ms 达成 <150ms 红线，干预成功率 100%）。toB 抽屉"记忆与干预"页签呈现三元组卡/干预历史/干预表单。
 
 ### LLM 配置（可选）
 

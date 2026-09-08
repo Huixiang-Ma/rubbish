@@ -110,6 +110,25 @@ class PlanProcessor:
                     should_run = True
                 if not should_run:
                     continue
+                # 工单 7 · 防脏读：节点边界重读 state，消费运行态干预队列（热替换 user_input）
+                latest = self.store.load(job_id)
+                pending_interventions = latest.pop("interventions", None)
+                if pending_interventions:
+                    for iv in pending_interventions:
+                        self.store.append_audit(
+                            job_id,
+                            {
+                                "action": "intervention_applied",
+                                "field": iv.get("field"),
+                                "changes": iv.get("changes"),
+                                "operator": iv.get("operator"),
+                                "reason": iv.get("reason"),
+                            },
+                        )
+                    if latest["user_input"] != context["user_input"]:
+                        context["user_input"] = latest["user_input"]
+                        log_event("intervention_consumed", job_id=job_id,
+                                  fields=[iv.get("field") for iv in pending_interventions])
                 self.store.mark_running(job_id, agent.name, min(index * 15 + 8, 82))
                 result = agent.run(context)
                 # 外部抓取内容安全过滤：递归扫描 Agent 输出，高风险替换/中风险清洗，全部写审计
