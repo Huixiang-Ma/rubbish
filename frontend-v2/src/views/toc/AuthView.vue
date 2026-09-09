@@ -54,7 +54,7 @@
         演示环境账号由系统配置发放；游客端支持手机验证码注册
       </p>
       <p v-if="realm === 'toc'" class="demo-tip" style="margin-top:6px">企业员工？请从
-        <router-link :to="{ name: 'auth', query: { realm: 'tob' } }" style="color:var(--brand)">企业工作台入口</router-link>
+        <router-link :to="{ name: 'tob-auth' }" style="color:var(--brand)">企业工作台入口</router-link>
         登录</p>
       <p v-else class="demo-tip" style="margin-top:6px">个人游客？请从
         <router-link :to="{ name: 'auth', query: { realm: 'toc' } }" style="color:var(--brand)">游客端入口</router-link>

@@ -10,6 +10,7 @@ import hashlib
 import hmac
 import json
 import secrets
+import threading
 import time
 
 from app.config import get_settings
@@ -72,6 +73,84 @@ _TOB_DEMO_ROLES: dict[str, dict[str, str]] = {
 }
 
 
+# ---------- toB 企业内部账号管理（独立于 toC 用户库；env 演示账号并入列表只读展示） ----------
+_TOB_ACCOUNTS_FILE = DATA_ROOT / "tob_accounts.json"
+_TOB_LOCK = threading.Lock()
+
+
+def _tob_accounts_all() -> dict[str, dict]:
+    if _TOB_ACCOUNTS_FILE.exists():
+        try:
+            return json.loads(_TOB_ACCOUNTS_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+    return {}
+
+
+def _save_tob_accounts(accounts: dict) -> None:
+    _TOB_ACCOUNTS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    tmp = _TOB_ACCOUNTS_FILE.with_suffix(".tmp")
+    tmp.write_text(json.dumps(accounts, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp.replace(_TOB_ACCOUNTS_FILE)
+
+
+def tob_accounts_list() -> list[dict]:
+    """账号清单：env 内置演示账号 + 文件管理账号（口令不回传）。"""
+    settings = get_settings()
+    rows = [{
+        "username": settings.admin_username, "display": "工作台管理员", "role": "admin",
+        "source": "builtin", "tenant": "wl", "created_at": "",
+    }]
+    for name, meta in _TOB_DEMO_ROLES.items():
+        rows.append({"username": name, "display": meta["display"], "role": meta["role"],
+                     "source": "builtin", "tenant": "wl", "created_at": ""})
+    for u, meta in _tob_accounts_all().items():
+        rows.append({"username": u, "display": meta.get("display") or u, "role": meta.get("role") or "consultant",
+                     "source": "managed", "tenant": meta.get("tenant") or "wl",
+                     "created_at": meta.get("created_at") or ""})
+    return rows
+
+
+def tob_account_create(username: str, password: str, display: str, role: str, tenant: str = "wl") -> tuple[dict | None, str | None]:
+    settings = get_settings()
+    if not username or not password:
+        return None, "用户名与密码不能为空"
+    if role not in ("admin", "supervisor", "consultant"):
+        return None, "角色不合法（admin / supervisor / consultant）"
+    with _TOB_LOCK:
+        accounts = _tob_accounts_all()
+        if username in accounts or username in _TOB_DEMO_ROLES or username == settings.admin_username:
+            return None, "账号已存在"
+        salt = secrets.token_hex(8)
+        accounts[username] = {"salt": salt, "hash": _hash(password, salt),
+                              "display": display or username, "role": role, "tenant": tenant,
+                              "created_at": time.strftime("%Y-%m-%d %H:%M")}
+        _save_tob_accounts(accounts)
+    return {"username": username, "display": display or username, "role": role}, None
+
+
+def tob_account_reset(username: str, password: str) -> tuple[bool, str | None]:
+    if not password or len(password) < 6:
+        return False, "新口令至少 6 位"
+    with _TOB_LOCK:
+        accounts = _tob_accounts_all()
+        if username not in accounts:
+            return False, "内置演示账号口令由 .env 管理，仅可重置自建账号"
+        accounts[username]["hash"] = _hash(password, accounts[username]["salt"])
+        _save_tob_accounts(accounts)
+    return True, None
+
+
+def tob_account_delete(username: str) -> tuple[bool, str | None]:
+    with _TOB_LOCK:
+        accounts = _tob_accounts_all()
+        if username not in accounts:
+            return False, "内置演示账号不可删除"
+        accounts.pop(username, None)
+        _save_tob_accounts(accounts)
+    return True, None
+
+
 # ---------- P2.1 手机号验证码登录（mock 通道：验证码回显给页面，接入真实短信服务后仅替换 _send_sms） ----------
 _sms_codes: dict[str, tuple[str, float]] = {}
 _SMS_TTL_SECONDS = 300.0
@@ -120,6 +199,10 @@ def verify(realm: str, username: str, password: str) -> dict | None:
         if account and expected and hmac.compare_digest(password, expected):
             tenant = getattr(settings, f"tob_{username}_tenant", "wl")
             return {"username": username, "display": account["display"], "role": account["role"], "tenant": tenant}
+        managed = _tob_accounts_all().get(username)
+        if managed and hmac.compare_digest(managed["hash"], _hash(password, managed["salt"])):
+            return {"username": username, "display": managed.get("display") or username,
+                    "role": managed.get("role") or "consultant", "tenant": managed.get("tenant") or "wl"}
         return None
     creds = _demo_credentials()
     if username == creds["toc_username"] and hmac.compare_digest(password, creds["toc_password"]):

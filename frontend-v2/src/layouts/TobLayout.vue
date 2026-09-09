@@ -14,6 +14,7 @@
         <router-link :to="{ name: 'tob-orders' }"><span class="ico">🧾</span>订单管理</router-link>
         <router-link :to="{ name: 'tob-plans' }"><span class="ico">🗂</span>方案列表</router-link>
         <router-link :to="{ name: 'tob-customers' }"><span class="ico">👥</span>客户管理</router-link>
+    <router-link :to="{ name: 'tob-accounts' }"><span class="ico">👤</span>企业账号</router-link>
 
         <div class="nav-group">治理</div>
         <router-link :to="{ name: 'tob-approvals' }"><span class="ico">⚖️</span>HITL 审核台<em v-if="pendingCount" class="badge">{{ pendingCount }}</em></router-link>
@@ -37,7 +38,7 @@
           <span>{{ auth.name }} · {{ auth.role }}</span>
           <button @click="auth.logout(); toast('已退出', 'ok')">退出</button>
         </div>
-        <router-link v-else :to="{ name: 'auth', query: { realm: 'tob' } }" class="btn btn-primary btn-sm" style="text-decoration:none">登录工作台</router-link>
+        <router-link v-else :to="{ name: 'tob-auth' }" class="btn btn-primary btn-sm" style="text-decoration:none">登录工作台</router-link>
       </div>
     </aside>
 

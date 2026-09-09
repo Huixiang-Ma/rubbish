@@ -121,3 +121,57 @@ def require_role(*roles: str):
         return payload
 
     return dep
+
+# ---------- toB 企业账号管理（admin 专属；账号由企业内部发放，不开放自助注册） ----------
+class TobAccountCreate(BaseModel):
+    username: str = Field(..., min_length=2, max_length=40)
+    password: str = Field(..., min_length=6)
+    display: str = Field(default="", max_length=40)
+    role: str = Field(default="consultant", pattern="^(admin|supervisor|consultant)$")
+    tenant: str = Field(default="wl", max_length=40)
+
+
+class TobAccountReset(BaseModel):
+    password: str = Field(..., min_length=6)
+
+
+def _require_tob_admin(request: Request) -> dict:
+    token = bearer_token(request)
+    payload = auth_service.verify_token(token)
+    if not payload or payload.get("r") != "admin":
+        raise HTTPException(status_code=403, detail="仅工作台管理员可管理企业账号")
+    return payload
+
+
+@router.get("/tob/accounts")
+def tob_accounts(request: Request) -> dict:
+    _require_tob_admin(request)
+    return {"accounts": auth_service.tob_accounts_list()}
+
+
+@router.post("/tob/accounts")
+def tob_account_create(payload: TobAccountCreate, request: Request) -> dict:
+    _require_tob_admin(request)
+    account, error = auth_service.tob_account_create(
+        payload.username.strip(), payload.password, payload.display.strip(), payload.role, payload.tenant)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return {"ok": True, "account": account}
+
+
+@router.post("/tob/accounts/{username}/reset")
+def tob_account_reset(username: str, payload: TobAccountReset, request: Request) -> dict:
+    _require_tob_admin(request)
+    ok, error = auth_service.tob_account_reset(username, payload.password)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return {"ok": True}
+
+
+@router.delete("/tob/accounts/{username}")
+def tob_account_delete(username: str, request: Request) -> dict:
+    _require_tob_admin(request)
+    ok, error = auth_service.tob_account_delete(username)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return {"ok": True}

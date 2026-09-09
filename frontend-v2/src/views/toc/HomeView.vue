@@ -83,9 +83,8 @@
               </div>
               <div class="pf-field">
                 <label>出行日期</label>
-                <button type="button" class="input date-btn" @click="dateOpen = true">
-                  <span :class="{ 'date-empty': !dateRangeText }">{{ dateRangeText || '选择出发 / 返程日期' }}</span>
-                  <span class="date-ico">📅</span>
+                <button type="button" class="date-text" @click="dateOpen = true">
+                  {{ dateRangeText || '选择出发 / 返程日期' }} <span class="dt-edit">{{ dateRangeText ? '修改' : '' }}</span>
                 </button>
               </div>
             </div>
@@ -174,54 +173,36 @@
       </div>
     </section>
 
-    <!-- 玩法主题 -->
+    <!-- 玩法 × 方案（电商式分类橱窗：玩法 tab 即类目，方案卡直达详情） -->
     <section class="container sec">
       <div class="sec-head">
         <div>
-          <div class="sec-title">按玩法挑方案</div>
-          <p class="sec-desc">不是按门票分类，而是按你想怎么玩挑</p>
+          <div class="sec-title">🧭 挑方案：按玩法选类目</div>
+          <p class="sec-desc">选一个玩法（类目），下方直接给出该类目在售方案——与「线路方案」馆同一份库存</p>
         </div>
+        <router-link :to="{ name: 'malls' }" class="more-link">进线路方案馆 →</router-link>
       </div>
-      <div class="cat-strip">
-        <router-link v-for="c in themes" :key="c.name"
-                     :to="{ name: 'malls-category', params: { key: c.name } }"
-                     class="cat-tile"
-                     :style="{ '--cat-c': c.color }">
+      <div class="cat-tabs">
+        <button v-for="c in themes" :key="c.name"
+                :class="['cat-tab', { on: shopCat === c.name }]"
+                :style="{ '--cat-c': c.color }"
+                @click="shopCat = c.name; filterShopByCat()">
           <span class="ct-emoji">{{ c.emoji }}</span>
           <span class="ct-label">{{ c.name }}</span>
-          <span class="ct-hint">{{ c.desc }} · {{ c.count }} 条</span>
-        </router-link>
+          <i class="ct-cnt">{{ c.count }}</i>
+        </button>
       </div>
-    </section>
-
-    <!-- 精选线路方案 -->
-    <section class="container sec">
-      <div class="sec-head">
-        <div>
-          <div class="sec-title">🧭 精选线路方案</div>
-          <p class="sec-desc">整体报价按人计，一条线路含每日动线，不用自己拼票</p>
-        </div>
-        <router-link :to="{ name: 'malls' }" class="more-link">全部方案 →</router-link>
-      </div>
+      <p class="shop-sub">{{ shopCat ? `「${shopCat}」在售方案` : '全部在售方案' }} · 按人计价一价全包</p>
       <div class="shop-grid">
-        <router-link v-for="p in plans" :key="p.id"
+        <router-link v-for="p in shopPlans" :key="p.id"
                      :to="{ name: 'malls-product', params: { id: p.id } }"
                      class="shop-card card card-hover">
-          <div class="shop-cover" :style="{ background: p.cover.gradient }">
-            <!-- 景点实拍图轮换（高德 POI 图；无图回落 emoji 封面） -->
-            <template v-if="p.photos && p.photos.length">
-              <img v-for="(ph, i) in p.photos" :key="ph.url" v-show="photoIdx[p.id] % p.photos.length === i"
-                   class="shop-photo" :src="ph.url" :alt="ph.name" loading="lazy" />
-              <div class="photo-dots">
-                <i v-for="(ph, i) in p.photos" :key="i" :class="{ on: photoIdx[p.id] % p.photos.length === i }" />
-              </div>
-            </template>
-            <span v-else class="shop-emoji">{{ p.cover.emoji }}</span>
+          <PhotoCover :cover="p.cover" :photos="p.photos || []" auto>
             <div class="shop-badges">
               <span v-for="b in p.badges" :key="b" class="bd">{{ b }}</span>
             </div>
             <span class="days-chip">{{ p.days }} 日</span>
-          </div>
+          </PhotoCover>
           <div class="shop-body">
             <div class="shop-cat">{{ p.category }} · {{ p.city }}</div>
             <div class="shop-name">{{ p.name }}</div>
@@ -282,11 +263,12 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { reactive, ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { plansApi, planShopApi, svcApi } from '../../api'
 import { useAuthStore } from '../../stores/auth'
 import { toast } from '../../composables/toast'
+import PhotoCover from '../../components/PhotoCover.vue'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -297,10 +279,15 @@ const cities = ref([])
 const creating = ref(false)
 const prefsOpen = ref(false)
 const dateOpen = ref(false)
-const photoIdx = ref({})
 const plan = reactive({ destination: '', origin: '', days: 3, budget: 8000, date: '', dateReturn: '', group: '', interests: [], rhythm: '', sleep: '', note: '' })
 
 const ORIGIN_CITIES = ['上海', '南京', '杭州', '北京', '苏州', '无锡', '常州', '合肥', '武汉', '广州', '深圳', '成都', '西安', '天津']
+
+// 玩法类目选择的方案过滤（电商式：tab=类目，卡片=该类目在售方案）
+const shopCat = ref('')
+const shopPlans = computed(() => (shopCat.value ? plans.value.filter(p => p.category === shopCat.value) : plans.value))
+
+function filterShopByCat() { /* 响应式 computed 已联动，这里只留 tab 切换语义 */ }
 const today = new Date().toISOString().slice(0, 10)
 
 // 日期按钮文案
@@ -463,7 +450,6 @@ async function load() {
 }
 
 // 需求5：精选方案卡片拉景点实拍图（高德 POI 图），每 3.5s 轮换
-let photoTimer = null
 async function loadPhotos() {
   for (const p of plans.value.slice(0, 6)) {
     try {
@@ -472,13 +458,8 @@ async function loadPhotos() {
       if (r.photos && r.photos.length) p.photos = r.photos
     } catch { /* 无图保持 emoji 封面 */ }
   }
-  if (plans.value.some(p => p.photos && p.photos.length)) {
-    photoTimer = setInterval(() => {
-      for (const p of plans.value) if (p.photos && p.photos.length) photoIdx.value[p.id] = (photoIdx.value[p.id] || 0) + 1
-    }, 3500)
-  }
+  // 轮换由 PhotoCover 组件自驱动（auto）
 }
-onBeforeUnmount(() => { if (photoTimer) clearInterval(photoTimer) })
 
 onMounted(load)
 </script>
@@ -559,9 +540,15 @@ onMounted(load)
 .pf-tip { font-size: 12px; color: var(--ink-400); text-align: center; margin: 2px 0 0; }
 
 /* 出行日期按钮 + 弹窗 */
-.date-btn { display: flex; align-items: center; justify-content: space-between; cursor: pointer; text-align: left; font-weight: 600; }
-.date-btn .date-empty { color: var(--ink-400); font-weight: 400; }
-.date-btn .date-ico { font-size: 15px; }
+.date-text {
+  border: none; background: none; padding: 2px 0; cursor: pointer; text-align: left;
+  font-size: 14px; font-weight: 700; color: var(--brand-600);
+}
+.date-text:hover { text-decoration: underline; }
+.date-text .dt-edit {
+  font-size: 11px; font-weight: 600; color: #fff; background: var(--brand-500);
+  border-radius: 999px; padding: 1px 8px; margin-left: 4px;
+}
 .pf-actions { display: flex; gap: 12px; align-items: stretch; margin-top: 6px; }
 .pf-actions .manual-btn { flex: none; display: flex; flex-direction: column; align-items: flex-start; gap: 0; font-weight: 700; }
 .pf-actions .manual-btn small { font-weight: 400; font-size: 11px; color: var(--ink-400); }
@@ -614,17 +601,23 @@ onMounted(load)
 .more-link { font-size: 14px; color: var(--brand-600); font-weight: 700; text-decoration: none !important; }
 .more-link:hover { color: var(--brand-700); }
 
-.cat-strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
-.cat-tile {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: #fff; border: 1px solid var(--ink-200); border-radius: var(--r-md);
-  padding: 22px 12px; text-decoration: none !important; text-align: center;
-  border-top: 3px solid var(--cat-c, var(--brand-500)); transition: all .15s;
+.cat-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.cat-tab {
+  display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+  background: #fff; border: 1.5px solid var(--ink-200); border-radius: 999px;
+  padding: 9px 18px; font-size: 14px; font-weight: 700; color: var(--ink-700); transition: all .15s;
+  border-bottom-color: var(--cat-c, var(--brand-500));
 }
-.cat-tile:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(15,23,42,.08); border-color: var(--cat-c, var(--brand-500)); }
-.ct-emoji { font-size: 32px; margin-bottom: 8px; }
-.ct-label { font-weight: 800; font-size: 15px; color: var(--ink-900); }
-.ct-hint { font-size: 12px; color: var(--ink-500); margin-top: 4px; }
+.cat-tab:hover { border-color: var(--cat-c, var(--brand-500)); color: var(--ink-900); transform: translateY(-1px); }
+.cat-tab.on { background: var(--cat-c, var(--brand-600)); border-color: var(--cat-c, var(--brand-600)); color: #fff; }
+.cat-tab .ct-emoji { font-size: 17px; }
+.cat-tab .ct-cnt {
+  font-style: normal; font-size: 11px; font-weight: 800; background: rgba(15,23,42,.08);
+  border-radius: 999px; padding: 1px 7px;
+}
+.cat-tab.on .ct-cnt { background: rgba(255,255,255,.25); }
+.shop-sub { font-size: 13px; color: var(--ink-500); margin: 0 0 12px; font-weight: 600; }
+.ct-label { font-weight: 800; font-size: 14px; }
 
 .shop-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 .shop-card { padding: 0; overflow: hidden; text-decoration: none !important; transition: all .18s; }
@@ -664,7 +657,7 @@ onMounted(load)
 @media (max-width: 980px) {
   .hero-inner { grid-template-columns: 1fr; }
   .hero-right { grid-template-columns: repeat(4, 1fr); }
-  .cat-strip { grid-template-columns: repeat(3, 1fr); }
+
   .shop-grid { grid-template-columns: repeat(2, 1fr); }
   .city-row { grid-template-columns: repeat(3, 1fr); }
   .assure-grid { grid-template-columns: repeat(2, 1fr); }

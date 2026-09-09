@@ -36,6 +36,7 @@ const routes = [
       { path: 'plan-products', name: 'tob-plan-products', component: () => import('../views/tob/PlanProductsView.vue'), meta: { title: '方案上架' } },
       { path: 'orders', name: 'tob-orders', component: () => import('../views/tob/OrdersView.vue'), meta: { title: '订单管理' } },
       { path: 'customers', name: 'tob-customers', component: () => import('../views/tob/CustomersView.vue'), meta: { title: '客户管理' } },
+      { path: 'accounts', name: 'tob-accounts', component: () => import('../views/tob/AccountsView.vue'), meta: { title: '企业账号' } },
       { path: 'whitelabel', name: 'tob-whitelabel', component: () => import('../views/tob/WhitelabelView.vue'), meta: { title: '白标交付' } },
     ],
   },
@@ -74,6 +75,9 @@ const routes = [
       { path: 'services', name: 'services', component: () => import('../views/toc/ServicesView.vue') },
       { path: 'auth', name: 'auth', component: () => import('../views/toc/AuthView.vue') },
 
+      // ===== toB 独立登录页（需求6：与游客端分离，账号企业内部发放）=====
+      { path: 'login', name: 'tob-auth', component: () => import('../views/tob/TobAuthView.vue') },
+
       // ===== 旧 /planner 入口兼容（W2 路由迁移过渡）=====
       // /planner                  → /plans?new=1（弹层入口；PlannerView 不再承担选模板职责）
       // /planner/trip/:tripId     → /trip/:tripId（旧 URL 仍能直达只读详情）
@@ -102,7 +106,7 @@ router.afterEach((to) => {
 const TOC_PROTECTED = new Set(['my-plans', 'trip-detail', 'trip-edit', 'trip-map', 'plan-detail',
   'my-orders', 'my-favorites', 'malls-checkout', 'manual-composer'])
 router.beforeEach((to) => {
-  if (to.name === 'auth' || to.name === 'share') return true
+  if (to.name === 'auth' || to.name === 'tob-auth' || to.name === 'share') return true
   const token = localStorage.getItem('wl_token')
   if (token) return true
   if (TOC_PROTECTED.has(String(to.name))) {

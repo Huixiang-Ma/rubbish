@@ -8,21 +8,20 @@
         </router-link>
         <nav class="nav-links">
           <router-link :to="{ name: 'home' }">首页</router-link>
-          <router-link :to="{ name: 'my-plans', query: { new: 1 } }" class="hot">✦ 行程规划</router-link>
+          <router-link :to="{ name: 'my-plans', query: { new: 1 } }" class="hot">行程规划</router-link>
           <router-link :to="{ name: 'malls' }">线路方案</router-link>
+          <router-link :to="{ name: 'manual-composer' }">手动规划</router-link>
           <router-link :to="{ name: 'services' }">服务大厅</router-link>
-          <router-link :to="{ name: 'tob-dashboard' }" class="tob-link">企业工作台 ↗</router-link>
         </nav>
         <div class="nav-right">
-          <router-link :to="{ name: 'manual-composer' }" class="mini-link">🧩 手动行程规划</router-link>
-          <router-link :to="{ name: 'my-plans' }" class="mini-link">🧳 我的行程</router-link>
-          <router-link :to="{ name: 'my-orders' }" class="mini-link">🧾 我的订单</router-link>
-          <router-link :to="{ name: 'my-favorites' }" class="mini-link">❤️ 收藏</router-link>
+          <router-link :to="{ name: 'my-plans' }" class="mini-link" title="我的行程">🧳<em>行程</em></router-link>
+          <router-link :to="{ name: 'my-orders' }" class="mini-link" title="我的订单">🧾<em>订单</em></router-link>
+          <router-link :to="{ name: 'my-favorites' }" class="mini-link" title="收藏">❤️<em>收藏</em></router-link>
           <template v-if="auth.isLogged">
-            <span class="user-chip">👤 {{ auth.name }}</span>
+            <span class="user-chip">{{ auth.name }}</span>
             <button class="btn btn-ghost btn-sm" @click="auth.logout(); toast('已退出登录', 'ok')">退出</button>
           </template>
-          <button v-else class="btn btn-primary btn-sm" @click="loginOpen = true">登录 / 注册</button>
+          <button v-else class="btn btn-primary btn-sm" @click="loginOpen = true">登录</button>
         </div>
       </div>
     </header>
@@ -40,6 +39,7 @@
           </div>
           <div class="foot-meta">
             <span>企业编排 · 方案整订 · 逐日动线 · 可退可改</span>
+            <router-link :to="{ name: 'tob-dashboard' }" style="color:var(--ink-400)">企业工作台入口 →</router-link>
             <span>Frontend v2 · Vue3 + Vite</span>
           </div>
         </div>
@@ -90,7 +90,7 @@ watch(() => auth.isLogged, (logged) => {
   height: var(--nav-h); background: rgba(255,255,255,.82); backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--ink-100); position: sticky; top: 0; z-index: 50;
 }
-.nav-inner { height: 100%; display: flex; align-items: center; gap: 34px; }
+.nav-inner { height: 100%; display: flex; align-items: center; gap: 20px; }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none !important; }
 .brand-mark {
   width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center;
@@ -99,9 +99,9 @@ watch(() => auth.isLogged, (logged) => {
 }
 .brand-text { font-size: 18px; font-weight: 800; color: var(--ink-900); letter-spacing: -.02em; display: flex; align-items: baseline; gap: 7px; }
 .brand-text small { font-size: 11px; color: var(--ink-400); font-weight: 600; letter-spacing: .08em; }
-.nav-links { display: flex; gap: 4px; flex: 1; }
+.nav-links { display: flex; gap: 2px; flex: 1; }
 .nav-links a {
-  padding: 8px 15px; border-radius: var(--r-sm); font-size: 14.5px; font-weight: 500;
+  padding: 7px 12px; border-radius: var(--r-sm); font-size: 14px; font-weight: 500;
   color: var(--ink-700); text-decoration: none !important; transition: all .15s;
 }
 .nav-links a:hover { background: var(--brand-50); color: var(--brand-600); }
@@ -113,13 +113,15 @@ watch(() => auth.isLogged, (logged) => {
 .nav-links a.hot:hover { filter: brightness(1.08); }
 .nav-links a.hot.router-link-active { color: #fff !important; box-shadow: 0 4px 14px rgba(37,99,235,.42); }
 .tob-link { color: var(--ink-500) !important; }
-.nav-right { display: flex; align-items: center; gap: 10px; }
-.mini-link {
-  font-size: 13.5px; color: var(--ink-700); font-weight: 600; text-decoration: none !important;
-  padding: 6px 10px; border-radius: 999px; transition: all .15s; white-space: nowrap;
+.nav-right { display: flex; align-items: center; gap: 4px; }
+.nav-right .mini-link {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 0; line-height: 1.15;
+  font-size: 10.5px; color: var(--ink-600); font-weight: 600; text-decoration: none !important;
+  padding: 4px 9px; border-radius: 9px; transition: all .15s;
 }
-.mini-link:hover { background: var(--ink-100); color: var(--brand-600); }
-.mini-link.router-link-active { color: var(--brand-700); background: var(--brand-50); }
+.nav-right .mini-link em { font-style: normal; }
+.nav-right .mini-link:hover { background: var(--ink-100); color: var(--brand-600); }
+.mini-link { white-space: nowrap; }
 .user-chip { font-size: 13.5px; color: var(--ink-700); font-weight: 600; background: var(--ink-100); padding: 6px 13px; border-radius: 999px; }
 
 .toc-main { flex: 1; }

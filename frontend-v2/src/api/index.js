@@ -122,6 +122,11 @@ export const authApi = {
   register: (body) => api.post('/auth/register', body),
   requestCode: (phone) => api.post('/auth/request-code', { phone }),
   me: () => api.get('/auth/me'),
+  // toB 企业账号管理（admin 专属）
+  tobAccounts: () => api.get('/auth/tob/accounts'),
+  tobAccountCreate: (body) => api.post('/auth/tob/accounts', body),
+  tobAccountReset: (username, password) => api.post(`/auth/tob/accounts/${encodeURIComponent(username)}/reset`, { password }),
+  tobAccountDelete: (username) => api.delete(`/auth/tob/accounts/${encodeURIComponent(username)}`),
 }
 
 /* ---------- RAG 知识问答 ----------

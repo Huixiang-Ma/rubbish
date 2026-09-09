@@ -76,13 +76,12 @@
           <router-link v-for="p in plans" :key="p.id"
                        :to="{ name: 'malls-product', params: { id: p.id } }"
                        class="shop-card card">
-            <div class="shop-cover" :style="{ background: p.cover.gradient }">
-              <span class="shop-emoji">{{ p.cover.emoji }}</span>
+            <PhotoCover :cover="p.cover" :photos="p.photos || []">
               <span class="days-chip">{{ p.days }} 日 / {{ p.pace_zh }}</span>
               <div class="shop-badges">
                 <span v-for="b in p.badges" :key="b" class="bd">{{ b }}</span>
               </div>
-            </div>
+            </PhotoCover>
             <div class="shop-body">
               <div class="shop-top">
                 <span class="shop-cat">{{ p.category }}</span>
@@ -114,7 +113,8 @@
 <script setup>
 import { reactive, ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { planShopApi } from '../../api'
+import { planShopApi, svcApi } from '../../api'
+import PhotoCover from '../../components/PhotoCover.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -158,6 +158,15 @@ function param() {
   }
 }
 
+async function loadPhotos() {
+  for (const p of plans.value.slice(0, 12)) {
+    try {
+      const r = await svcApi.planPhotos(p.city, '')
+      if (r.photos && r.photos.length) p.photos = r.photos
+    } catch { /* 无图回落 emoji */ }
+  }
+}
+
 async function load(reset = true) {
   loading.value = true
   try {
@@ -172,6 +181,7 @@ async function load(reset = true) {
       cats.total = c.value.total || 0
     }
   } finally { loading.value = false }
+  loadPhotos()
 }
 
 function setCity(v) {

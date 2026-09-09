@@ -40,7 +40,7 @@
           </div>
           <button class="btn btn-primary btn-block" :disabled="busy">{{ busy ? '注册中…' : '注 册' }}</button>
         </form>
-        <p class="am-tip">还没有账号？切到「注册」即买即用 · 企业员工请走<a href="#/auth?realm=tob" style="color:var(--brand)">工作台入口</a></p>
+        <p class="am-tip">还没有账号？切到「注册」即买即用 · 企业员工请走<a href="#/login" style="color:var(--brand)">工作台入口</a></p>
       </div>
     </div>
   </Teleport>
