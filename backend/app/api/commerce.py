@@ -159,6 +159,7 @@ class OrderCreate(BaseModel):
     product_id: str
     persons: Optional[int] = Field(default=None, ge=1)
     qty: Optional[int] = Field(default=None, ge=1)
+    sku_id: Optional[str] = None  # 套餐种类（标准整订 / 纯玩不含宿 / 单房差 / 儿童价）
     use_date: Optional[str] = None
     start_date: Optional[str] = None
     contact: Optional[OrderContact] = None

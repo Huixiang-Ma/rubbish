@@ -365,20 +365,67 @@ def _plan_remaining(p: dict[str, Any]) -> int:
     return max(0, base - _active_reservations(p.get("id") or ""))
 
 
-def plan_item_of(plan_id: str, persons: int) -> dict[str, Any] | None:
-    """方案 → 订单条目（整体预订，以人计）。契约见 mock planItemOf。"""
+def plan_skus(plan: dict[str, Any]) -> list[dict[str, Any]]:
+    """方案可选种类（套餐规格）：默认全包整订 + 按方案特征派生的可选 SKU。
+
+    - 含住宿的方案：基础（不含酒店）/ 含酒店 两档；
+    - 全部方案：双人成团价（默认）、单房差补、儿童价（不占床）。
+    价格口径以 per_price 为基准增减，演示级；后续 SKU 可由 toB 上架表单自定义。
+    """
+    days = int(plan.get("days") or 1)
+    per = int(plan.get("per_price") or 0)
+    orig = int(plan.get("original_per_price") or per)
+    skus = [{
+        "sku_id": f"{plan['id']}_full", "label": "标准整订",
+        "spec": f"{days} 日 · 全包", "price": per, "original_price": orig,
+        "note": "门票 + 餐饮推荐 + 全程导览",
+        "default": True,
+    }]
+    has_hotel = any(
+        (b.get("product") or {}).get("category") == "住宿"
+        for d in (plan.get("itinerary") or []) for b in (d.get("blocks") or [])
+    )
+    if has_hotel:
+        skus.append({
+            "sku_id": f"{plan['id']}_nohotel", "label": "纯玩不含宿",
+            "spec": f"{days} 日 · 不含住宿", "price": max(99, per - days * 260),
+            "original_price": max(99, orig - days * 260),
+            "note": "自行安排住宿，其余同标准",
+        })
+        skus.append({
+            "sku_id": f"{plan['id']}_single", "label": "单房差",
+            "spec": f"{days} 日 · 独立房间", "price": per + days * 220,
+            "original_price": orig + days * 220,
+            "note": "1 人一间，免拼房",
+        })
+    skus.append({
+        "sku_id": f"{plan['id']}_child", "label": "儿童价",
+        "spec": f"{days} 日 · 不占床", "price": max(59, int(per * 0.6)),
+        "original_price": max(59, int(orig * 0.6)),
+        "note": "1.2m 以下儿童，不占床不含早",
+    })
+    return skus
+
+
+def plan_item_of(plan_id: str, persons: int, sku_id: str = "") -> dict[str, Any] | None:
+    """方案 → 订单条目（整体预订，以人计）。sku_id 空时取默认种类。"""
     p = find_plan(plan_id)
     if not p:
         return None
     days = int(p.get("days") or 1)
     per = int(p.get("per_price") or 0)
     orig = int(p.get("original_per_price") or per)
+    sku = next((s for s in plan_skus(p) if s["sku_id"] == sku_id), None) or {}
+    unit = int(sku.get("price") or per)
+    unit_orig = int(sku.get("original_price") or orig)
+    label = sku.get("label") or f"{days} 日行程 · 整订"
+    spec = sku.get("spec") or f"{days} 日 · 人均 ¥{per}"
     return {
         "kind": "plan", "product_id": p["id"], "name": p.get("title"),
         "category": p.get("category"), "city": p.get("city"), "cover": p.get("cover"),
         "days": days, "plan_days": days, "title": p.get("title"),
-        "sku_id": f"{p['id']}_full", "sku_label": f"{days} 日行程 · 整订",
-        "spec": f"{days} 日 · 人均 ¥{per}", "unit_price": per, "original_price": orig,
+        "sku_id": sku.get("sku_id") or f"{p['id']}_full", "sku_label": label,
+        "spec": spec, "unit_price": unit, "original_price": unit_orig,
         "qty": persons, "travelers": persons,
         "pickup": p.get("pickup") or "行程起点集合（下单后客服确认具体点位）",
         "refund": p.get("refund_policy") or "出行前 48 小时外可免费取消，48 小时内按 30% 扣费",
@@ -440,7 +487,7 @@ def catalog_detail(plan_id: str) -> dict[str, Any]:
         raise LookupError("行程方案不存在或已下架")
     pubs = [x for x in plans_seed() if x.get("listed") is not False and x.get("id") != plan_id]
     related = [plan_summary(x) for x in pubs if x.get("category") == p.get("category") or x.get("city") == p.get("city")][:3]
-    detail = {**p, "stock": _plan_remaining(p)}
+    detail = {**p, "stock": _plan_remaining(p), "skus": plan_skus(p)}
     return {"plan": detail, "related": related}
 
 
@@ -545,7 +592,7 @@ def create_order(payload: dict[str, Any], caller: dict[str, Any] | None) -> dict
     use_date = str(payload.get("use_date") or payload.get("start_date") or "").strip()
     if not use_date:
         raise ValueError("请选择出发日期")
-    item = plan_item_of(product_id, persons)
+    item = plan_item_of(product_id, persons, str(payload.get("sku_id") or ""))
     if not item:
         raise LookupError("行程方案不存在或已下架")
     contact = payload.get("contact") or {}
@@ -553,7 +600,7 @@ def create_order(payload: dict[str, Any], caller: dict[str, Any] | None) -> dict
     order = _new_order(
         owner=owner, items=[item],
         contact={"name": str(contact.get("name") or "未填写"), "phone": str(contact.get("phone") or "")},
-        status="UNPAID", total=int(item["unit_price"] * persons), use_date=use_date,
+        status="UNPAID", total=int(item["unit_price"]) * int(item["qty"] or persons), use_date=use_date,
         created_at=_now_iso(),
     )
     with _LOCK:

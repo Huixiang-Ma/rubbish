@@ -64,8 +64,8 @@
 
         <aside class="hero-buy card">
           <div class="price-row">
-            <span class="y">¥</span><b class="n">{{ plan.per_price }}</b>
-            <span class="suffix">/ 人 · 整订</span>
+            <span class="y">¥</span><b class="n">{{ activeSku?.price ?? plan.per_price }}</b>
+            <span class="suffix">/ 人 · {{ activeSku?.label || '整订' }}</span>
           </div>
           <s v-if="plan.original_per_price > plan.per_price" class="orig">门市参考 ¥{{ plan.original_per_price }} /人</s>
           <div class="sale-row">
@@ -73,6 +73,17 @@
             <span class="minp">每单 ≥ {{ plan.min_persons }} 人起订</span>
           </div>
 
+          <div class="buy-field" v-if="skus.length">
+            <label>选择种类</label>
+            <div class="sku-group">
+              <button v-for="s in skus" :key="s.sku_id" type="button"
+                      :class="['sku-chip', { on: skuId === s.sku_id }]" @click="skuId = s.sku_id">
+                <b>{{ s.label }}</b>
+                <em>¥{{ s.price }} · {{ s.spec }}</em>
+              </button>
+            </div>
+            <p class="sku-note" v-if="activeSku?.note">💡 {{ activeSku.note }}</p>
+          </div>
           <div class="buy-field">
             <label>出发日期</label>
             <select v-model="date" class="select">
@@ -213,6 +224,7 @@ const liked = ref(false)
 const buying = ref(false)
 const persons = ref(2)
 const date = ref('')
+const skuId = ref('')
 // RAG 语料背书（B 档）：每站知识原文来自标品知识语料实时检索，后端不可用则整块隐藏
 const grounding = ref({ items: [], total: 0 })
 const groundMatched = computed(() => grounding.value.items.filter(i => i.matched).length)
@@ -262,7 +274,9 @@ const dateOptions = computed(() => {
   }
   return out
 })
-const total = computed(() => (plan.value ? plan.value.per_price * persons.value : 0))
+const skus = computed(() => plan.value?.skus || [])
+const activeSku = computed(() => skus.value.find(x => x.sku_id === skuId.value) || skus.value[0] || null)
+const total = computed(() => plan.value ? (activeSku.value?.price ?? plan.value.per_price) * persons.value : 0)
 
 function periodLabel(k) { return PERIODS[k] || k }
 function catColor(name) {
@@ -285,6 +299,7 @@ async function load() {
     plan.value = r.plan
     related.value = r.related || []
     persons.value = Math.max(r.plan.min_persons || 2, 2)
+    skuId.value = (r.plan.skus || []).find(x => x.default)?.sku_id || (r.plan.skus || [])[0]?.sku_id || ''
     if (!date.value) date.value = dateOptions.value[2]?.value || ''
     if (plan.value.stock === 0) toast('该方案本期已满，可换个出发日', 'warn')
     if (plan.value) loadGrounding()
@@ -316,7 +331,7 @@ function onShare() {
 function goCheckout() {
   if (!date.value) { toast('请先选择出发日期', 'warn'); return }
   if ((plan.value.stock || 0) <= 0) { toast('该团期已满', 'warn'); return }
-  router.push({ name: 'malls-checkout', query: { product: plan.value.id, persons: persons.value, date: date.value } })
+  router.push({ name: 'malls-checkout', query: { product: plan.value.id, persons: persons.value, date: date.value, sku: activeSku.value?.sku_id || '' } })
 }
 
 onMounted(() => {
@@ -367,6 +382,17 @@ onMounted(() => {
 .stock { color: var(--ok-700, #15803D); font-weight: 700; }
 .stock.low { color: var(--danger); }
 .minp { color: var(--ink-400); }
+.sku-group { display: flex; flex-wrap: wrap; gap: 7px; }
+.sku-chip {
+  border: 1.5px solid var(--ink-200); background: #fff; border-radius: 11px;
+  padding: 7px 11px; cursor: pointer; text-align: left; transition: all .14s; min-width: 46%;
+  flex: 1 1 46%;
+}
+.sku-chip:hover { border-color: var(--brand-500); }
+.sku-chip.on { border-color: var(--brand-600); background: var(--brand-50, #EFF6FF); box-shadow: 0 0 0 2px rgba(37,99,235,.12); }
+.sku-chip b { display: block; font-size: 12.5px; color: var(--ink-900); }
+.sku-chip em { font-style: normal; font-size: 11px; color: var(--ink-500); }
+.sku-note { font-size: 11.5px; color: var(--ink-400); margin: 6px 0 0; }
 .buy-field { margin-top: 14px; }
 .buy-field label { font-size: 12px; font-weight: 700; color: var(--ink-600); display: block; margin-bottom: 6px; }
 .stepper { display: flex; align-items: center; gap: 6px; }

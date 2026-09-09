@@ -99,8 +99,8 @@
           <aside class="co-side card">
             <div class="co-price-title">费用明细</div>
             <div class="co-line">
-              <span>{{ plan.title }}（整订）</span>
-              <span>¥{{ plan.per_price }} × {{ form.persons }} 人</span>
+              <span>{{ plan.title }}（{{ form.sku?.label || '整订' }}）</span>
+              <span>¥{{ form.sku?.price ?? plan.per_price }} × {{ form.persons }} 人</span>
             </div>
             <div class="co-line dim">
               <span>含：门票 / 早晚餐推荐 / {{ plan.days > 1 ? '住宿' : '保障' }}</span>
@@ -167,7 +167,7 @@ const payOpen = ref(false)
 const paying = ref(false)
 const submitting = ref(false)
 const method = ref('wechat')
-const form = reactive({ name: '', phone: '', date: '', persons: 2 })
+const form = reactive({ name: '', phone: '', date: '', persons: 2, skuId: '', sku: null })
 
 const dateOptions = computed(() => {
   const out = []
@@ -181,7 +181,7 @@ const dateOptions = computed(() => {
   }
   return out
 })
-const total = computed(() => (plan.value ? plan.value.per_price * form.persons : 0))
+const total = computed(() => plan.value ? (form.sku?.price ?? plan.value.per_price) * form.persons : 0)
 const valid = computed(() => plan.value && !!form.date && form.name.trim() && /^1\d{10}$/.test(form.phone))
 
 function fmtDate(v) {
@@ -199,6 +199,8 @@ async function load() {
     plan.value = r.plan
     form.persons = Math.max(plan.value.min_persons || 2, Number(route.query.persons) || 2)
     form.date = String(route.query.date || dateOptions.value[2]?.value || '')
+    form.skuId = String(route.query.sku || '')
+    form.sku = (plan.value.skus || []).find(x => x.sku_id === form.skuId) || null
   } catch (e) { plan.value = null } finally { loading.value = false }
 }
 
@@ -210,6 +212,7 @@ async function submit() {
     const payload = {
       product_id: plan.value.id,
       persons: form.persons,
+      sku_id: form.skuId || undefined,
       use_date: form.date,
       start_date: form.date,
       contact: { name: form.name, phone: form.phone },
