@@ -110,6 +110,9 @@ export const svcApi = {
     api.get(`/services/${kind}?destination=${encodeURIComponent(destination)}&origin=${encodeURIComponent(origin)}`),
   cityPhoto: (destination) =>
     api.get(`/services/city/photo?destination=${encodeURIComponent(destination)}`),
+  // 方案卡片景点实拍图（目的地 + 方案内停留点名，逗号分隔）
+  planPhotos: (destination, spots) =>
+    api.get(`/services/plan/photos?destination=${encodeURIComponent(destination || '')}&spots=${encodeURIComponent(spots || '')}`),
   bookingClick: (kind, jobId = null) => api.post('/services/booking/click', { kind, job_id: jobId }),
 }
 
@@ -208,6 +211,55 @@ export const coverageApi = {
   overview: (params = {}) => api.get('/stats/product-coverage', { params }),
   trend: (params = {}) => api.get('/stats/product-coverage/trend', { params }),
   missing: (params = {}) => api.get('/stats/product-coverage/missing', { params }),
+}
+
+/* ---------- 体验增强：行程评分沉淀 / 知识库文档 / RAG 问答助手 ---------- */
+export const assistApi = {
+  // 评分
+  getRating: (jobId) => api.get(`/plans/${encodeURIComponent(jobId)}/rating`),
+  rate: (jobId, body) => api.post(`/plans/${encodeURIComponent(jobId)}/rating`, body),
+  rateIngest: (jobId) => api.post(`/plans/${encodeURIComponent(jobId)}/rate-ingest`),
+  rateListing: (jobId) => api.post(`/plans/${encodeURIComponent(jobId)}/rate-listing`),
+  // toB 知识库文档
+  kbList: () => api.get('/kb/docs'),
+  kbCreate: (body) => api.post('/kb/docs', body),
+  kbDelete: (id) => api.delete(`/kb/docs/${encodeURIComponent(id)}`),
+  // toC RAG 问答助手（知识库未命中自动联网搜索）
+  assistant: (message, topK = 3) => api.post('/rag/assistant', { message, top_k: topK }),
+  assistantChat: (message, topK = 3, { onMeta, onToken, onDone, onError } = {}) => {
+    const ctrl = new AbortController()
+    const promise = fetch(`${BASE}/rag/assistant/chat`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, top_k: topK }), signal: ctrl.signal,
+    }).then(async (res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const reader = res.body.getReader()
+      const dec = new TextDecoder('utf-8')
+      let buf = ''
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+        buf += dec.decode(value, { stream: true })
+        let idx
+        while ((idx = buf.indexOf('\n\n')) >= 0) {
+          const block = buf.slice(0, idx)
+          buf = buf.slice(idx + 2)
+          const line = block.split('\n').find(l => l.startsWith('data: '))
+          if (!line) continue
+          let evt
+          try { evt = JSON.parse(line.slice(6)) } catch { continue }
+          if (evt.type === 'meta') onMeta && onMeta(evt)
+          else if (evt.type === 'token') onToken && onToken(evt.text || '')
+          else if (evt.type === 'done') { onDone && onDone(evt); return }
+          else if (evt.type === 'error') { onError && onError(evt); return }
+        }
+      }
+      onDone && onDone({ type: 'done', mode: 'empty', answer: '' })
+    }).catch((e) => {
+      if (e.name !== 'AbortError') onError && onError({ type: 'error', message: e.message || String(e) })
+    })
+    return { abort: () => ctrl.abort(), promise }
+  },
 }
 
 /* =====================================================================

@@ -7,6 +7,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.services.checkpoint_store import CheckpointStore
+from app.services.safety_service import SafetyService
 from app.services.experience_service import ExperienceService
 from app.services.travel_context_service import TravelContextService
 

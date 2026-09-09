@@ -29,6 +29,7 @@ const routes = [
       { path: 'audit', name: 'tob-audit', component: () => import('../views/tob/AuditView.vue'), meta: { title: '合规审计' } },
       { path: 'feedback', name: 'tob-feedback', component: () => import('../views/tob/FeedbackView.vue'), meta: { title: '客户之声' } },
       { path: 'rag-lab', name: 'tob-rag-lab', component: () => import('../views/tob/RagLabView.vue'), meta: { title: 'RAG 实验室' } },
+      { path: 'knowledge', name: 'tob-knowledge', component: () => import('../views/tob/KnowledgeView.vue'), meta: { title: '知识库文档' } },
       { path: 'composer', name: 'tob-composer', component: () => import('../views/tob/ComposerView.vue'), meta: { title: '行程组装器' } },
       { path: 'coverage', name: 'tob-coverage', component: () => import('../views/tob/CoverageView.vue'), meta: { title: '标品覆盖率' } },
       { path: 'products', name: 'tob-products', component: () => import('../views/tob/ProductsView.vue'), meta: { title: '标品素材库' } },
@@ -46,6 +47,9 @@ const routes = [
 
       // ===== P1 总览 =====
       { path: 'plans', name: 'my-plans', component: () => import('../views/toc/PlansListView.vue'), meta: { title: '我的行程' } },
+
+      // ===== 手动行程规划（组装器游客版：标品选品 → 排程 → 编辑保存） =====
+      { path: 'manual', name: 'manual-composer', component: () => import('../views/toc/ManualComposerView.vue'), meta: { title: '手动行程规划' } },
 
       // ===== P2 详情/编辑 + P3 地图（多页面系统核心）=====
       { path: 'trip/:id',           name: 'trip-detail', component: () => import('../views/toc/TripDetailView.vue'), meta: { title: '行程书' } },
@@ -91,6 +95,20 @@ const router = createRouter({
 router.afterEach((to) => {
   const t = to.meta?.title
   document.title = t ? `${t} · 迹程智游` : '迹程智游 · 多Agent行程规划平台'
+})
+
+// toC 登录门禁：受保护页面未登录时弹登录注册弹窗（?login=1 驱动 TocLayout 的 AuthModal），
+// 登录成功后回到原页面。BareLayout 分享页与 auth 本身不拦。
+const TOC_PROTECTED = new Set(['my-plans', 'trip-detail', 'trip-edit', 'trip-map', 'plan-detail',
+  'my-orders', 'my-favorites', 'malls-checkout', 'manual-composer'])
+router.beforeEach((to) => {
+  if (to.name === 'auth' || to.name === 'share') return true
+  const token = localStorage.getItem('wl_token')
+  if (token) return true
+  if (TOC_PROTECTED.has(String(to.name))) {
+    return { name: 'home', query: { login: 1, next: to.fullPath } }
+  }
+  return true
 })
 
 export default router

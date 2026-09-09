@@ -44,6 +44,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTripsStore } from '../../stores/trips'
+import { useTripDraft } from '../../composables/tripDraft'
 import { routeTemplatesApi } from '../../api'
 import { toast } from '../../composables/toast'
 import TripDayEditor from '../../components/TripDayEditor.vue'
@@ -51,6 +52,7 @@ import TripDayEditor from '../../components/TripDayEditor.vue'
 const route = useRoute()
 const router = useRouter()
 const store = useTripsStore()
+const D = useTripDraft()
 
 const trip = ref(null)
 const creatingTemplate = ref(null)
@@ -72,6 +74,18 @@ async function load() {
     } catch { seedProduct.value = null }
   } else {
     seedProduct.value = null
+  }
+
+  // 手动行程规划分支：/trip/_new/edit?manual=1 —— 草稿已由 ManualComposerView 装配好
+  if (id === '_new' && String(route.query.manual || '') === '1') {
+    if (!D.ready.value || !D.draft.days.length) {
+      toast('排程草稿为空，请先在手动规划页生成行程', 'err')
+      router.replace({ name: 'manual-composer' })
+      return
+    }
+    mode.value = 'create'
+    loading.value = false
+    return
   }
 
   // 新建分支：id 是 _new（来自选模板弹层）或 id 找不到但 query.template 有

@@ -59,7 +59,10 @@ function newBlockId() {
   return 'b_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7)
 }
 
+let _draftSingleton = null
+
 export function useTripDraft() {
+  if (_draftSingleton) return _draftSingleton
   const store = useTripStore()
 
   // —— 状态 ——
@@ -144,6 +147,43 @@ export function useTripDraft() {
       toast('标品目录加载失败，编排可预览但无法换品', 'err')
       draft.days = buildDaysFromTemplate(tpl, prodMap.value, seedProduct.value)
     }
+    ready.value = true
+    dayIdx.value = 0
+    stage.value = 1
+  }
+
+  /** 手动行程规划：把组装器（/api/composer/from-products）的排程结果装配为草稿 */
+  async function applyComposerResult(composerTpl, composed) {
+    reset()
+    if (!composerTpl) return
+    await ensureCatalog().catch(() => {})
+    draft.template = composerTpl
+    draft.city = composerTpl.city || ''
+    baseTotal.value = Number(composed && composed.budget_estimate && composed.budget_estimate.tickets) || 0
+    draft.meta = {
+      title: '',
+      travelers: 2,
+      budget: (composed && composed.budget_estimate && composed.budget_estimate.total) || null,
+      start_date: DEFAULT_START_DATE,
+      audience: composerTpl.audience || '',
+      note: '',
+    }
+    const byId = new Map()
+    for (const p of prods.value) byId.set(p.id, p)
+    const days = []
+    for (const d of (composed && composed.itinerary) || []) {
+      const blocks = []
+      for (const b of (d.blocks || [])) {
+        const p = byId.get(b.product_id) || {
+          id: b.product_id, name: b.title, category: b.type, city: '',
+          tags: [], price_min: 0, rating: 4.5, sales: 0,
+        }
+        const slot = b.slot || 'morning'
+        blocks.push({ key: newBlockId(), period: slot, start: b.start || (PERIODS[slot] ? PERIODS[slot].start : '08:30'), tag: '', product: snapshot(p) })
+      }
+      days.push({ day: d.day, blocks })
+    }
+    draft.days = days
     ready.value = true
     dayIdx.value = 0
     stage.value = 1
@@ -323,7 +363,7 @@ export function useTripDraft() {
     return (diff > 0 ? '+' : '−') + '¥' + fmt(Math.abs(diff))
   }
 
-  return {
+  _draftSingleton = {
     store,
     // state
     stage, ready, dayIdx, editId, seedProduct, prods, draft,
@@ -332,11 +372,12 @@ export function useTripDraft() {
     isEdit, prodMap, blockCount, coveredCats, totalCost, pickerOptions,
     issues, errCount, issueText, curTemplate, canSave,
     // actions
-    reset, openCreate, openEdit, ensureCatalog,
+    reset, openCreate, openEdit, applyComposerResult, ensureCatalog,
     openSwap, openAdd, pick, removeBlock, goStage,
     stopCountOf, dayTitle, saveTrip,
     // tools
     fmt, fmtSales, paceLabel, periodLabel, catColor, priceText, diffText,
     CATS, PERIODS, DAY_SLOTS,
   }
+  return _draftSingleton
 }

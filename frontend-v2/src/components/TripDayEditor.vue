@@ -75,7 +75,7 @@
               <div class="tl-line"><i class="tl-dot" :style="{ background: catColor(b.product.category) }"></i></div>
               <div class="tl-body" @click="openSwap(b)">
                 <div class="tl-card">
-                  <span class="tl-emoji" :style="{ background: b.product.cover.gradient }">{{ b.product.cover.emoji }}</span>
+                  <span class="tl-emoji" :style="{ background: b.product.cover?.gradient || 'linear-gradient(135deg,#E2E8F0,#94A3B8)' }">{{ b.product.cover?.emoji || "📍" }}</span>
                   <div class="tl-info">
                     <div class="tl-name">
                       {{ b.product.name }}
@@ -199,7 +199,7 @@
           <div v-for="p in pickerOptions" :key="p.id" class="opt card card-hover"
                :class="{ cur: picker.cur && picker.cur.product.id === p.id }"
                @click="pick(p)">
-            <span class="opt-emoji" :style="{ background: p.cover.gradient }">{{ p.cover.emoji }}</span>
+            <span class="opt-emoji" :style="{ background: p.cover?.gradient || 'linear-gradient(135deg,#E2E8F0,#94A3B8)' }">{{ p.cover?.emoji || "📍" }}</span>
             <div class="opt-info">
               <div class="opt-name">{{ p.name }}<span v-if="picker.cur && picker.cur.product.id === p.id" class="opt-cur">使用中</span></div>
               <div class="opt-meta">{{ p.category }} · {{ p.city }} · ★ {{ p.rating.toFixed(1) }} · 售 {{ fmtSales(p.sales) }}</div>
@@ -284,6 +284,7 @@ onMounted(async () => {
   } else if (props.template) {
     await D.openCreate(props.template, props.seed)
   } else {
+    // 手动行程规划：草稿已由 ManualComposerView.applyComposerResult 装配，保持共享单例即可
     ready.value = true
   }
 })

@@ -4,31 +4,24 @@
       <div class="a-brand">
         <span class="mark">迹</span>
         <div>
-          <div class="a-title">{{ mode === 'login' ? '欢迎回来' : '加入迹程智游' }}</div>
-          <div class="a-sub">{{ mode === 'login' ? '登录后同步你的行程与偏好记忆' : '注册一个 toC 账号，行程随身带' }}</div>
+          <div class="a-title">{{ realmTitle }} · {{ mode === 'login' ? '欢迎回来' : '注册新账号' }}</div>
+          <div class="a-sub">{{ realmSub }}</div>
         </div>
       </div>
 
       <div class="tabs" style="margin:18px 0 20px">
         <button class="tab" :class="{ active: mode === 'login' }" @click="mode = 'login'">登录</button>
-        <button class="tab" :class="{ active: mode === 'register' }" @click="mode = 'register'">注册</button>
+        <button v-if="realm === 'toc'" class="tab" :class="{ active: mode === 'register' }" @click="mode = 'register'">注册</button>
       </div>
 
       <form @submit.prevent="submit" v-if="mode === 'login'">
-        <div class="field" style="margin-bottom:14px">
-          <label>身份</label>
-          <div class="chip-group">
-            <button type="button" class="chip" :class="{ active: realm === 'toc' }" @click="realm = 'toc'">游客 toC</button>
-            <button type="button" class="chip" :class="{ active: realm === 'tob' }" @click="realm = 'tob'">企业 toB</button>
-          </div>
-        </div>
         <div class="field" style="margin-bottom:14px">
           <label>用户名</label>
           <input v-model.trim="form.username" class="input" :placeholder="realm === 'toc' ? '旅者' : 'admin'" required />
         </div>
         <div class="field" style="margin-bottom:20px">
           <label>密码</label>
-          <input v-model="form.password" type="password" class="input" :placeholder="realm === 'toc' ? '123456' : 'wl2026'" required />
+          <input v-model="form.password" type="password" class="input" placeholder="请输入密码"" required />
         </div>
         <button class="btn btn-primary btn-block btn-lg" :disabled="busy">{{ busy ? '登录中…' : '登 录' }}</button>
       </form>
@@ -57,26 +50,43 @@
         <button class="btn btn-primary btn-block btn-lg" :disabled="busy">{{ busy ? '注册中…' : '注 册' }}</button>
       </form>
 
-      <p class="demo-tip">演示账号 — toC：<code>旅者 / 123456</code> · toB：<code>admin / wl2026</code></p>
+      <p class="demo-tip">
+        演示环境账号由系统配置发放；游客端支持手机验证码注册
+      </p>
+      <p v-if="realm === 'toc'" class="demo-tip" style="margin-top:6px">企业员工？请从
+        <router-link :to="{ name: 'auth', query: { realm: 'tob' } }" style="color:var(--brand)">企业工作台入口</router-link>
+        登录</p>
+      <p v-else class="demo-tip" style="margin-top:6px">个人游客？请从
+        <router-link :to="{ name: 'auth', query: { realm: 'toc' } }" style="color:var(--brand)">游客端入口</router-link>
+        登录 / 注册</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { authApi } from '../../api'
 import { toast } from '../../composables/toast'
 
+const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
+// 双端分离：/auth?realm=toc 游客端、/auth?realm=tob 企业端；互不可见对方的入口
+const realm = computed(() => (String(route.query.realm || 'toc') === 'tob' ? 'tob' : 'toc'))
 const mode = ref('login')
-const realm = ref('toc')
 const busy = ref(false)
 const codeSent = ref(false)
 const form = reactive({ username: '', password: '', password2: '', phone: '' })
+
+const realmTitle = computed(() => (realm.value === 'toc' ? '游客中心' : '企业工作台'))
+const realmSub = computed(() => (realm.value === 'toc'
+  ? (mode.value === 'login' ? '登录后同步你的行程与偏好记忆' : '注册一个 toC 账号，行程随身带')
+  : 'toB 管理账号登录（游客请从游客端进入）'))
+
+watch(realm, () => { mode.value = 'login' })
 
 async function sendCode() {
   try {

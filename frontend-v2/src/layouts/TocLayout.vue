@@ -14,6 +14,7 @@
           <router-link :to="{ name: 'tob-dashboard' }" class="tob-link">企业工作台 ↗</router-link>
         </nav>
         <div class="nav-right">
+          <router-link :to="{ name: 'manual-composer' }" class="mini-link">🧩 手动行程规划</router-link>
           <router-link :to="{ name: 'my-plans' }" class="mini-link">🧳 我的行程</router-link>
           <router-link :to="{ name: 'my-orders' }" class="mini-link">🧾 我的订单</router-link>
           <router-link :to="{ name: 'my-favorites' }" class="mini-link">❤️ 收藏</router-link>
@@ -21,7 +22,7 @@
             <span class="user-chip">👤 {{ auth.name }}</span>
             <button class="btn btn-ghost btn-sm" @click="auth.logout(); toast('已退出登录', 'ok')">退出</button>
           </template>
-          <router-link v-else :to="{ name: 'auth' }" class="btn btn-primary btn-sm">登录 / 注册</router-link>
+          <button v-else class="btn btn-primary btn-sm" @click="loginOpen = true">登录 / 注册</button>
         </div>
       </div>
     </header>
@@ -44,16 +45,39 @@
         </div>
       </div>
     </footer>
+
+    <!-- toC 登录注册弹窗：未登录点击受保护功能（router ?login=1 或顶栏按钮）时弹出 -->
+    <AuthModal :open="loginOpen" @close="loginOpen = false" />
     <AppToast />
   </div>
 </template>
 
 <script setup>
+import { ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { toast } from '../composables/toast'
 import AppToast from '../components/AppToast.vue'
+import AuthModal from '../components/AuthModal.vue'
 
 const auth = useAuthStore()
+const route = useRoute()
+const router = useRouter()
+const loginOpen = ref(false)
+
+// 路由守卫重定向来的 ?login=1 → 自动弹窗；登录成功后跳回 next 页面
+watch(() => route.query.login, (v) => {
+  if (v) loginOpen.value = true
+}, { immediate: true })
+
+watch(() => auth.isLogged, (logged) => {
+  if (logged && route.query.login) {
+    const next = String(route.query.next || '')
+    loginOpen.value = false
+    if (next) router.replace(next)
+    else router.replace({ query: {} })
+  }
+})
 </script>
 
 <style scoped>

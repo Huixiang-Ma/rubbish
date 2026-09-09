@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from app.api.admin import router as admin_router
+from app.api.assist import router as assist_router
 from app.api.auth import require_admin, router as auth_router
 from app.api.catalog import router as catalog_router
 from app.api.commerce import router as commerce_router
@@ -51,6 +52,7 @@ app.include_router(composer_router)
 app.include_router(commerce_router)
 app.include_router(material_router)
 app.include_router(rag_router)
+app.include_router(assist_router)
 app.include_router(auth_router)
 
 # toB 管理类路由：AUTH_ENABLED=true 时强制 Bearer 校验。

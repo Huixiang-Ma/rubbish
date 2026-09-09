@@ -58,7 +58,14 @@
               <li><span class="pp-ico">✏️</span><div><b>随时可改</b><p>时间、节奏、酒店，喜欢哪页改哪页</p></div></li>
             </ul>
           </div>
-          <form class="plan-form" @submit.prevent="createPlan">
+          <form class="plan-form" @submit.prevent="onPlanSubmit">
+            <div class="pf-field pf-full">
+              <label>出发地 <b>*</b></label>
+              <input v-model.trim="plan.origin" class="input" required placeholder="如：上海 / 南京（用于大交通规划）" maxlength="20" list="origin-list" />
+              <datalist id="origin-list">
+                <option v-for="c in ORIGIN_CITIES" :key="c" :value="c" />
+              </datalist>
+            </div>
             <div class="pf-field pf-full">
               <label>目的地 <b>*</b></label>
               <input v-model.trim="plan.destination" class="input" required placeholder="如：苏州 / 北京 / 杭州" maxlength="20" />
@@ -75,8 +82,11 @@
                 <input v-model.number="plan.budget" class="input" type="number" min="0" step="100" placeholder="8000" />
               </div>
               <div class="pf-field">
-                <label>出发日期</label>
-                <input v-model="plan.date" class="input" type="date" />
+                <label>出行日期</label>
+                <button type="button" class="input date-btn" @click="dateOpen = true">
+                  <span :class="{ 'date-empty': !dateRangeText }">{{ dateRangeText || '选择出发 / 返程日期' }}</span>
+                  <span class="date-ico">📅</span>
+                </button>
               </div>
             </div>
 
@@ -122,12 +132,44 @@
                 </div>
               </div>
             </div>
-            <button class="btn btn-primary btn-lg plan-btn" :disabled="creating || !plan.destination">
-              <span v-if="creating" class="spinner" style="width:16px;height:16px;border-width:2.5px"></span>
-              {{ creating ? '正在规划…' : '✦ 开始规划我的行程' }}
-            </button>
+            <div class="pf-actions">
+              <button type="button" class="btn btn-ghost manual-btn" @click="goManual">
+                🧩 手动行程规划 <small>从标品库自己拼</small>
+              </button>
+              <button class="btn btn-primary btn-lg plan-btn" :disabled="creating || !plan.destination" @click="onPlanSubmit">
+                <span v-if="creating" class="spinner" style="width:16px;height:16px;border-width:2.5px"></span>
+                {{ creating ? '正在规划…' : '✦ 开始规划我的行程' }}
+              </button>
+            </div>
             <p class="pf-tip">约 1-3 分钟生成 · 生成后随时可改 · 可提交企业沉淀为线路方案</p>
           </form>
+
+          <!-- 日期选择弹窗：出发日期 + 返程日期 -->
+          <Teleport to="body">
+            <div v-if="dateOpen" class="date-mask" @click.self="dateOpen = false">
+              <div class="date-pop card">
+                <div class="dp-head">
+                  <b>选择出行日期</b>
+                  <button type="button" class="dp-x" @click="dateOpen = false">×</button>
+                </div>
+                <div class="dp-body">
+                  <label class="dp-field">
+                    <span>出发日期</span>
+                    <input v-model="plan.date" class="input" type="date" :min="today" @change="fixReturn" />
+                  </label>
+                  <label class="dp-field">
+                    <span>返程日期</span>
+                    <input v-model="plan.dateReturn" class="input" type="date" :min="plan.date || today" />
+                  </label>
+                  <p class="dp-hint">返程日期 = 出发日期 + 天数 - 1（可手动调整；调整后天数自动同步）</p>
+                </div>
+                <div class="dp-foot">
+                  <button type="button" class="btn btn-ghost" @click="plan.date = ''; plan.dateReturn = ''; dateOpen = false">清除</button>
+                  <button type="button" class="btn btn-primary" @click="applyDates">确定</button>
+                </div>
+              </div>
+            </div>
+          </Teleport>
         </div>
       </div>
     </section>
@@ -166,7 +208,15 @@
                      :to="{ name: 'malls-product', params: { id: p.id } }"
                      class="shop-card card card-hover">
           <div class="shop-cover" :style="{ background: p.cover.gradient }">
-            <span class="shop-emoji">{{ p.cover.emoji }}</span>
+            <!-- 景点实拍图轮换（高德 POI 图；无图回落 emoji 封面） -->
+            <template v-if="p.photos && p.photos.length">
+              <img v-for="(ph, i) in p.photos" :key="ph.url" v-show="photoIdx[p.id] % p.photos.length === i"
+                   class="shop-photo" :src="ph.url" :alt="ph.name" loading="lazy" />
+              <div class="photo-dots">
+                <i v-for="(ph, i) in p.photos" :key="i" :class="{ on: photoIdx[p.id] % p.photos.length === i }" />
+              </div>
+            </template>
+            <span v-else class="shop-emoji">{{ p.cover.emoji }}</span>
             <div class="shop-badges">
               <span v-for="b in p.badges" :key="b" class="bd">{{ b }}</span>
             </div>
@@ -232,19 +282,67 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { plansApi, planShopApi } from '../../api'
+import { reactive, ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { plansApi, planShopApi, svcApi } from '../../api'
+import { useAuthStore } from '../../stores/auth'
 import { toast } from '../../composables/toast'
 
-const router = useRouter()
+const route = useRoute()
+const auth = useAuthStore()
 const kw = ref('')
 const plans = ref([])
 const themes = ref([])
 const cities = ref([])
 const creating = ref(false)
 const prefsOpen = ref(false)
-const plan = reactive({ destination: '', days: 3, budget: 8000, date: '', group: '', interests: [], rhythm: '', sleep: '', note: '' })
+const dateOpen = ref(false)
+const photoIdx = ref({})
+const plan = reactive({ destination: '', origin: '', days: 3, budget: 8000, date: '', dateReturn: '', group: '', interests: [], rhythm: '', sleep: '', note: '' })
+
+const ORIGIN_CITIES = ['上海', '南京', '杭州', '北京', '苏州', '无锡', '常州', '合肥', '武汉', '广州', '深圳', '成都', '西安', '天津']
+const today = new Date().toISOString().slice(0, 10)
+
+// 日期按钮文案
+const dateRangeText = computed(() => {
+  if (!plan.date) return ''
+  const zh = (d) => `${Number(d.slice(5, 7))}月${Number(d.slice(8, 10))}日`
+  return plan.dateReturn && plan.dateReturn !== plan.date
+    ? `${zh(plan.date)} — ${zh(plan.dateReturn)}`
+    : zh(plan.date)
+})
+
+// 出发日 → 天数联动：返程日变化时自动同步天数；天数变化时自动推返程日
+function fixReturn() {
+  if (!plan.date) { plan.dateReturn = ''; return }
+  const ms = new Date(plan.date).getTime() + (plan.days - 1) * 86400000
+  const auto = new Date(ms).toISOString().slice(0, 10)
+  if (!plan.dateReturn || new Date(plan.dateReturn) < new Date(plan.date)) plan.dateReturn = auto
+}
+function syncDays() {
+  if (plan.date && plan.dateReturn) {
+    const diff = Math.round((new Date(plan.dateReturn) - new Date(plan.date)) / 86400000) + 1
+    if (diff >= 1 && diff <= 14) plan.days = diff
+  }
+}
+watch(() => plan.dateReturn, syncDays)
+function applyDates() { fixReturn(); syncDays(); dateOpen.value = false }
+
+// 需求1：未登录点击"开始规划" → 弹登录注册弹窗（登录成功由 TocLayout 处理回跳）
+function onPlanSubmit() {
+  if (!auth.isLogged) {
+    router.replace({ query: { ...route.query, login: 1, next: route.fullPath } })
+    return
+  }
+  createPlan()
+}
+function goManual() {
+  if (!auth.isLogged) {
+    router.replace({ query: { ...route.query, login: 1, next: '/manual' } })
+    return
+  }
+  router.push({ name: 'manual-composer' })
+}
 
 // 收起态摘要：选了哪些选项一目了然；全不选时提示可跳过
 const prefsMeta = computed(() => {
@@ -280,6 +378,7 @@ async function createPlan() {
       budget: Number(plan.budget || 0),
       travelers: group ? group.travelers : 2,
     }
+    if (plan.origin) payload.origin = plan.origin
     if (plan.date) payload.departure_date = plan.date
     if (prefs.length) payload.preferences = [...new Set(prefs)]
     if (constraints.length) payload.constraints = [...new Set(constraints)]
@@ -360,7 +459,26 @@ async function load() {
       cities.value = cat.value.cities || []
     }
   } catch (e) { /* 静默 */ }
+  loadPhotos()
 }
+
+// 需求5：精选方案卡片拉景点实拍图（高德 POI 图），每 3.5s 轮换
+let photoTimer = null
+async function loadPhotos() {
+  for (const p of plans.value.slice(0, 6)) {
+    try {
+      const spots = (p.product_ids || []).length ? '' : ''
+      const r = await svcApi.planPhotos(p.city, p.photo_spots || spots)
+      if (r.photos && r.photos.length) p.photos = r.photos
+    } catch { /* 无图保持 emoji 封面 */ }
+  }
+  if (plans.value.some(p => p.photos && p.photos.length)) {
+    photoTimer = setInterval(() => {
+      for (const p of plans.value) if (p.photos && p.photos.length) photoIdx.value[p.id] = (photoIdx.value[p.id] || 0) + 1
+    }, 3500)
+  }
+}
+onBeforeUnmount(() => { if (photoTimer) clearInterval(photoTimer) })
 
 onMounted(load)
 </script>
@@ -439,6 +557,34 @@ onMounted(load)
 .pf-field label b { color: var(--danger); }
 .plan-btn { width: 100%; margin-top: 6px; }
 .pf-tip { font-size: 12px; color: var(--ink-400); text-align: center; margin: 2px 0 0; }
+
+/* 出行日期按钮 + 弹窗 */
+.date-btn { display: flex; align-items: center; justify-content: space-between; cursor: pointer; text-align: left; font-weight: 600; }
+.date-btn .date-empty { color: var(--ink-400); font-weight: 400; }
+.date-btn .date-ico { font-size: 15px; }
+.pf-actions { display: flex; gap: 12px; align-items: stretch; margin-top: 6px; }
+.pf-actions .manual-btn { flex: none; display: flex; flex-direction: column; align-items: flex-start; gap: 0; font-weight: 700; }
+.pf-actions .manual-btn small { font-weight: 400; font-size: 11px; color: var(--ink-400); }
+.pf-actions .plan-btn { flex: 1; }
+.date-mask { position: fixed; inset: 0; background: rgba(15,23,42,.45); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+.date-pop { width: min(360px, 100%); padding: 20px 22px; }
+.dp-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.dp-head b { font-size: 15.5px; }
+.dp-x { border: none; background: none; font-size: 22px; color: var(--ink-400); cursor: pointer; line-height: 1; }
+.dp-body { display: flex; flex-direction: column; gap: 12px; }
+.dp-field { display: flex; flex-direction: column; gap: 5px; }
+.dp-field span { font-size: 13px; font-weight: 700; color: var(--ink-700); }
+.dp-hint { font-size: 11.5px; color: var(--ink-400); margin: 0; }
+.dp-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+
+/* 精选卡片景点图轮换 */
+.shop-cover { aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.shop-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; animation: photoIn .5s ease; }
+@keyframes photoIn { from { opacity: 0; transform: scale(1.04); } to { opacity: 1; transform: scale(1); } }
+.photo-dots { position: absolute; bottom: 8px; left: 0; right: 0; display: flex; justify-content: center; gap: 5px; z-index: 2; }
+.photo-dots i { width: 6px; height: 6px; border-radius: 999px; background: rgba(255,255,255,.55); transition: all .25s; }
+.photo-dots i.on { background: #fff; width: 14px; }
+.shop-cover .shop-badges, .shop-cover .days-chip { z-index: 2; }
 .pf-prefs {
   display: flex; flex-direction: column;
   border-top: 1px dashed var(--ink-200); padding-top: 12px; margin-top: 2px;
@@ -483,7 +629,6 @@ onMounted(load)
 .shop-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 .shop-card { padding: 0; overflow: hidden; text-decoration: none !important; transition: all .18s; }
 .shop-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
-.shop-cover { aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; position: relative; }
 .shop-emoji { font-size: 70px; filter: drop-shadow(0 4px 8px rgba(0,0,0,.18)); }
 .shop-badges { position: absolute; left: 10px; top: 10px; display: flex; gap: 4px; flex-wrap: wrap; }
 .shop-badges .bd { background: rgba(0,0,0,.45); color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; backdrop-filter: blur(6px); }

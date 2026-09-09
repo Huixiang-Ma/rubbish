@@ -26,6 +26,7 @@
 
         <div class="nav-group">知识</div>
         <router-link :to="{ name: 'tob-rag-lab' }"><span class="ico">🧠</span>RAG 实验室</router-link>
+    <router-link :to="{ name: 'tob-knowledge' }"><span class="ico">📚</span>知识库文档</router-link>
         <router-link :to="{ name: 'tob-composer' }"><span class="ico">🧩</span>行程组装器</router-link>
         <router-link :to="{ name: 'tob-coverage' }"><span class="ico">📐</span>标品覆盖率</router-link>
       </nav>
@@ -36,7 +37,7 @@
           <span>{{ auth.name }} · {{ auth.role }}</span>
           <button @click="auth.logout(); toast('已退出', 'ok')">退出</button>
         </div>
-        <router-link v-else :to="{ name: 'auth' }" class="btn btn-primary btn-sm" style="text-decoration:none">登录工作台</router-link>
+        <router-link v-else :to="{ name: 'auth', query: { realm: 'tob' } }" class="btn btn-primary btn-sm" style="text-decoration:none">登录工作台</router-link>
       </div>
     </aside>
 

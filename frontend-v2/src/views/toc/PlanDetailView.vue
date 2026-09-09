@@ -18,6 +18,7 @@
         <div class="head-actions">
           <button class="btn btn-ghost btn-sm" @click="copyShare">🔗 分享链接</button>
           <button class="btn btn-ghost btn-sm" @click="feedbackOpen = true">📣 反馈</button>
+          <button class="btn btn-soft btn-sm" @click="ratingOpen = true">⭐ 评分{{ ratingAvg ? ` ${ratingAvg}` : '' }}</button>
           <button class="btn btn-soft btn-sm" @click="replanOpen = true">✦ 增量重规划</button>
         </div>
       </div>
@@ -58,10 +59,8 @@
         <div v-if="!result && polling" class="loading-block"><div class="spinner spin"></div>行程书生成中，完成后自动展示…</div>
         <div v-else-if="!result" class="empty"><div class="icon">📕</div><p>暂无行程书（{{ job?.status }}）</p></div>
         <template v-else>
-          <div class="book-tools">
-            <span class="sha">sha256: {{ result.sha256?.slice(0, 16) }}… · v{{ result.version }}</span>
-          </div>
-          <MdView :source="result.travel_plan_md" />
+          <BookSplit :source="result.travel_plan_md" :sha="result.sha256 || ''"
+                     :spots="bookSpots" @replace-spot="openSpotReplace" />
         </template>
       </div>
 
@@ -113,6 +112,9 @@
         </div>
       </div>
 
+      <!-- 智能问答助手（需求3：知识库未命中自动联网搜索） -->
+      <AssistantPanel v-else-if="tab === 'assistant'" :job-id="jobId" />
+
       <!-- 版本 diff -->
       <div v-else-if="tab === 'diff'">
         <div class="sec-title">版本对比</div>
@@ -151,6 +153,44 @@
       </div>
       <template #foot>
         <button class="btn btn-primary" :disabled="!fb.content || fbBusy" @click="sendFeedback">{{ fbBusy ? '提交中…' : '提交' }}</button>
+      </template>
+    </AppModal>
+
+    <!-- 行程书景点搜索替换（需求6） -->
+    <AppModal v-if="spotReplace.open" :title="`🔁 替换「${spotReplace.name}」`" @close="spotReplace.open = false">
+      <form class="sp-search" @submit.prevent="searchSpot">
+        <input v-model.trim="spotReplace.q" class="input" placeholder="搜索想去的景点 / 餐饮 / 住宿，如「虎丘」「苏帮菜」" />
+        <button class="btn btn-primary" :disabled="spotReplace.busy || !spotReplace.q.trim()">搜索</button>
+      </form>
+      <p class="sp-note">选中新景点后提交增量重规划，只重跑受影响节点（更快更省）。</p>
+      <div class="sp-results">
+        <div v-for="p in spotReplace.results" :key="p.id" class="sp-row" @click="confirmSpotReplace(p)">
+          <span class="sp-emoji">{{ p.category === '餐饮' ? '🍜' : p.category === '住宿' ? '🏨' : '📍' }}</span>
+          <div class="sp-body">
+            <b>{{ p.name }}</b>
+            <em>{{ p.city }} · {{ p.category }} · {{ p.price_min ? '¥' + p.price_min + ' 起' : '免费' }}</em>
+          </div>
+          <button class="btn btn-ghost btn-sm">替换</button>
+        </div>
+        <div v-if="!spotReplace.results.length && !spotReplace.busy" class="sp-none">输入关键词搜索标品库</div>
+      </div>
+    </AppModal>
+
+    <!-- 评分弹窗（需求2）：高分行程可沉淀知识库攻略 / 上架为线路方案 -->
+    <AppModal v-if="ratingOpen" title="⭐ 为这趟行程打分" @close="ratingOpen = false">
+      <div class="rate-stars">
+        <button v-for="n in 5" :key="n" class="star" :class="{ on: n <= ratingForm.score }" @click="ratingForm.score = n">{{ n <= ratingForm.score ? '★' : '☆' }}</button>
+        <b class="rate-num">{{ ratingForm.score }} 星</b>
+      </div>
+      <textarea v-model.trim="ratingForm.comment" class="textarea" style="margin-top:12px" maxlength="200"
+                placeholder="这趟行程哪里让你惊喜 / 哪里想调整？（选填，将随攻略一起沉淀）"></textarea>
+      <div v-if="ratingGood" class="rate-good">
+        ✨ 平均 {{ ratingAvg }} 分 · 可将本行程沉淀为
+        <button class="btn btn-ghost btn-sm" :disabled="ingestBusy" @click="ingestGuide">{{ ingestBusy ? '沉淀中…' : '📚 知识库攻略' }}</button>
+        <button class="btn btn-ghost btn-sm" :disabled="listingBusy" @click="toListing">{{ listingBusy ? '上架中…' : '🏷 线路方案' }}</button>
+      </div>
+      <template #foot>
+        <button class="btn btn-primary" :disabled="!ratingForm.score || ratingBusy" @click="submitRating">{{ ratingBusy ? '提交中…' : '提交评分' }}</button>
       </template>
     </AppModal>
 
@@ -227,17 +267,19 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { plansApi, swapApi } from '../../api'
+import { plansApi, swapApi, assistApi, composerApi } from '../../api'
 import { toast } from '../../composables/toast'
 import { useJobPolling } from '../../composables/useJobPolling'
 import StatusTag from '../../components/StatusTag.vue'
 import MdView from '../../components/MdView.vue'
+import BookSplit from '../../components/BookSplit.vue'
 import AppModal from '../../components/AppModal.vue'
 import DebatePanel from './panels/DebatePanel.vue'
 import GuidePanel from './panels/GuidePanel.vue'
 import SwarmPanel from './panels/SwarmPanel.vue'
 import MapPanel from './panels/MapPanel.vue'
 import RagPanel from '../../components/RagPanel.vue'
+import AssistantPanel from './panels/AssistantPanel.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -251,6 +293,7 @@ const TABS = [
   { key: 'swarm', label: '👥 踩点与反事实' },
   { key: 'map', label: '🗺 每日动线' },
   { key: 'rag', label: '🧠 AI 导游问答' },
+  { key: 'assistant', label: '💬 智能问答助手' },
   { key: 'diff', label: '🔀 版本对比' },
 ]
 const tab = ref('book')
@@ -273,6 +316,51 @@ const doneSet = computed(() => new Set(job.value?.completed_nodes || []))
 const feedbackOpen = ref(false)
 const fb = reactive({ kind: 'praise', content: '' })
 const fbBusy = ref(false)
+
+// 评分（需求2）：1-5 星 → 高分可沉淀知识库攻略 / 上架线路方案
+const ratingOpen = ref(false)
+const ratingForm = reactive({ score: 0, comment: '' })
+const ratingAvg = ref(null)
+const ratingGood = ref(false)
+const ratingBusy = ref(false)
+const ingestBusy = ref(false)
+const listingBusy = ref(false)
+
+async function loadRating() {
+  try {
+    const r = await assistApi.getRating(jobId)
+    ratingAvg.value = r.avg
+    ratingGood.value = !!r.can_ingest
+  } catch { /* 静默 */ }
+}
+
+async function submitRating() {
+  ratingBusy.value = true
+  try {
+    const r = await assistApi.rate(jobId, { score: ratingForm.score, comment: ratingForm.comment })
+    ratingAvg.value = r.avg
+    ratingGood.value = !!r.good
+    toast(`已评分：${r.avg} 分${r.good ? ' · 可沉淀攻略/上架方案' : ''}`, 'ok')
+  } catch (e) { toast(e.message || '评分失败', 'err') } finally { ratingBusy.value = false }
+}
+
+async function ingestGuide() {
+  ingestBusy.value = true
+  try {
+    const r = await assistApi.rateIngest(jobId)
+    toast(`已沉淀为知识库攻略（${r.kb_id}，RAG 可检索）`, 'ok')
+    ratingOpen.value = false
+  } catch (e) { toast(e.message || '沉淀失败', 'err') } finally { ingestBusy.value = false }
+}
+
+async function toListing() {
+  listingBusy.value = true
+  try {
+    const r = await assistApi.rateListing(jobId)
+    toast(`已上架为线路方案「${r.title}」`, 'ok')
+    ratingOpen.value = false
+  } catch (e) { toast(e.message || '上架失败', 'err') } finally { listingBusy.value = false }
+}
 
 const replanOpen = ref(false)
 const replanText = ref('')
@@ -301,6 +389,50 @@ async function onSwapRequest(payload) {
       })
     } catch { swapDialog.inspect = null }
   }
+}
+
+// 行程书景点（需求6）：从 result.itinerary 提取停留点名，供行程书内点击替换
+const bookSpots = computed(() => {
+  const out = []
+  for (const d of (result.value?.itinerary || [])) {
+    for (const it of (d.items || [])) {
+      const n = it?.spot?.name || it?.title
+      if (n && !out.includes(n)) out.push(n)
+    }
+  }
+  return out
+})
+
+// 行程书内点击景点 → 搜索替换（走增量重规划，只重跑受影响节点）
+const spotReplace = reactive({ open: false, name: '', q: '', results: [], busy: false })
+function openSpotReplace(name) {
+  spotReplace.open = true
+  spotReplace.name = name
+  spotReplace.q = ''
+  spotReplace.results = []
+}
+async function searchSpot() {
+  const q = spotReplace.q.trim()
+  if (!q) return
+  spotReplace.busy = true
+  try {
+    const r = await composerApi.searchProducts(q, { top_k: 8 })
+    spotReplace.results = (r.results || []).map(x => x.product)
+  } catch (e) { toast('搜索失败：' + (e.message || e), 'err') } finally { spotReplace.busy = false }
+}
+async function confirmSpotReplace(p) {
+  spotReplace.busy = true
+  try {
+    await plansApi.replan(jobId, {
+      change_request: `把行程中的「${spotReplace.name}」替换为「${p.name}」，并更新对应景点信息`,
+      base_version: Number(result.value?.version || job.value?.version || 1),
+    })
+    toast(`已提交增量重规划：${spotReplace.name} → ${p.name}，正在重新生成受影响节点`, 'ok')
+    spotReplace.open = false
+    start(async (j) => { if (j.status === 'COMPLETED') { loadResult(); loadAudit(); toast('重规划完成，行程书已更新', 'ok') } })
+  } catch (e) {
+    toast(e.message || '重规划提交失败', 'err')
+  } finally { spotReplace.busy = false }
 }
 
 // RAG 命中块 → 真实标品 id：标品语料块 job_id 形如 cat:p_xxx；
@@ -349,6 +481,7 @@ onMounted(() => {
   })
   loadResult()
   loadAudit()
+  loadRating()
 })
 
 watch(() => job.value?.status, (s) => {
@@ -421,6 +554,28 @@ function auditCls(a) {
 .route { font-size: 13.5px; color: var(--ink-500); }
 .head-meta { font-size: 13.5px; color: var(--ink-500); margin-top: 6px; }
 .head-actions { display: flex; gap: 9px; flex-wrap: wrap; }
+
+.sp-search { display: flex; gap: 8px; }
+.sp-search .input { flex: 1; }
+.sp-note { font-size: 12px; color: var(--ink-400); margin: 8px 0 10px; }
+.sp-results { display: flex; flex-direction: column; gap: 7px; max-height: 320px; overflow-y: auto; }
+.sp-row { display: grid; grid-template-columns: 30px 1fr auto; gap: 8px; align-items: center; border: 1px solid var(--ink-100); border-radius: 11px; padding: 9px 12px; cursor: pointer; }
+.sp-row:hover { border-color: var(--brand-500); background: var(--brand-50); }
+.sp-emoji { font-size: 19px; text-align: center; }
+.sp-body b { display: block; font-size: 13.5px; }
+.sp-body em { font-style: normal; font-size: 11.5px; color: var(--ink-400); }
+.sp-none { text-align: center; color: var(--ink-400); font-size: 12.5px; padding: 18px 0; }
+
+/* 评分弹窗（需求2） */
+.rate-stars { display: flex; align-items: center; gap: 6px; }
+.star { border: none; background: none; font-size: 34px; cursor: pointer; color: var(--ink-200); transition: transform .12s, color .12s; padding: 0 2px; }
+.star:hover { transform: scale(1.15); }
+.star.on { color: #F59E0B; }
+.rate-num { margin-left: 8px; font-size: 15px; color: var(--ink-700); }
+.rate-good {
+  margin-top: 14px; padding: 12px 14px; background: #ECFDF5; border: 1px solid #10B981;
+  border-radius: 10px; font-size: 13px; color: #065F46; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
 .prog-meta { font-size: 12.5px; color: var(--ink-400); margin-top: 8px; }
 .prog-meta .err { color: var(--danger); }
 

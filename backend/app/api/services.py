@@ -90,6 +90,56 @@ _CITY_PHOTO_TTL_SECONDS = 3600.0
 _last_amap_ts = [0.0]
 
 
+def _amap_throttle() -> bool:
+    """高德 QPS 限速；返回 False 表示 key 未就绪。"""
+    import time as _time
+
+    if not amap_client.is_ready():
+        return False
+    elapsed = _time.monotonic() - _last_amap_ts[0]
+    if elapsed < 0.4:
+        _time.sleep(0.4 - elapsed)
+    _last_amap_ts[0] = _time.monotonic()
+    return True
+
+
+@router.get("/plan/photos")
+def plan_photos(destination: str = "", spots: str = "") -> dict[str, Any]:
+    """方案卡片景点实拍图轮换源：目的地 + 方案内停留点名（逗号分隔）逐一取高德 POI 照片。
+
+    返回 {photos: [{url, name}]}；未配置 key / 全部无图时静默返回空数组（前端保持 emoji 封面）。
+    """
+    import time as _time
+
+    if not _amap_throttle():
+        return {"photos": []}
+    cache_key = f"{destination}|{spots}"
+    cached = _city_photo_cache.get(cache_key)
+    if cached and _time.monotonic() - cached[0] < _CITY_PHOTO_TTL_SECONDS:
+        return {"photos": cached[1]}
+    names: list[str] = []
+    if spots.strip():
+        names = [s.strip() for s in spots.split(",") if s.strip()][:6]
+    photos: list[dict[str, str]] = []
+    try:
+        if names:
+            for n in names:
+                rows = [p for p in amap_client.search_pois(destination or "", n, size=2) if p.get("photo")]
+                if not rows:
+                    rows = [p for p in amap_client.search_pois(n, n, size=1) if p.get("photo")]
+                if rows:
+                    photos.append({"url": rows[0]["photo"], "name": n})
+                if len(photos) >= 5:
+                    break
+        elif destination.strip():
+            rows = [p for p in amap_client.search_pois(destination.strip(), "风景名胜", size=6) if p.get("photo")]
+            photos = [{"url": p["photo"], "name": p.get("name", "")} for p in rows[:5]]
+    except Exception:
+        photos = []
+    _city_photo_cache[cache_key] = (_time.monotonic(), photos)
+    return {"photos": photos}
+
+
 @router.get("/city/photo")
 def city_photo(destination: str = "") -> dict[str, Any]:
     """目的地著名景点实拍图（高德 POI 自带照片，国内可达；未配置 key 或无图返回空 url，前端静默降级）。"""
