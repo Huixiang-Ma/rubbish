@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import time
+from pathlib import Path
 from typing import Any
 
 from sqlalchemy import text
@@ -16,6 +17,31 @@ from app.services.semantic import search_similar
 
 VALID_STATUS = {"draft", "reviewed", "published"}
 DAILY_CHECK_FIELDS = ("closure", "weather", "booking")
+
+# 本地演示种子：DATABASE_URL 未配置时 /api/routes 的兜底数据源（与 frontend-v2 mock 同源迁移）。
+_SEED_FILE = Path(__file__).resolve().parents[1] / "data" / "route_templates_seed.json"
+_SEED_CACHE: list[dict[str, Any]] | None = None
+
+
+def _seed_routes() -> list[dict[str, Any]]:
+    global _SEED_CACHE
+    if _SEED_CACHE is None:
+        try:
+            with open(_SEED_FILE, encoding="utf-8") as fh:
+                raw = json.load(fh)
+            _SEED_CACHE = raw.get("routes", []) if isinstance(raw, dict) else raw
+        except Exception:
+            _SEED_CACHE = []
+    return [dict(r) for r in _SEED_CACHE]
+
+
+def _seed_find(route_id: str, tenant_id: str) -> dict[str, Any] | None:
+    if tenant_id != "default":
+        return None
+    for r in _seed_routes():
+        if r.get("route_id") == route_id:
+            return dict(r)
+    return None
 
 
 def _row_to_route(row: Any) -> dict[str, Any]:
@@ -66,9 +92,18 @@ def create_route(route: dict[str, Any], tenant_id: str = "default") -> dict[str,
 
 
 def list_routes(tenant_id: str, city: str | None = None, status: str | None = None) -> list[dict[str, Any]]:
-    """列出线路（按租户强制隔离 + 可选城市/状态过滤）。"""
-    if not pg_mirror.enabled:
-        return []
+    """列出线路（按租户强制隔离 + 可选城市/状态过滤）。
+
+    PG 未启用时回退本地演示种子（route_templates_seed.json）——保证
+    前端模板选择 / 方案馆在无 DATABASE_URL 的本地环境也能取到后端数据。
+    """
+    if not pg_mirror._ensure():
+        return [
+            r for r in _seed_routes()
+            if r.get("tenant_id", "default") == tenant_id
+            and (not city or r.get("city") == city)
+            and (not status or r.get("status") == status)
+        ]
     sql = "SELECT * FROM itinerary_routes WHERE tenant_id = :tenant"
     params: dict[str, Any] = {"tenant": tenant_id}
     if city:
@@ -84,8 +119,8 @@ def list_routes(tenant_id: str, city: str | None = None, status: str | None = No
 
 
 def get_route(route_id: str, tenant_id: str) -> dict[str, Any] | None:
-    if not pg_mirror.enabled:
-        return None
+    if not pg_mirror._ensure():
+        return _seed_find(route_id, tenant_id)
     with pg_mirror.engine.connect() as conn:
         row = conn.execute(
             text(
@@ -145,23 +180,35 @@ def daily_check(route: dict[str, Any], env=None) -> list[dict[str, str]]:
             if block.get("type") != "poi":
                 continue
             name = block.get("name", "")
-            hit = search_similar(name, k=1, tenant_id=route.get("tenant_id", "default"))
+            try:
+                hit = search_similar(name, k=1, tenant_id=route.get("tenant_id", "default"), multi=False)
+            except Exception:
+                break  # 检索服务不可达：后续块同样取不到，整体降级不阻塞
             if not hit.get("results"):
                 warnings.append({"name": name, "level": "warn", "msg": f"未检索到「{name}」的语料，内容可能缺失"})
     return warnings
 
 
 def enrich_knowledge(route: dict[str, Any]) -> dict[str, Any]:
-    """详情页渲染：按 knowledge_refs 实时 RAG 取知识卡片（语料更新自动保鲜）。"""
+    """详情页渲染：按 knowledge_refs 实时 RAG 取知识卡片（语料更新自动保鲜）。
+
+    RAG 检索失败（embedding 服务不可达 / 语料为空等）静默降级：详情照常返回，
+    只是不带 _knowledge —— 知识层绝不让商品接口 5xx。
+    """
     route = dict(route)
     refs = route.get("knowledge_refs") or []
     enriched = []
+    # POI 名/主题是"关键词探测"而非开放问题：关闭多意图拆分（multi=False），
+    # 避免把每条 ref 拖进 query_planner/LLM 而放大时延。
     for ref in refs:  # ref 形如 "doc:zhuozhengyuan#3" 或 {source, query}
         if isinstance(ref, dict):
             query = ref.get("query", ref.get("source", ""))
         else:
             query = str(ref).split("#")[0]
-        hit = search_similar(query, k=1, tenant_id=route.get("tenant_id", "default"))
+        try:
+            hit = search_similar(query, k=1, tenant_id=route.get("tenant_id", "default"), multi=False)
+        except Exception:
+            break  # 检索后端暂不可用：本条及后续都取不到，直接降级返回
         if hit.get("results"):
             enriched.append({"ref": ref, "content": hit["results"][0]["content"]})
     route["_knowledge"] = enriched

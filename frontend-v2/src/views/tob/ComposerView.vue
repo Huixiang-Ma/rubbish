@@ -13,19 +13,22 @@
     </header>
 
     <div class="cv-body">
-      <!-- 左：标品目录 -->
+      <!-- 左：标品目录（RAG 语义选品 / 全量目录 双模式） -->
       <section class="cv-catalog">
         <div class="cv-controls">
-          <div class="seg">
-            <button v-for="c in CATEGORIES" :key="c.key"
-              :class="['seg-item', { active: filterCat === c.key }]"
-              @click="filterCat = c.key">{{ c.emoji }} {{ c.key }}</button>
+          <div class="rag-bar">
+            <input v-model="searchQ" class="input rag-input" placeholder="RAG 选品：如「园林 文化 亲子」回车检索" @keyup.enter="onRagSearch" />
+            <button class="btn btn-primary" :disabled="searching || !searchQ.trim()" @click="onRagSearch">
+              {{ searching ? '检索中…' : '🔍 RAG 检索' }}
+            </button>
+            <button v-if="searchMode === 'rag'" class="btn" @click="loadCatalog">↩ 全量目录</button>
           </div>
           <select v-model="filterCity" class="select">
             <option value="">全部城市</option>
             <option v-for="c in cities" :key="c" :value="c">{{ c }}</option>
           </select>
         </div>
+        <div v-if="searchMode === 'rag'" class="mode-tip">⚡ 当前为 RAG 语义选品结果（混合检索标品知识语料），点击「全量目录」返回完整清单</div>
         <div class="product-list">
           <article v-for="p in filteredCatalog" :key="p.id"
                    :class="['product', { selected: selected.includes(p.id) }]"
@@ -38,8 +41,7 @@
               <div class="p-meta">
                 <span>📍 {{ p.city }}</span>
                 <span>⏱ {{ p.typical_dwell }}</span>
-                <span v-if="p.ticket.startsWith('¥')">💰 {{ p.ticket }}</span>
-                <span v-else>🎫 {{ p.ticket }}</span>
+                <span>💰 {{ ticketText(p) }}</span>
               </div>
               <div class="p-tags">
                 <span v-for="t in p.tags" :key="t" class="tg">{{ t }}</span>
@@ -109,6 +111,7 @@
                     <b>{{ b.title }}</b>
                     <span class="slot-type">{{ catEmoji(b.type) }} {{ b.type }}</span>
                     <p>{{ b.note }}</p>
+                    <p v-if="b.knowledge" class="slot-knowledge" :title="b.knowledge.content">📖 {{ b.knowledge.content }}</p>
                   </div>
                   <div class="slot-tag">{{ slotLabel(b.slot) }}</div>
                 </div>
@@ -163,18 +166,12 @@ import { ref, computed, onMounted } from 'vue'
 import { composerApi } from '../../api'
 import { toast } from '../../composables/toast'
 
-const CATEGORIES = [
-  { key: '', 名称: '全部' },
-  { key: '景点', 名称: '景点' },
-  { key: '餐饮', 名称: '餐饮' },
-  { key: '住宿', 名称: '住宿' },
-  { key: '交通', 名称: '交通' },
-  { key: '购物', 名称: '购物' },
-  { key: '文化', 名称: '文化' },
-]
 const CAT_EMOJI = { 景点: '🏛', 餐饮: '🍜', 住宿: '🏨', 交通: '🚄', 购物: '🛍', 文化: '📚' }
 
 const catalog = ref([])
+const searchMode = ref('all') // all=全量目录 | rag=RAG 语义选品
+const searchQ = ref('')
+const searching = ref(false)
 const selected = ref([])
 const filterCat = ref('')
 const filterCity = ref('')
@@ -183,9 +180,17 @@ const result = ref(null)
 
 const params = ref({ days: 2, pace: 'standard', budget: null, city: '' })
 
-const cities = computed(() => Array.from(new Set(catalog.value.map(p => p.city.split('→')[0].trim()))))
+// 门票展示：skus 最低正价 / 无 sku 用 price_min（后端素材库真实字段）
+function ticketText(p) {
+  const prices = (p.skus || []).map(s => Number(s.price) || 0).filter(x => x > 0)
+  const price = prices.length ? Math.min(...prices) : (Number(p.price_min) || 0)
+  return price ? `¥${price} 起` : '免费'
+}
+
+const cities = computed(() => Array.from(new Set(catalog.value.map(p => String(p.city || '').split('→')[0].trim()).filter(Boolean))))
 const filteredCatalog = computed(() => {
   let list = catalog.value
+  if (searchMode.value === 'rag') return list // RAG 模式下结果即检索命中，不做二次过滤
   if (filterCat.value) list = list.filter(p => p.category === filterCat.value)
   if (filterCity.value) list = list.filter(p => p.city.includes(filterCity.value))
   return list
@@ -199,15 +204,32 @@ function toggle(id) {
 }
 function productById(id) { return catalog.value.find(p => p.id === id) }
 function catEmoji(cat) { return CAT_EMOJI[cat] || '📌' }
-function slotLabel(s) { return { morning: '上午', midday: '午间', afternoon: '下午', evening: '傍晚' }[s] || s }
+function slotLabel(s) { return { morning: '上午', midday: '午间', afternoon: '下午', evening: '傍晚', night: '夜游' }[s] || s }
 
 async function loadCatalog() {
   try {
     const r = await composerApi.listProducts()
     catalog.value = r.products || []
+    searchMode.value = 'all'
   } catch (e) {
-    // mock 兜底（shoot.mjs 会注入 fetch mock）
     toast('标品目录加载失败：' + (e.message || e), 'err')
+  }
+}
+
+// RAG 语义选品：自然语言主题 → 后端 /api/composer/search（混合检索标品知识语料）
+async function onRagSearch() {
+  const q = searchQ.value.trim()
+  if (!q) return
+  searching.value = true
+  try {
+    const r = await composerApi.searchProducts(q, { top_k: 30, city: filterCity.value })
+    catalog.value = (r.results || []).map(x => x.product)
+    searchMode.value = 'rag'
+    toast(`RAG 命中 ${catalog.value.length} 个标品（${r.mode === 'rag' ? '语义检索' : '词面兜底'}）`, 'ok')
+  } catch (e) {
+    toast('RAG 检索失败：' + (e.message || e), 'err')
+  } finally {
+    searching.value = false
   }
 }
 
@@ -260,6 +282,10 @@ onMounted(loadCatalog)
 .p-title { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
 .p-tag { font-size: 11px; padding: 1px 6px; background: var(--bg-hover); color: var(--text-faint); border-radius: 4px; font-weight: 600; }
 .p-meta { display: flex; gap: 12px; margin-top: 4px; font-size: 12px; color: var(--text-faint); flex-wrap: wrap; }
+.rag-bar { display: flex; gap: 8px; flex: 1; min-width: 0; }
+.rag-input { flex: 1; min-width: 0; }
+.mode-tip { font-size: 12px; color: var(--brand); background: rgba(14,165,233,.08); border: 1px dashed var(--brand); border-radius: 8px; padding: 7px 10px; margin-bottom: 10px; }
+.slot-knowledge { margin: 4px 0 0; font-size: 11.5px; color: var(--text-faint); border-left: 2px solid var(--brand); padding-left: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .p-tags { margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap; }
 .tg { font-size: 11px; padding: 1px 6px; background: var(--bg-hover); color: var(--text-dim); border-radius: 999px; }
 .p-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--line); }

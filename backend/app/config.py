@@ -24,6 +24,17 @@ class Settings(BaseSettings):
     def __init__(self, **values):
         _load_env_file()
         super().__init__(**values)
+        # 裸跑后端（非容器）时 host.docker.internal 不可解析——自动兜底为 localhost，
+        # 避免每次 embedding/LLM 兜底调用都白等一次 DNS 失败；容器内 compose 会显式传回原值。
+        if "host.docker.internal" in self.embedding_ollama_url:
+            try:
+                import socket as _socket
+
+                _socket.getaddrinfo("host.docker.internal", None)
+            except OSError:
+                self.embedding_ollama_url = self.embedding_ollama_url.replace(
+                    "host.docker.internal", "127.0.0.1"
+                )
 
     # 队列
     queue_backend: str = "memory"  # memory | redis

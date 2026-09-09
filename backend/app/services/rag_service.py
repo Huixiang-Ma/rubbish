@@ -66,26 +66,13 @@ def ask(question: str, cfg: RagConfig | None = None, tenant_id: str | None = Non
 
 
 def _generate(llm: LLMClient, prompt: str, fallback_model: str = "") -> str:
-    """生成文本：云 API（real）→ 失败回退本地 Ollama → 仍失败返回空串（兜底检索模式）。"""
+    """生成文本：LLMClient 统一通道（云 API real→httpx 失败自动降级 raw socket，
+    实测部分网关 WAF 按 TLS 指纹拒绝 httpx 连接）→ 仍失败回退本地 Ollama → 空串（兜底检索模式）。"""
     mode = getattr(llm, "mode", "mock")
     if mode == "real" and getattr(llm, "api_key", ""):
-        try:
-            import httpx
-
-            resp = httpx.post(
-                llm.base_url.rstrip("/") + "/chat/completions",
-                headers={"Authorization": f"Bearer {llm.api_key}"},
-                json={"model": llm.model, "messages": [{"role": "user", "content": prompt}],
-                      "temperature": 0.1},
-                timeout=60.0,
-            )
-            resp.raise_for_status()
-            content = (resp.json().get("choices") or [{}])[0].get("message", {}).get("content", "")
-            text = _strip_think((content or "").strip())
-            if text:
-                return text
-        except Exception:
-            pass  # 云 API 瞬断（SSL/超时/限流），走本地回退
+        text = llm.generate_text(prompt, system=_SYSTEM_PROMPT)
+        if text:
+            return text
     if fallback_model:
         try:
             from app.config import get_settings
@@ -101,7 +88,7 @@ def _generate(llm: LLMClient, prompt: str, fallback_model: str = "") -> str:
             )
             resp.raise_for_status()
             content = (resp.json().get("message") or {}).get("content", "")
-            text = _strip_think((content or "").strip())
+            text = _strip_think(content)
             if text:
                 return text
         except Exception:
@@ -147,58 +134,32 @@ def stream_ask(question: str, cfg: RagConfig | None = None, tenant_id: str | Non
 
 
 def _stream_generate(llm: LLMClient, prompt: str, fallback_model: str = "") -> Iterator[str]:
-    """流式生成（OpenAI 兼容 SSE）。
+    """流式生成。
 
-    该上游对长连接流式偶发 SSL 瞬断（实测非流式稳定）——连接阶段失败自动
-    回退非流式生成，答案以单 token 事件发出，保证问答不因流式挂掉而失败。
+    实测上游网关按 TLS 指纹拦截 httpx 流式长连接（SSL 瞬断必现），故 real 模式
+    直接走 LLMClient 的 raw-socket 短连接通道一次生成，再把答案切分为 token 事件
+    发出——对外事件口径（meta → token* → done）与真流式一致。
     """
     mode = getattr(llm, "mode", "mock")
     if mode != "real" or not getattr(llm, "api_key", ""):
         return iter(())  # 空流 → done 兜底为 retrieval 模式
-    import json as _json
 
-    import httpx
-
-    deltas: list[str] = []
-    try:
-        with httpx.stream(
-            "POST",
-            llm.base_url.rstrip("/") + "/chat/completions",
-            headers={"Authorization": f"Bearer {llm.api_key}"},
-            json={"model": llm.model, "messages": [{"role": "user", "content": prompt}],
-                  "stream": True, "temperature": 0.1},
-            timeout=60.0,
-        ) as resp:
-            resp.raise_for_status()
+    text = llm.generate_text(prompt, system=_SYSTEM_PROMPT)
+    if not text:
+        # 云通道整体失败 → 回退本地 Ollama（同样一次生成，切块下发）
+        if fallback_model:
+            text = _generate(llm, prompt, fallback_model=fallback_model)
+    text = _strip_think(text)
+    if not text:
+        return iter(())
+    # 按自然块切分：先句、再固定长度，保证前端有打字机效果
+    pieces: list[str] = []
+    buf = ""
+    for ch in text:
+        buf += ch
+        if ch in "。！？；\n":
+            pieces.append(buf)
             buf = ""
-            for line in resp.iter_lines():
-                if not line.startswith("data: "):
-                    continue
-                payload = line[6:].strip()
-                if payload == "[DONE]":
-                    break
-                try:
-                    data = _json.loads(payload)
-                except _json.JSONDecodeError:
-                    continue
-                delta = ((data.get("choices") or [{}])[0].get("delta") or {}).get("content", "")
-                if not delta:
-                    continue
-                buf += delta
-                # think 标签过滤（简化：闭合前不放行）
-                if "<think>" in buf and "</think>" not in buf:
-                    continue
-                clean = _strip_think(buf)
-                if clean:
-                    deltas.append(clean)
-                    buf = ""
-        if deltas:
-            yield from deltas
-            return
-    except Exception:
-        if deltas:  # 已流出一部分，直接结束（done 兜底显示已有内容）
-            return
-    # 流式失败/空 → 回退非流式（云→本地 Ollama→空，实测该路径稳定）
-    text = _generate(llm, prompt, fallback_model=fallback_model)
-    if text:
-        yield text
+    if buf:
+        pieces.append(buf)
+    return iter(pieces)

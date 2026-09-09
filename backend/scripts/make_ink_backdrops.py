@@ -13,7 +13,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / "frontend" / "media"
+OUT = ROOT / "frontend-v2" / "public" / "media"
 TAU = 2 * math.pi
 
 PAPER = np.asarray((249, 245, 234), np.float32)

@@ -195,8 +195,15 @@ async function loadAll() {
     const [ov, tr] = await Promise.all([coverageApi.overview(), coverageApi.trend()])
     overview.value = ov
     trend.value = tr.trend || []
-  } catch (e) {
-    // shoot.mjs 注入 mock；前端无 mock 时会持续重试
+  } catch {
+    // 后端冷启动（首次摄入标品语料）可能秒级耗时，静默失败会让看板永远停在 0；
+    // 一次退避重试保证最终一致
+    await new Promise(r => setTimeout(r, 1500))
+    try {
+      const [ov, tr] = await Promise.all([coverageApi.overview(), coverageApi.trend()])
+      overview.value = ov
+      trend.value = tr.trend || []
+    } catch { /* 保持初始 0，不阻塞页面 */ }
   }
 }
 

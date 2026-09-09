@@ -8,11 +8,15 @@
         </router-link>
         <nav class="nav-links">
           <router-link :to="{ name: 'home' }">首页</router-link>
-          <router-link :to="{ name: 'my-plans' }">我的行程</router-link>
+          <router-link :to="{ name: 'my-plans', query: { new: 1 } }" class="hot">✦ 行程规划</router-link>
+          <router-link :to="{ name: 'malls' }">线路方案</router-link>
           <router-link :to="{ name: 'services' }">服务大厅</router-link>
           <router-link :to="{ name: 'tob-dashboard' }" class="tob-link">企业工作台 ↗</router-link>
         </nav>
         <div class="nav-right">
+          <router-link :to="{ name: 'my-plans' }" class="mini-link">🧳 我的行程</router-link>
+          <router-link :to="{ name: 'my-orders' }" class="mini-link">🧾 我的订单</router-link>
+          <router-link :to="{ name: 'my-favorites' }" class="mini-link">❤️ 收藏</router-link>
           <template v-if="auth.isLogged">
             <span class="user-chip">👤 {{ auth.name }}</span>
             <button class="btn btn-ghost btn-sm" @click="auth.logout(); toast('已退出登录', 'ok')">退出</button>
@@ -30,11 +34,11 @@
       <div class="container">
         <div class="foot-row">
           <div>
-            <div class="foot-brand">迹程智游 · TrailMind</div>
-            <p class="foot-desc">多智能体协作的文旅行程规划平台 —— 一句话需求，交给 10 个智能体吵出一趟好旅程。</p>
+            <div class="foot-brand">迹程智游 · 文旅行程规划</div>
+            <p class="foot-desc">标品素材由目的地企业编排成完整行程方案：逐日动线、整体报价一次打包，游客不用再一张张买门票车票。</p>
           </div>
           <div class="foot-meta">
-            <span>行程可审计 · 状态可恢复 · 预算可审批</span>
+            <span>企业编排 · 方案整订 · 逐日动线 · 可退可改</span>
             <span>Frontend v2 · Vue3 + Vite</span>
           </div>
         </div>
@@ -78,8 +82,20 @@ const auth = useAuthStore()
 }
 .nav-links a:hover { background: var(--brand-50); color: var(--brand-600); }
 .nav-links a.router-link-active { background: var(--brand-50); color: var(--brand-700); font-weight: 700; }
+.nav-links a.hot {
+  background: linear-gradient(135deg, var(--brand-600), var(--accent-500)); color: #fff !important;
+  box-shadow: 0 4px 12px rgba(37,99,235,.32); padding: 7px 16px;
+}
+.nav-links a.hot:hover { filter: brightness(1.08); }
+.nav-links a.hot.router-link-active { color: #fff !important; box-shadow: 0 4px 14px rgba(37,99,235,.42); }
 .tob-link { color: var(--ink-500) !important; }
 .nav-right { display: flex; align-items: center; gap: 10px; }
+.mini-link {
+  font-size: 13.5px; color: var(--ink-700); font-weight: 600; text-decoration: none !important;
+  padding: 6px 10px; border-radius: 999px; transition: all .15s; white-space: nowrap;
+}
+.mini-link:hover { background: var(--ink-100); color: var(--brand-600); }
+.mini-link.router-link-active { color: var(--brand-700); background: var(--brand-50); }
 .user-chip { font-size: 13.5px; color: var(--ink-700); font-weight: 600; background: var(--ink-100); padding: 6px 13px; border-radius: 999px; }
 
 .toc-main { flex: 1; }

@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue'
 
 // 开发时代理到本地 FastAPI 后端
 export default defineConfig({
-  base: '/v2/',
+  base: '/',
   plugins: [vue()],
   server: {
     port: 5273,

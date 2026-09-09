@@ -60,20 +60,32 @@
   --ease: cubic-bezier(.4,0,.2,1);
 }
 
-/* toB 深色工作台令牌（作用域在 .tob-scope） */
+/* toB 运营工作台令牌（作用域在 .tob-scope）
+   —— 去"AI 控制台"味：暖铜主色 + 沙石灰阶，像真正的旅行社/景区运营后台，
+   不再是清一色深蓝青蓝的"AI agent 仪表盘"。 */
 .tob-scope {
-  --bg:        #0B1220;
-  --bg-panel:  #131E33;
-  --bg-raised: #1A2740;
-  --bg-hover:  #20304E;
-  --line:      #263450;
-  --text:      #E6EDF7;
-  --text-dim:  #93A4C0;
-  --text-faint:#5C6E8C;
-  --brand:     #38BDF8;
-  --brand-dim: #0EA5E9;
-  --ok:        #34D399;
-  --warn:      #FBBF24;
-  --danger:    #F87171;
-  --purple:    #A78BFA;
+  /* 表面：偏褐的深石板，而不是纯冷蓝黑 */
+  --bg:        #14110E;
+  --bg-panel:  #1C1814;
+  --bg-raised: #251F1A;
+  --bg-hover:  #2D2620;
+  --line:      #362E25;
+  --line-soft: #2A231D;
+
+  /* 文字：暖灰白，不是冷青灰 */
+  --text:      #F2EAD9;
+  --text-dim:  #B8A98E;
+  --text-faint:#7A6B57;
+
+  /* 主品牌：暖铜橙（旅行社/景区运营感），替代青蓝 #38BDF8 */
+  --brand:     #E08A3C;
+  --brand-2:   #C2683A;
+  --brand-dim: #B5572B;
+  --brand-bg:  rgba(224,138,60,.12);
+
+  /* 状态色稍偏暖 */
+  --ok:        #6FBF73;
+  --warn:      #E8B559;
+  --danger:    #E07A6B;
+  --purple:    #C9A66B;
 }

@@ -14,7 +14,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT_DIR = ROOT / "frontend" / "media"
+OUT_DIR = ROOT / "frontend-v2" / "public" / "media"
 OUT_VIDEO = OUT_DIR / "scenery.mp4"
 OUT_POSTER = OUT_DIR / "scenery-poster.jpg"
 

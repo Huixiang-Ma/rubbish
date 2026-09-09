@@ -89,9 +89,7 @@ _retheme.py
 # ---- 其它内部文档与备份（不入库） ----
 docs/
 backend/scripts/*.png
-frontend/index_legacy_backup.html
-frontend/index_style_preview.html
-frontend/_opt_layer.css
+# 旧版单文件前端 frontend/ 已整体移除（frontend-v2 为唯一前端），历史忽略规则随之清理
 
 # ---- 其它内部文档 ----
 实训视频讲解文档*

@@ -8,7 +8,10 @@
 
       <nav class="side-nav">
         <div class="nav-group">经营</div>
-        <router-link :to="{ name: 'tob-dashboard' }"><span class="ico">📊</span>经营看板</router-link>
+        <router-link :to="{ name: 'tob-dashboard' }"><span class="ico">📊</span>数据看板</router-link>
+        <router-link :to="{ name: 'tob-products' }"><span class="ico">📦</span>标品素材库</router-link>
+        <router-link :to="{ name: 'tob-plan-products' }"><span class="ico">🧭</span>方案上架</router-link>
+        <router-link :to="{ name: 'tob-orders' }"><span class="ico">🧾</span>订单管理</router-link>
         <router-link :to="{ name: 'tob-plans' }"><span class="ico">🗂</span>方案列表</router-link>
         <router-link :to="{ name: 'tob-customers' }"><span class="ico">👥</span>客户管理</router-link>
 
@@ -75,7 +78,7 @@ onMounted(async () => {
 }
 .side-brand .mark {
   width: 32px; height: 32px; border-radius: 9px; flex: none;
-  background: linear-gradient(135deg, #0EA5E9, #38BDF8); color: #04202E;
+  background: linear-gradient(135deg, var(--brand-2), var(--brand)); color: #1C1814;
   display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800;
 }
 .side-brand b { display: block; font-size: 10.5px; color: var(--text-faint); font-weight: 600; letter-spacing: .14em; margin-top: 1px; }
@@ -87,7 +90,7 @@ onMounted(async () => {
   color: var(--text-dim); font-size: 14px; font-weight: 500; text-decoration: none !important; transition: all .14s;
 }
 .side-nav a:hover { background: var(--bg-hover); color: var(--text); }
-.side-nav a.router-link-active { background: rgba(56,189,248,.13); color: var(--brand); font-weight: 700; }
+.side-nav a.router-link-active { background: var(--brand-bg); color: var(--brand); font-weight: 700; }
 .side-nav .ico { font-size: 15px; width: 20px; text-align: center; }
 .side-nav .badge {
   margin-left: auto; background: var(--danger); color: #fff; font-size: 11px; font-style: normal;

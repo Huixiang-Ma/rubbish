@@ -23,7 +23,7 @@ venv/
 
 # 前端本地依赖与构建产物
 node_modules/
-frontend/node_modules/
+frontend-v2/node_modules/
 
 # 文档 / 观测配置不影响镜像，但排除减少上下文
 docs/

@@ -51,6 +51,14 @@ def _memory_all(tenant_id: str | None) -> list[dict[str, Any]]:
     return _MEMORY.get(tenant_id or "default", [])
 
 
+def all_chunks(tenant_id: str | None = None) -> list[dict[str, Any]]:
+    """对外只读全量块（幂等检查用）：PG 已启用查 pgvector，否则查进程内存兜底。"""
+    pg_mirror._ensure()
+    if pg_mirror.enabled:
+        return pg_mirror.all_chunks(tenant_id)
+    return _memory_all(tenant_id)
+
+
 def _search_once(query: str, settings, tenant_id: str | None, k: int) -> list[dict[str, Any]]:
     """单问题混合检索：稠密 top(pool) + BM25 top(pool) → RRF → k。dense 模式仅稠密。
 

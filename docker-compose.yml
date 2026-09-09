@@ -30,14 +30,18 @@ services:
       DATA_ROOT: /data/jobs
       # DATABASE_URL 若指向本机 localhost 在容器内不可达，改为服务名（未启用 postgres profile 时保持为空）
       DATABASE_URL: ${DATABASE_URL:-}
+      # 宿主机 Ollama（embedding/LLM 兜底）：.env 里的 host.docker.internal 仅供容器访问；
+      # 裸跑后端在 config.py 中自动兜底改写为 http://127.0.0.1:11434，容器内保持原值
+      EMBEDDING_OLLAMA_URL: ${EMBEDDING_OLLAMA_URL:-http://host.docker.internal:11434}
       # 告警桥接：Alertmanager webhook 回调鉴权（生产必改）
       ALERT_BRIDGE_TOKEN: ${ALERT_BRIDGE_TOKEN:-alert-bridge-change-me}
     ports:
       - "${BACKEND_HOST_PORT:-8000}:8000"
     volumes:
       - ./data:/data
-      # 前端以挂载方式提供：改 HTML 无需重建镜像，杜绝"改了没同步"的静默过期问题
-      - ./frontend:/app/frontend:ro
+      # 前端构建产物以挂载方式提供：宿主先 npm run build（frontend-v2/dist），
+      # 改前端无需重建镜像，杜绝"改了没同步"的静默过期问题；dist 缺失时后端仅提供 API。
+      - ./frontend-v2/dist:/app/web:ro
     restart: unless-stopped
     depends_on:
       redis:

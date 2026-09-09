@@ -9,7 +9,7 @@
 | 后端 | Python 3.12 + FastAPI + Pydantic v2，Uvicorn 启动 |
 | 队列 | 内存队列（默认）/ Redis Streams（Docker 模式） |
 | LLM | OpenAI 兼容接口，`real / mock` 双模式，失败自动降级 |
-| 前端 | 原生单文件 HTML（toC `/` + toB `/b`），vendor：ECharts / Leaflet / html2canvas |
+| 前端 | Vue3 + Vite（`frontend-v2`，构建产物 `dist`），hash 路由；toC `/` + toB `/#/b`，由后端同源托管 |
 | 部署 | Docker + docker compose（Redis 7 + backend） |
 
 完整定版选型、备选理由与生产演进路线见《[技术栈清单_完善版](技术栈清单_完善版.md)》；全部环境变量说明见 `.env.example`。
@@ -41,7 +41,7 @@
 - 基础 Prompt 注入检测。
 - 北京静态景点库。
 - 预算超限挂起审批。
-- 最小前端页面。
+- 前端唯一来源为 `frontend-v2`（Vue3 + Vite，全部页面接真实后端 `/api`，无 mock 种子层）；旧版单文件前端目录 `frontend/` 已整体删除。
 - 启动恢复：进程重启后自动重新入队 `QUEUED/RUNNING` 任务，从 `resume_from` 继续；`state.json` 损坏进入 `RECOVERY_REQUIRED`。
 - 审批幂等：审批递增 `version`，重复审批或非法状态审批返回 409；安全挂起可人工放行。
 - 增量重规划返回粗粒度 diff 摘要（当前为 constraints 追加口径）。
@@ -50,11 +50,17 @@
 - 诚实 AI 翻车预演（融合版 C8）：≥3 条数据驱动翻车预警 + B 计划（天气/通勤超时/闭馆替补/超预算）。
 - 旅行服务大厅（toC 弹窗）：车票/机票/商家/景点/娱乐五个窗口，演示口径 + 本地计算（`GET /api/services/{kind}`）。
 - 登录认证（演示级）：toC 山水主题登录/注册门禁（演示账号由 .env 配置（TOC_DEMO_USERNAME/TOC_DEMO_PASSWORD，生产必轮换），toB 工作台暗色登录门禁三角色——admin（管理员）、supervisor（主管）、consultant（顾问），口令均由 .env 的 ADMIN_PASSWORD/TOB_*_PASSWORD 配置；HMAC token + `/api/auth/*` 接口；RBAC：预算/安全审批须 supervisor 或 admin，重规划与客户之声须 consultant/supervisor/admin（游客角色 403）；`AUTH_ENABLED=true` 时 toB 管理类 API 强制 Bearer 校验。
-- toC 登录页动态视频背景：`frontend/media/scenery.mp4`（12 秒无缝循环，约 0.6MB），由 `backend/scripts/make_scenery_video.py` **程序化渲染生成**（水墨远山/流云/波光/孤舟/飞鸟），非第三方素材、无版权风险、断网可跑；视频加载失败自动降级为 CSS/SVG 动画山水场景。曾尝试按要求从千图网（58pic）取文旅视频素材，但其下载需登录且多数素材为会员专享/需授权，未绕过——故改为本地程序化生成。
+- toC 登录页动态视频背景：`frontend-v2/public/media/scenery.mp4`（12 秒无缝循环，约 0.6MB），由 `backend/scripts/make_scenery_video.py` **程序化渲染生成**（水墨远山/流云/波光/孤舟/飞鸟），非第三方素材、无版权风险、断网可跑；视频加载失败自动降级为 CSS/SVG 动画山水场景。曾尝试按要求从千图网（58pic）取文旅视频素材，但其下载需登录且多数素材为会员专享/需授权，未绕过——故改为本地程序化生成。
 - 出行要素引擎（本地静态估算口径）：经纬度通勤估算（地铁/打车时长与费用）、门票静态票价、分项预算（大交通/住宿/市内交通/门票/餐饮）、大交通决策建议（`origin` 可选）、住宿分档策略、四季天气提示。
-- toC 水墨山水画视觉主题：全页背景（页头横幅 `ink-hero.jpg`、正文宣纸底纹 `ink-body.jpg`、页脚墨山 `ink-foot.jpg`）由 `backend/scripts/make_ink_backdrops.py` **程序化渲染生成**（宣纸底/浓淡墨山/皴笔纹理/云雾/孤舟飞鸟/朱砂印章），非第三方素材、无版权风险、断网可跑；页头标题改墨绿、竖排水印改墨色、弹窗遮罩改墨青色调。如需替换为真实授权图片，放入 `frontend/media/` 覆盖同名文件即可。
+- toC 水墨山水画视觉主题：全页背景（页头横幅 `ink-hero.jpg`、正文宣纸底纹 `ink-body.jpg`、页脚墨山 `ink-foot.jpg`）由 `backend/scripts/make_ink_backdrops.py` **程序化渲染生成**（宣纸底/浓淡墨山/皴笔纹理/云雾/孤舟飞鸟/朱砂印章），非第三方素材、无版权风险、断网可跑；页头标题改墨绿、竖排水印改墨色、弹窗遮罩改墨青色调。如需替换为真实授权图片，放入 `frontend-v2/public/media/` 覆盖同名文件即可（frontend-v2 已接入该视觉素材；未引用时仅作为生成素材保留）。
 - toC 表单智能化（纯前端、数据不出域）：目的地/出发地 20 城市下拉建议（`datalist`，按使用频率置顶）；新增出行人数选择器（1–10+），预算分项按人数换算；心情词/偏好/约束提供可点选建议标签（点选即增删，选中高亮）；登录用户的使用项记入 localStorage 长期记忆（`wlMemory_<用户名>`），常用项以 ★ 金色标签按频率置顶——演示口径为本地记忆，非服务端画像。
-- LLM 真实接入边界（mock-first）：`LLM_MODE=real` 时走 OpenAI 兼容接口，失败自动降级 mock 模板，断网/无 key 主链路照常可演示。
+- LLM 真实接入边界（mock-first）：`LLM_MODE=real` 时走 OpenAI 兼容接口，httpx 失败自动降级 raw-socket 短连接（实测部分网关按 TLS 指纹拦截 httpx），仍失败回退本地 Ollama；断网/无 key 主链路照常可演示。裸跑后端时 `host.docker.internal` 不可解析会自动兜底为 `127.0.0.1`（容器内由 compose 显式回传原值）。
+- 标品链路全量 RAG 化（frontend-v2 × 后端闭环）：
+  - `GET /api/composer/products` 标品目录（素材库真实数据）、`GET /api/composer/search?q=` **RAG 语义选品**（BGE-M3 向量 + BM25 RRF 混合检索标品知识语料，命中含匹配分与语料摘要；检索不可用自动词面兜底）；
+  - `POST /api/composer/from-products` 确定性排程生成行程模板（餐饮占午间/节奏密度/预算分项/覆盖率评分），每个排入块附 **RAG 知识背书卡片**；
+  - `POST /api/plans/{id}/swap-product[/inspect]` 行程中标品替换（兼容管线版 `items` 与组装器版 `blocks` 双结构）：RAG 语料背书校验 + 时长/费用/点间距 diff 影响评估；前端「AI 导游问答」命中标品后可一键替换；
+  - `GET /api/stats/product-coverage[/trend|/missing]` 标品覆盖率看板（在售素材 vs 已入库语料的真实口径，分类完整度 + TOP 缺口 + 摄入趋势）；
+  - 商业闭环 `/api/plan-products` `/api/orders` `/api/favorites` `/api/products` 全部真实落库（`data/` JSON 原子写），前端已全部去 mock 化直连。
 - toB 企业端工作台（`/b`）：侧边栏八页签（方案列表行内操作/搜索/失败红标、HITL 审核台待审角标、安全治理看板、合规审计、客户之声、白标交付、经营看板、客户管理）；方案详情抽屉（行程书/决策溯源/审计时间线/记忆挂载点，打开期间每 5s 刷新）；改单 + 父子版本行级 diff；管理请求统一 Bearer，审计 CSV blob 下载。
 - 增量重规划实测：`python scripts/bench_replan.py`（mock 口径下耗时降约 23%，LLM real 模式下随更多节点接入 LLM 而放大）。
 - 生产演进（全部落地）：`WORKER_COUNT` 多 Worker + Redis 分布式锁；PostgreSQL 镜像层 + pgvector 语义检索（`DATABASE_URL` 未配置时自动 no-op；Embedding 默认 mock 演示向量，`EMBEDDING_PROVIDER=ollama` 时经宿主机 Ollama 调 BGE-M3 1024 维）；Prometheus `/metrics` + 结构化 JSON 日志；飞书审批提醒（`FEISHU_WEBHOOK_URL`）；CI 工作流 `.github/workflows/ci.yml`（git 入库后生效）。监控栈：`docker compose --profile postgres --profile observability up -d`。
@@ -88,14 +94,25 @@ uvicorn app.main:app --reload
 
 ## 打开前端
 
-后端直接托管两个路由（推荐，同源无跨域）：
+前端只有一套（`frontend-v2`，Vue3 + Vite，hash 路由），由后端同源托管其构建产物（同源无跨域）：
 
 ```text
 游客端 toC：http://127.0.0.1:8000/
-企业端 toB：http://127.0.0.1:8000/b
+企业端 toB：http://127.0.0.1:8000/#/b
+分享页    ：http://127.0.0.1:8000/#/s/{job_id}
 ```
 
-也可直接用浏览器打开 `frontend/index.html`（需在控制台配置 localStorage apiBase）。
+旧路径 `/b`、`/s/{job_id}` 会自动 307 重定向到新 hash 路由。本地迭代前端用 Vite dev：`cd frontend-v2 && npm run dev`（默认 `127.0.0.1:5273`，`/api` 代理到后端）。
+
+## 构建前端（部署/演示用）
+
+```bash
+cd frontend-v2
+npm install
+npm run build     # 产物在 frontend-v2/dist，后端（--reload 自动重载 / 容器重挂载）直接托管
+```
+
+> 历史说明：早期原生单文件前端目录 `frontend/` 已随改版整体移除，Vite 产物为唯一前端来源。
 
 ## Docker 启动
 

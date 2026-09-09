@@ -183,6 +183,12 @@
           <span v-if="swapDialog.payload?.product?.fields?.open_time">🕐 {{ swapDialog.payload?.product?.fields?.open_time }}</span>
           <span v-if="swapDialog.payload?.product?.fields?.ticket">🎫 {{ swapDialog.payload?.product?.fields?.ticket }}</span>
         </div>
+        <div v-if="swapDialog.inspect?.grounding" class="sp-grounding" style="margin-top:8px;font-size:12px;color:var(--ok)">
+          📖 知识背书通过（{{ (swapDialog.inspect.grounding.score * 100).toFixed(0) }}%）：{{ swapDialog.inspect.grounding.snippet }}
+        </div>
+        <div v-else class="sp-grounding" style="margin-top:8px;font-size:12px;color:var(--warn)">
+          ⚠ 知识库暂无该标品语料，替换以素材库数据为准
+        </div>
       </div>
 
       <p style="font-size:12.5px;color:var(--ink-500);margin:14px 0 8px">选择要替换的时段</p>
@@ -273,7 +279,7 @@ const replanText = ref('')
 const rpBusy = ref(false)
 
 // 替换标品到行程
-const swapDialog = reactive({ open: false, payload: null, day: 1, slot: 0, diff: null, busy: false })
+const swapDialog = reactive({ open: false, payload: null, day: 1, slot: 0, diff: null, inspect: null, busy: false })
 const itineraryDays = computed(() => {
   // 从 result 里抽出每天有多少个 slot；拿不到时给个兜底
   const days = result.value?.itinerary || (result.value?.itinerary_md ? 2 : 2)
@@ -286,12 +292,29 @@ async function onSwapRequest(payload) {
   swapDialog.day = 1
   swapDialog.slot = 0
   swapDialog.diff = null
+  // 先做替换影响预检（后端按 RAG 语料背书 + 时长/费用/距离 diff）
+  const newId = resolveProductId(payload)
+  if (newId && result.value?.itinerary?.length) {
+    try {
+      swapDialog.inspect = await swapApi.inspect(jobId, {
+        day: Number(swapDialog.day), slot_index: Number(swapDialog.slot), new_product_id: newId,
+      })
+    } catch { swapDialog.inspect = null }
+  }
 }
+
+// RAG 命中块 → 真实标品 id：标品语料块 job_id 形如 cat:p_xxx；
+// 非标品语料（amap/文件/url）时回退素材库按名解析
+function resolveProductId(payload) {
+  const jobId0 = payload?.product?.sourceMeta?.job_id || payload?.source?.job_id || ''
+  if (String(jobId0).startsWith('cat:')) return String(jobId0).slice(4)
+  return payload?.product?.title || ''
+}
+
 async function confirmSwap() {
   swapDialog.busy = true
   try {
-    // 把 source.content 解析出的标品名当作 new_product_id（演示用）
-    const newId = 'swap_' + (swapDialog.payload?.product?.title || 'unknown').slice(0, 12)
+    const newId = resolveProductId(swapDialog.payload) || (swapDialog.payload?.product?.title || 'unknown')
     const r = await swapApi.swap(jobId, {
       day: Number(swapDialog.day),
       slot_index: Number(swapDialog.slot),

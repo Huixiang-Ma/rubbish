@@ -1,147 +1,230 @@
 <template>
-  <div>
-    <!-- Hero -->
+  <div class="home">
+    <!-- Hero：把"标品"翻译成游客听得懂的话 -->
     <section class="hero">
-      <div class="container">
-        <div class="hero-badge rise">🤖 10 个智能体 · 全程可审计 · 状态可恢复</div>
-        <h1 class="hero-title rise">把一场旅行，<br />交给一群<span class="grad">会吵架的智能体</span></h1>
-        <p class="hero-sub rise">一句话说出你的需求，智能体流水线自动调研、规划、核算、互怼、验收，
-          最终交付一本含<b>逐日行程 · 费用账本 · 决策辩论 · 翻车预演</b>的完整行程书。</p>
+      <div class="container hero-inner">
+        <div class="hero-left">
+          <span class="hero-tag">🚩 线路方案整订 · 一价全包 · 不用自己凑门票</span>
+          <h1 class="hero-title">
+            企业排好的行程，<br />
+            <span class="grad">你只管选一条，直接出发。</span>
+          </h1>
+          <p class="hero-sub">
+            每一份「线路方案」都由目的地文旅把门票、餐饮、住宿按天排好动线、打包报价。
+            你选方案 → 选出行日与人数 → 整单下单，不再一张张买门票和车票。
+          </p>
+          <div class="search-bar card">
+            <span class="s-icon">🔍</span>
+            <input v-model="kw" class="s-input" placeholder="搜索城市 / 主题 / 线路，例如：苏州、园林、亲子" @keydown.enter="goSearch" />
+            <button class="btn btn-primary" @click="goSearch">找方案</button>
+          </div>
+          <div class="hot-search">
+            <span>热门：</span>
+            <button v-for="q in HOT_KW" :key="q" class="hs-chip" @click="kw = q; goSearch()">{{ q }}</button>
+          </div>
+        </div>
+        <div class="hero-right">
+          <div class="hero-stat">
+            <div class="st-num">4</div>
+            <div class="st-label">已上线路方案</div>
+          </div>
+          <div class="hero-stat">
+            <div class="st-num">6</div>
+            <div class="st-label">素材覆盖分类</div>
+          </div>
+          <div class="hero-stat">
+            <div class="st-num">整订</div>
+            <div class="st-label">一价含门票食宿</div>
+          </div>
+          <div class="hero-stat">
+            <div class="st-num">90 天</div>
+            <div class="st-label">可订团期</div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-        <!-- 创建行程表单 -->
-        <div class="create-card card rise" style="animation-delay:.1s">
-          <form @submit.prevent="submit">
-            <div class="grid">
-              <div class="field">
-                <label>目的地 *</label>
-                <input v-model.trim="form.destination" class="input" placeholder="如：北京市" required maxlength="20" />
-              </div>
-              <div class="field">
-                <label>出发地</label>
-                <input v-model.trim="form.origin" class="input" placeholder="如：上海（不填不计大交通）" maxlength="20" />
-              </div>
-              <div class="field">
+    <!-- 行程规划：平台主功能 -->
+    <section class="plan-band">
+      <div class="container">
+        <div class="plan-card card">
+          <div class="plan-copy">
+            <div class="plan-eyebrow">✦ 平台主功能 · 文旅行程规划</div>
+            <h2>没有现成方案？<br />说句话，现场给你排一本</h2>
+            <ul class="plan-points">
+              <li><span class="pp-ico">🗓</span><div><b>逐日动线</b><p>想去哪、玩几天、花多少，说清就开工</p></div></li>
+              <li><span class="pp-ico">📦</span><div><b>素材来自标品库</b><p>只用企业已核验的景点、餐饮、住宿素材，不瞎编</p></div></li>
+              <li><span class="pp-ico">✅</span><div><b>可转方案上架</b><p>排得好的行程，企业可一键沉淀为可售线路方案</p></div></li>
+              <li><span class="pp-ico">✏️</span><div><b>随时可改</b><p>时间、节奏、酒店，喜欢哪页改哪页</p></div></li>
+            </ul>
+          </div>
+          <form class="plan-form" @submit.prevent="createPlan">
+            <div class="pf-field pf-full">
+              <label>目的地 <b>*</b></label>
+              <input v-model.trim="plan.destination" class="input" required placeholder="如：苏州 / 北京 / 杭州" maxlength="20" />
+            </div>
+            <div class="pf-grid">
+              <div class="pf-field">
                 <label>天数</label>
-                <select v-model.number="form.days" class="select">
+                <select v-model.number="plan.days" class="select">
                   <option v-for="d in 14" :key="d" :value="d">{{ d }} 天</option>
                 </select>
               </div>
-              <div class="field">
-                <label>预算（元）*</label>
-                <input v-model.number="form.budget" type="number" class="input" min="0" step="100" required placeholder="8000" />
+              <div class="pf-field">
+                <label>预算（元）</label>
+                <input v-model.number="plan.budget" class="input" type="number" min="0" step="100" placeholder="8000" />
               </div>
-              <div class="field">
-                <label>出行人数</label>
-                <select v-model.number="form.travelers" class="select">
-                  <option v-for="t in 20" :key="t" :value="t">{{ t }} 人</option>
-                </select>
-              </div>
-              <div class="field">
+              <div class="pf-field">
                 <label>出发日期</label>
-                <input v-model="form.departure_date" type="date" class="input" />
+                <input v-model="plan.date" class="input" type="date" />
               </div>
             </div>
 
-            <div class="field" style="margin-top:16px">
-              <label>心情关键词 <span class="hint">填写后生成「心情剧本」章节</span></label>
-              <div class="chip-group">
-                <button type="button" v-for="m in MOODS" :key="m" class="chip" :class="{ active: form.mood.includes(m) }" @click="toggleMood(m)">{{ m }}</button>
-              </div>
-            </div>
-
-            <div class="field" style="margin-top:14px">
-              <label>偏好标签</label>
-              <div class="chip-group">
-                <button type="button" v-for="p in PREFS" :key="p" class="chip" :class="{ active: form.preferences.includes(p) }" @click="toggleList(form.preferences, p)">{{ p }}</button>
-              </div>
-            </div>
-
-            <div class="field" style="margin-top:14px">
-              <label>约束条件 <span class="hint">硬性要求，智能体必须遵守</span></label>
-              <div class="chip-group">
-                <button type="button" v-for="c in CONS" :key="c" class="chip" :class="{ active: form.constraints.includes(c) }" @click="toggleList(form.constraints, c)">{{ c }}</button>
-              </div>
-            </div>
-
-            <div style="display:flex;align-items:center;gap:14px;margin-top:22px;flex-wrap:wrap">
-              <button class="btn btn-primary btn-lg" :disabled="creating || !form.destination || form.budget === ''">
-                <span v-if="creating" class="spinner" style="width:16px;height:16px;border-width:2.5px"></span>
-                {{ creating ? '智能体集结中…' : '✦ 生成我的行程书' }}
+            <!-- 偏好设置（携程 AI 行程式问卷）：可收纳，默认收起；展开再点选，收起时显示已选摘要 -->
+            <div class="pf-prefs">
+              <button type="button" class="pf-prefs-head" :aria-expanded="prefsOpen" @click="prefsOpen = !prefsOpen">
+                <span class="pf-prefs-title">偏好设置</span>
+                <span class="pf-prefs-summary" :class="{ set: prefsMeta.dirty }">{{ prefsMeta.text }}</span>
+                <svg class="pf-chev" :class="{ open: prefsOpen }" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
-              <span class="hint-s">约 1-3 秒完成 · 超预算会挂起等你审批</span>
+              <div v-show="prefsOpen" class="pf-prefs-body">
+                <div class="pf-field">
+                  <label>和谁一起去</label>
+                  <div class="chip-group">
+                    <button type="button" v-for="g in GROUPS" :key="g.label" class="chip"
+                            :class="{ active: plan.group === g.label }" @click="pickOne(plan, 'group', g.label)">{{ g.label }}</button>
+                  </div>
+                </div>
+                <div class="pf-field">
+                  <label>想玩什么 <span class="pf-opt-hint">可多选</span></label>
+                  <div class="chip-group">
+                    <button type="button" v-for="it in INTERESTS" :key="it.label" class="chip"
+                            :class="{ active: plan.interests.includes(it.label) }" @click="toggleInterest(it.label)">{{ it.label }}</button>
+                  </div>
+                </div>
+                <div class="pf-field">
+                  <label>行程节奏</label>
+                  <div class="chip-group">
+                    <button type="button" v-for="r in RHYTHMS" :key="r.label" class="chip"
+                            :class="{ active: plan.rhythm === r.label }" @click="pickOne(plan, 'rhythm', r.label)">{{ r.label }}</button>
+                  </div>
+                </div>
+                <div class="pf-field">
+                  <label>作息习惯</label>
+                  <div class="chip-group">
+                    <button type="button" v-for="s in SLEEPS" :key="s.label" class="chip"
+                            :class="{ active: plan.sleep === s.label }" @click="pickOne(plan, 'sleep', s.label)">{{ s.label }}</button>
+                  </div>
+                </div>
+                <div class="pf-field">
+                  <label>其它要求 <span class="pf-opt-hint">预算分配 / 忌口等</span></label>
+                  <input v-model.trim="plan.note" class="input" maxlength="60" placeholder="如：当地美食与中餐结合 · 人均预算 1 万" />
+                </div>
+              </div>
             </div>
+            <button class="btn btn-primary btn-lg plan-btn" :disabled="creating || !plan.destination">
+              <span v-if="creating" class="spinner" style="width:16px;height:16px;border-width:2.5px"></span>
+              {{ creating ? '正在规划…' : '✦ 开始规划我的行程' }}
+            </button>
+            <p class="pf-tip">约 1-3 分钟生成 · 生成后随时可改 · 可提交企业沉淀为线路方案</p>
           </form>
         </div>
       </div>
     </section>
 
-    <!-- 问问 AI 导游（RAG 快捷入口） -->
-    <section class="container sec" id="ask-rag">
-      <div class="sec-title">问问 AI 导游</div>
-      <p class="sec-desc">
-        基于景点/线路知识库的问答：先向量检索 → 再 LLM 有据生成 → 距离过大则拒答（不编造）。
-        <router-link :to="{ name: 'plan-detail', params: { jobId: 'demo' } }" style="font-size:12px; margin-left:6px">全程体验见「行程书 · AI 导游问答」</router-link>
-      </p>
-
-      <!-- 标品分类导航：点击填入并触发提问 -->
-      <div class="cat-grid">
-        <button v-for="c in PRODUCT_CATS" :key="c.key" type="button" class="cat-card"
-                :style="{ '--cat-c': c.color }"
-                @click="askByCategory(c)">
-          <span class="cat-icon">{{ c.icon }}</span>
-          <span class="cat-label">{{ c.label }}</span>
-          <span class="cat-q">"{{ c.sample }}"</span>
-        </button>
-      </div>
-
-      <div class="card rag-home-card">
-        <RagPanel mode="sync" :show-mode="false" :reset-able="true"
-                  hint="拙政园门票淡旺季分别多少？"
-                  placeholder="例：拙政园门票、北京 3 天亲子行程怎么排、苏州雨天备选有哪些？" />
-        <div class="rag-shortcuts">
-          <span>试试：</span>
-          <button v-for="q in RAG_QUICK" :key="q" type="button" class="chip chip-outline" @click="fillRag(q)">{{ q }}</button>
+    <!-- 玩法主题 -->
+    <section class="container sec">
+      <div class="sec-head">
+        <div>
+          <div class="sec-title">按玩法挑方案</div>
+          <p class="sec-desc">不是按门票分类，而是按你想怎么玩挑</p>
         </div>
+      </div>
+      <div class="cat-strip">
+        <router-link v-for="c in themes" :key="c.name"
+                     :to="{ name: 'malls-category', params: { key: c.name } }"
+                     class="cat-tile"
+                     :style="{ '--cat-c': c.color }">
+          <span class="ct-emoji">{{ c.emoji }}</span>
+          <span class="ct-label">{{ c.name }}</span>
+          <span class="ct-hint">{{ c.desc }} · {{ c.count }} 条</span>
+        </router-link>
       </div>
     </section>
 
-    <!-- 智能体流水线 -->
+    <!-- 精选线路方案 -->
     <section class="container sec">
-      <div class="sec-title">智能体流水线</div>
-      <p class="sec-desc">toC 全链路 10 节点：每一站都有独立职责，每个决策都有审计记录</p>
-      <div class="agents-row">
-        <div v-for="(a, i) in AGENTS" :key="a.name" class="agent-card card card-hover" :style="{ animationDelay: `${i * 0.05}s` }">
-          <div class="agent-emoji">{{ a.emoji }}</div>
-          <div class="agent-name">{{ a.name }}</div>
-          <div class="agent-role">{{ a.role }}</div>
+      <div class="sec-head">
+        <div>
+          <div class="sec-title">🧭 精选线路方案</div>
+          <p class="sec-desc">整体报价按人计，一条线路含每日动线，不用自己拼票</p>
         </div>
+        <router-link :to="{ name: 'malls' }" class="more-link">全部方案 →</router-link>
       </div>
-    </section>
-
-    <!-- 行程书七章 -->
-    <section class="container sec">
-      <div class="sec-title">一册行程书 · 七章</div>
-      <p class="sec-desc">不是一页冷冰冰的列表，而是一本可读、可查账、可回溯的旅行文档</p>
-      <div class="chapters">
-        <div v-for="(c, i) in CHAPTERS" :key="c.title" class="chapter card card-hover">
-          <div class="ch-num">{{ String(i + 1).padStart(2, '0') }}</div>
-          <div class="ch-title">{{ c.title }}</div>
-          <p class="ch-desc">{{ c.desc }}</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- 特色体验 -->
-    <section class="container sec">
-      <div class="sec-title">不止规划，还有灵魂</div>
-      <p class="sec-desc">围绕行程书的体验层：辩论直播、名导陪聊、虚拟游客踩点、反事实推演</p>
-      <div class="features">
-        <div v-for="f in FEATURES" :key="f.title" class="feature card card-hover">
-          <div class="ft-emoji">{{ f.emoji }}</div>
-          <div>
-            <div class="ft-title">{{ f.title }}</div>
-            <p class="ft-desc">{{ f.desc }}</p>
+      <div class="shop-grid">
+        <router-link v-for="p in plans" :key="p.id"
+                     :to="{ name: 'malls-product', params: { id: p.id } }"
+                     class="shop-card card card-hover">
+          <div class="shop-cover" :style="{ background: p.cover.gradient }">
+            <span class="shop-emoji">{{ p.cover.emoji }}</span>
+            <div class="shop-badges">
+              <span v-for="b in p.badges" :key="b" class="bd">{{ b }}</span>
+            </div>
+            <span class="days-chip">{{ p.days }} 日</span>
           </div>
+          <div class="shop-body">
+            <div class="shop-cat">{{ p.category }} · {{ p.city }}</div>
+            <div class="shop-name">{{ p.name }}</div>
+            <div class="shop-meta">
+              <span class="rating">★ {{ p.rating.toFixed(1) }}</span>
+              <span>售 {{ formatSales(p.sales) }}</span>
+              <span>{{ p.poi_count }} 点位 · {{ p.pace_zh }}</span>
+            </div>
+            <div class="shop-price">
+              <span class="y">¥</span><b>{{ p.per_price }}</b><span class="suffix"> /人 整订</span>
+              <s v-if="p.original_per_price > p.per_price" class="p-orig">¥{{ p.original_per_price }}</s>
+            </div>
+          </div>
+        </router-link>
+      </div>
+    </section>
+
+    <!-- 城市 -->
+    <section class="container sec">
+      <div class="sec-head">
+        <div>
+          <div class="sec-title">🏙 从城市出发</div>
+          <p class="sec-desc">挑目的地，看本地已排好的线路</p>
+        </div>
+      </div>
+      <div class="city-row">
+        <router-link v-for="c in cities" :key="c.name"
+                     :to="{ name: 'malls-search', query: { city: c.name } }"
+                     class="city-tile"
+                     :style="{ background: cityGradient(c.name) }">
+          <span class="city-emoji">🏯</span>
+          <div class="city-meta">
+            <div class="city-name">{{ c.name }}</div>
+            <div class="city-hint">{{ c.count }} 条线路方案</div>
+          </div>
+          <span class="city-arrow">→</span>
+        </router-link>
+      </div>
+    </section>
+
+    <!-- 整订保障 -->
+    <section class="container sec">
+      <div class="sec-head">
+        <div>
+          <div class="sec-title">🛡 为什么敢整订</div>
+          <p class="sec-desc">方案背后是素材库 → 编排 → 报价的全链路保障</p>
+        </div>
+      </div>
+      <div class="assure-grid">
+        <div v-for="a in ASSURE" :key="a.title" class="assure-card card">
+          <div class="as-emoji">{{ a.emoji }}</div>
+          <div class="as-title">{{ a.title }}</div>
+          <p class="as-desc">{{ a.desc }}</p>
         </div>
       </div>
     </section>
@@ -149,200 +232,307 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { plansApi } from '../../api'
+import { plansApi, planShopApi } from '../../api'
 import { toast } from '../../composables/toast'
-import RagPanel from '../../components/RagPanel.vue'
-import { PRODUCT_CATEGORIES } from '../../lib/productParser'
 
 const router = useRouter()
+const kw = ref('')
+const plans = ref([])
+const themes = ref([])
+const cities = ref([])
 const creating = ref(false)
+const prefsOpen = ref(false)
+const plan = reactive({ destination: '', days: 3, budget: 8000, date: '', group: '', interests: [], rhythm: '', sleep: '', note: '' })
 
-const MOODS = ['治愈', '亲子', '文艺', '探险', '躺平', '怀旧']
-const PREFS = ['亲子', '博物馆', '美食', '小众', '摄影', '夜生活', '自然风光', '历史古迹']
-const CONS = ['不去人多的地方', '不吃辣', '需要无障碍', '带老人', '雨天备选', '晚上不安排']
-
-const AGENTS = [
-  { emoji: '📋', name: 'Intake', role: '需求受理与注入拦截' },
-  { emoji: '🔍', name: 'Researcher', role: '目的地资料调研' },
-  { emoji: '🧭', name: 'Planner', role: '路线骨架规划' },
-  { emoji: '🗓', name: 'Itinerary', role: '逐日行程编排' },
-  { emoji: '💰', name: 'Budget', role: '预算核算' },
-  { emoji: '✅', name: 'Validator', role: '可行性验收' },
-  { emoji: '舆情', name: 'Sentiment', role: '口碑与避坑扫描' },
-  { emoji: '⚔️', name: 'Debate', role: '规划方 vs 游客方辩论' },
-  { emoji: '🎭', name: 'Mood', role: '心情剧本生成' },
-  { emoji: '📕', name: 'Reporter', role: '行程书成稿' },
-]
-
-const CHAPTERS = [
-  { title: '总览摘要', desc: '需求逐条回放、住宿推荐与整体节奏一览' },
-  { title: '逐日行程', desc: '按时间排序的景点动线、通勤方式与四餐推荐' },
-  { title: '费用账本', desc: '门票、交通、住宿逐项核算，预算红线预警' },
-  { title: '辩论实录', desc: '每个关键决策的正反双方观点与裁决理由' },
-  { title: '心情剧本', desc: '把情绪需求翻译成具体场景的沉浸式剧本' },
-  { title: '翻车预演', desc: 'B 计划：天气、排队、闭馆的应急预案' },
-  { title: '出行清单', desc: '证件、装备、预约事项的出发前 checklist' },
-]
-
-const FEATURES = [
-  { emoji: '🔴', title: '辩论直播', desc: 'SSE 实时观看规划方与游客方互怼，还能投票站队' },
-  { emoji: '🎓', title: '名导团', desc: '杜甫、马可·波罗等虚拟名导点评行程，可追问细节' },
-  { emoji: '👥', title: '虚拟游客踩点', desc: 'swarm 模拟不同人设提前"走"一遍行程并给反馈' },
-  { emoji: '🔮', title: '反事实推演', desc: '如果当初选了另一条路线会怎样？后悔药对照卡' },
-]
-
-const RAG_QUICK = [
-  '拙政园门票淡旺季分别多少？',
-  '苏州适合雨天游览的景点有哪些？',
-  '北京 3 天亲子行程预算 8000 怎么安排？',
-  '故宫周边 500 米内酒店推荐',
-]
-
-// 6 大标品分类（与 productParser 一致），点击直接发起该类问题
-const PRODUCT_CATS = PRODUCT_CATEGORIES.filter(c => c.key !== 'other').map(c => ({
-  ...c,
-  color: ({ sight: '#6366f1', food: '#f97316', hotel: '#0ea5e9', transit: '#22c55e', shop: '#ec4899', culture: '#a78bfa' })[c.key],
-  sample: ({
-    sight:  '推荐北京必去的 5 个国家级景点',
-    food:    '北京最地道的烤鸭店在哪儿？',
-    hotel:   '故宫周边 500 米内有性价比的酒店吗？',
-    transit: '首都机场到国贸最快的交通方式？',
-    shop:    '北京哪里买老字号伴手礼最全？',
-    culture: '故宫的历史背景与必看典故',
-  })[c.key],
-}))
-
-const form = reactive({
-  destination: '', origin: '', days: 3, budget: 8000, travelers: 2,
-  departure_date: '', mood: [], preferences: [], constraints: [],
+// 收起态摘要：选了哪些选项一目了然；全不选时提示可跳过
+const prefsMeta = computed(() => {
+  const items = [plan.group, ...plan.interests, plan.rhythm, plan.sleep]
+  if (plan.note) items.push('备注要求')
+  const dirty = items.length > 0
+  const text = dirty
+    ? `已选 ${items.slice(0, 3).join('、')}${items.length > 3 ? ` 等 ${items.length} 项` : ''}`
+    : '选填 · 全不选也能直接生成'
+  return { dirty, text }
 })
 
-function toggleMood(m) { toggleList(form.mood, m) }
-function toggleList(list, v) {
-  const i = list.indexOf(v)
-  i >= 0 ? list.splice(i, 1) : list.push(v)
-}
-function fillRag(q) {
-  // 直接找到 panel 内的 textarea 填入
-  const ta = document.querySelector('.rag-home-card textarea')
-  if (!ta) return
-  // 用 vue 的 v-model 触发：构造一个 input event
-  const setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set
-  setter.call(ta, q)
-  ta.dispatchEvent(new Event('input', { bubbles: true }))
-  ta.focus()
-}
-
-function askByCategory(c) {
-  // 填入该分类示例问题并直接点提交按钮（绕过手动点击）
-  fillRag(c.sample)
-  const btn = document.querySelector('.rag-home-card .btn-primary')
-  if (btn) setTimeout(() => btn.click(), 30)
-}
-
-async function submit() {
-  if (!form.destination || form.budget === '' || form.budget == null) return
+async function createPlan() {
+  if (!plan.destination || creating.value) return
   creating.value = true
   try {
-    const payload = {
-      destination: form.destination,
-      days: form.days,
-      budget: Number(form.budget),
-      travelers: form.travelers,
+    const group = GROUPS.find((g) => g.label === plan.group)
+    // 兴趣选项 → 偏好词；节奏/作息/备注 → 结构化约束，交给 Intake 解析成 pacing 与 parsed_flags
+    const prefs = plan.interests.map((label) => (INTERESTS.find((i) => i.label === label) || {}).tag || label)
+    const constraints = []
+    if (group) {
+      if (group.slow) constraints.push('不要太赶')
+      if (group.prefs) prefs.push(...group.prefs)
     }
-    if (form.origin) payload.origin = form.origin
-    if (form.departure_date) payload.departure_date = form.departure_date
-    if (form.mood.length) payload.mood = form.mood.join(',')
-    if (form.preferences.length) payload.preferences = form.preferences
-    if (form.constraints.length) payload.constraints = form.constraints
+    const rhythmTag = plan.rhythm && RHYTHMS.find((r) => r.label === plan.rhythm)?.tag
+    if (rhythmTag) constraints.push(rhythmTag)
+    if (plan.sleep && SLEEPS.find((s) => s.label === plan.sleep)?.late) constraints.push('晚起，不赶早')
+    if (plan.note) constraints.push(plan.note)
 
+    const payload = {
+      destination: plan.destination,
+      days: plan.days || 3,
+      budget: Number(plan.budget || 0),
+      travelers: group ? group.travelers : 2,
+    }
+    if (plan.date) payload.departure_date = plan.date
+    if (prefs.length) payload.preferences = [...new Set(prefs)]
+    if (constraints.length) payload.constraints = [...new Set(constraints)]
     const r = await plansApi.create(payload)
-    toast('任务已创建，智能体开工！', 'ok')
+    toast('行程任务已创建，正在为你规划', 'ok')
     router.push({ name: 'plan-detail', params: { jobId: r.job_id } })
   } catch (e) {
-    toast(`创建失败：${e.message}`, 'err')
+    toast('创建失败：' + (e.message || e), 'err')
   } finally {
     creating.value = false
   }
 }
+
+const HOT_KW = ['苏州', '北京', '园林古建', '亲子', '文化漫游']
+
+// 携程 AI 行程式偏好问卷：选项文案贴近用户习惯，tag 对齐景点素材库/管线解析关键词
+const GROUPS = [
+  { label: '独自旅行', travelers: 1 },
+  { label: '情侣同行', travelers: 2 },
+  { label: '亲子同行', travelers: 3, prefs: ['亲子'] },
+  { label: '长辈同行', travelers: 3, slow: true },
+  { label: '朋友结伴', travelers: 4 },
+]
+const INTERESTS = [
+  { label: '美食探店', tag: '美食' },
+  { label: '人文历史', tag: '历史' },
+  { label: '博物馆艺术', tag: '博物馆' },
+  { label: '自然风光', tag: '自然' },
+  { label: '城市漫步', tag: '城市漫步' },
+  { label: '亲子同乐', tag: '亲子' },
+  { label: '摄影出片', tag: '摄影' },
+  { label: '夜生活', tag: '夜游' },
+]
+const RHYTHMS = [
+  { label: '松弛一点，慢慢逛', tag: '不要太赶' },
+  { label: '节奏适中就行' },
+  { label: '特种兵拉练' },
+]
+const SLEEPS = [
+  { label: '每天早点出发' },
+  { label: '睡到自然醒', late: true },
+]
+
+function pickOne(scope, key, value) {
+  scope[key] = scope[key] === value ? '' : value
+}
+function toggleInterest(label) {
+  const i = plan.interests.indexOf(label)
+  i >= 0 ? plan.interests.splice(i, 1) : plan.interests.push(label)
+}
+
+const ASSURE = [
+  { emoji: '🏭', title: '素材库严选', desc: '方案里的每个点位都来自企业已核验的标品素材：营业时间、票价、建议时长真实在库' },
+  { emoji: '🛤', title: '动线已排好', desc: '每日去哪儿、几点到、玩多久都由编排器算好，不绕路不空档' },
+  { emoji: '💰', title: '整体报价', desc: '门票、餐饮、住宿打包成"人均价"，下单前就知道这一趟花多少' },
+  { emoji: '↩️', title: '可退可改', desc: '出行前 1 天 18:00 前可全额退，行程内点位也可再调整' },
+]
+
+function formatSales(n) { return n >= 10000 ? (n / 10000).toFixed(1) + 'w' : String(n) }
+function goSearch() {
+  const q = kw.value.trim()
+  router.push({ name: 'malls-search', query: q ? { q } : {} })
+}
+
+const CITY_GRADIENTS = {
+  苏州: 'linear-gradient(135deg,#FDE7D2,#C2683A)', 北京: 'linear-gradient(135deg,#F3D5CE,#B03A48)',
+  上海: 'linear-gradient(135deg,#D4E5F7,#3B82F6)', 西安: 'linear-gradient(135deg,#E8D9B7,#8B5A2B)',
+  成都: 'linear-gradient(135deg,#D7F0DD,#2F9E68)', 杭州: 'linear-gradient(135deg,#D6EFEC,#0E8C86)',
+}
+function cityGradient(name) { return CITY_GRADIENTS[name] || 'linear-gradient(135deg,#E2E8F0,#94A3B8)' }
+
+async function load() {
+  try {
+    const [feat, cat] = await Promise.allSettled([planShopApi.featured(), planShopApi.categories()])
+    if (feat.status === 'fulfilled') plans.value = (feat.value.items || []).slice(0, 8)
+    if (cat.status === 'fulfilled') {
+      themes.value = cat.value.themes || []
+      cities.value = cat.value.cities || []
+    }
+  } catch (e) { /* 静默 */ }
+}
+
+onMounted(load)
 </script>
 
 <style scoped>
+.home { padding-bottom: 40px; }
 .hero {
-  padding: 72px 0 56px;
+  padding: 60px 0 46px;
   background:
-    radial-gradient(700px 320px at 78% 8%, rgba(245,158,11,.10), transparent 60%),
-    radial-gradient(900px 420px at 12% -5%, rgba(37,99,235,.09), transparent 55%);
+    radial-gradient(700px 320px at 78% 12%, rgba(224,138,60,.10), transparent 60%),
+    radial-gradient(900px 420px at 8% -8%, rgba(59,130,246,.08), transparent 55%);
 }
-.hero-badge {
+.hero-inner { display: grid; grid-template-columns: 1.4fr 1fr; gap: 40px; align-items: center; }
+.hero-tag {
   display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600;
-  color: var(--brand-700); background: var(--brand-50); border: 1px solid var(--brand-200);
-  padding: 7px 16px; border-radius: 999px; margin-bottom: 22px;
+  color: var(--accent-700); background: var(--accent-50, #FFFBEB); border: 1px solid var(--accent-500);
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 18px;
 }
-.hero-title { font-size: clamp(34px, 5.4vw, 54px); font-weight: 900; line-height: 1.22; letter-spacing: -.03em; color: var(--ink-900); }
+.hero-title { font-size: clamp(32px, 4.8vw, 50px); font-weight: 900; line-height: 1.22; letter-spacing: -.03em; color: var(--ink-900); margin: 0; }
 .hero-title .grad {
-  background: linear-gradient(100deg, var(--brand-600), var(--accent-500));
+  background: linear-gradient(100deg, var(--accent-600), var(--brand-600));
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.hero-sub { margin: 18px 0 34px; font-size: 16.5px; color: var(--ink-500); max-width: 640px; }
-.hero-sub b { color: var(--ink-900); }
-
-.create-card { padding: 28px 30px; max-width: 880px; box-shadow: var(--shadow-md); }
-.create-card .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px 16px; }
-.hint-s { font-size: 13px; color: var(--ink-400); }
-
-.sec { margin-top: 72px; }
-.agents-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 13px; }
-.agent-card { padding: 18px 15px; text-align: center; animation: rise .5s var(--ease) both; }
-.agent-emoji { font-size: 26px; margin-bottom: 8px; }
-.agent-name { font-weight: 800; font-size: 14.5px; color: var(--ink-900); }
-.agent-role { font-size: 12px; color: var(--ink-500); margin-top: 4px; line-height: 1.5; }
-
-.chapters { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
-.chapter { padding: 22px 24px; position: relative; overflow: hidden; }
-.ch-num { font-size: 40px; font-weight: 900; color: var(--brand-100); position: absolute; right: 16px; top: 6px; letter-spacing: -.04em; }
-.ch-title { font-weight: 800; font-size: 16px; color: var(--ink-900); margin-bottom: 6px; }
-.ch-desc { font-size: 13px; color: var(--ink-500); line-height: 1.7; }
-
-.features { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
-.feature { padding: 22px 24px; display: flex; gap: 16px; }
-.ft-emoji { font-size: 30px; flex: none; }
-.ft-title { font-weight: 800; font-size: 15.5px; color: var(--ink-900); }
-.ft-desc { font-size: 13.5px; color: var(--ink-500); margin-top: 5px; line-height: 1.7; }
-
-.cat-grid {
-  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px; margin-bottom: 16px;
+.hero-sub { margin: 16px 0 24px; font-size: 16px; color: var(--ink-500); max-width: 580px; line-height: 1.7; }
+.search-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 10px 10px 18px; max-width: 620px; box-shadow: 0 8px 28px rgba(15,23,42,.08);
 }
-.cat-card {
+.s-icon { font-size: 18px; color: var(--ink-400); }
+.s-input { flex: 1; border: none; outline: none; background: transparent; font-size: 15px; color: var(--ink-900); padding: 10px 0; }
+.s-input::placeholder { color: var(--ink-400); }
+.hot-search { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; font-size: 13px; color: var(--ink-500); }
+.hs-chip {
+  background: #fff; border: 1px solid var(--ink-200); padding: 4px 12px; border-radius: 999px;
+  font-size: 12.5px; color: var(--ink-700); cursor: pointer; transition: all .14s;
+}
+.hs-chip:hover { border-color: var(--brand-500); color: var(--brand-700); }
+.hero-right { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.hero-stat {
+  background: #fff; border-radius: var(--r-md); padding: 22px 18px;
+  box-shadow: 0 4px 18px rgba(15,23,42,.05); border: 1px solid var(--ink-100);
+}
+.st-num { font-size: 26px; font-weight: 900; color: var(--ink-900); letter-spacing: -.02em; }
+.st-label { font-size: 12.5px; color: var(--ink-500); margin-top: 4px; }
+
+.plan-band {
+  margin-top: 56px;
+  background:
+    radial-gradient(700px 300px at 10% 0%, rgba(224,138,60,.12), transparent 60%),
+    radial-gradient(900px 340px at 100% 100%, rgba(37,99,235,.08), transparent 55%);
+  padding: 34px 0;
+}
+.plan-card {
+  display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; padding: 40px 44px;
+  box-shadow: 0 10px 40px rgba(15,23,42,.10); border-top: 4px solid var(--brand-500);
+}
+.plan-eyebrow {
+  display: inline-flex; padding: 5px 13px; border-radius: 999px; font-size: 12.5px; font-weight: 700;
+  color: var(--brand-700); background: var(--brand-50); border: 1px solid var(--brand-200); margin-bottom: 14px;
+}
+.plan-copy h2 { font-size: clamp(24px, 3vw, 32px); font-weight: 900; line-height: 1.3; letter-spacing: -.02em; color: var(--ink-900); margin: 0 0 22px; }
+.plan-points { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.plan-points li { display: flex; gap: 12px; align-items: flex-start; }
+.pp-ico { width: 38px; height: 38px; flex: none; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; background: var(--ink-50); border: 1px solid var(--ink-200); }
+.plan-points b { font-size: 14.5px; color: var(--ink-900); }
+.plan-points p { font-size: 12.5px; color: var(--ink-500); margin: 2px 0 0; line-height: 1.5; }
+.plan-form {
+  display: flex; flex-direction: column; gap: 12px;
+  background: linear-gradient(180deg, var(--ink-50), #fff); border: 1px solid var(--ink-200);
+  border-radius: var(--r-lg); padding: 24px;
+}
+.pf-full { width: 100%; }
+.pf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.pf-field { display: flex; flex-direction: column; gap: 6px; }
+.pf-field label { font-size: 13px; font-weight: 700; color: var(--ink-700); }
+.pf-field label b { color: var(--danger); }
+.plan-btn { width: 100%; margin-top: 6px; }
+.pf-tip { font-size: 12px; color: var(--ink-400); text-align: center; margin: 2px 0 0; }
+.pf-prefs {
+  display: flex; flex-direction: column;
+  border-top: 1px dashed var(--ink-200); padding-top: 12px; margin-top: 2px;
+}
+.pf-prefs-head {
+  all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 8px;
+  width: 100%; cursor: pointer; color: inherit;
+}
+.pf-prefs-head:hover .pf-prefs-title { color: var(--brand-600); }
+.pf-prefs-head:focus-visible { outline: 2px solid var(--brand-400); outline-offset: 2px; border-radius: 6px; }
+.pf-prefs-title { font-size: 13px; font-weight: 800; color: var(--ink-900); white-space: nowrap; }
+.pf-prefs-summary {
+  flex: 1; min-width: 0; font-size: 11.5px; color: var(--ink-400); text-align: left;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pf-prefs-summary.set { color: var(--brand-600); }
+.pf-chev { flex: none; color: var(--ink-400); transition: transform .25s ease; }
+.pf-chev.open { transform: rotate(180deg); }
+.pf-prefs-body { display: flex; flex-direction: column; gap: 12px; padding-top: 12px; }
+.pf-opt-hint { font-weight: 500; color: var(--ink-400); font-size: 11px; }
+.pf-prefs .chip { font-size: 12.5px; padding: 5px 12px; }
+
+.sec { margin-top: 56px; }
+.sec-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+.sec-title { font-size: 22px; font-weight: 900; color: var(--ink-900); letter-spacing: -.01em; }
+.sec-desc { font-size: 13.5px; color: var(--ink-500); margin-top: 4px; }
+.more-link { font-size: 14px; color: var(--brand-600); font-weight: 700; text-decoration: none !important; }
+.more-link:hover { color: var(--brand-700); }
+
+.cat-strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.cat-tile {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: #fff; border: 1px solid var(--line, #e5e7eb); border-radius: 12px;
-  padding: 16px 8px; cursor: pointer; transition: all .2s;
-  border-top: 3px solid var(--cat-c, var(--brand-500));
-  text-align: center;
+  background: #fff; border: 1px solid var(--ink-200); border-radius: var(--r-md);
+  padding: 22px 12px; text-decoration: none !important; text-align: center;
+  border-top: 3px solid var(--cat-c, var(--brand-500)); transition: all .15s;
 }
-.cat-card:hover {
-  transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.06);
-  background: color-mix(in srgb, var(--cat-c) 5%, #fff);
+.cat-tile:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(15,23,42,.08); border-color: var(--cat-c, var(--brand-500)); }
+.ct-emoji { font-size: 32px; margin-bottom: 8px; }
+.ct-label { font-weight: 800; font-size: 15px; color: var(--ink-900); }
+.ct-hint { font-size: 12px; color: var(--ink-500); margin-top: 4px; }
+
+.shop-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.shop-card { padding: 0; overflow: hidden; text-decoration: none !important; transition: all .18s; }
+.shop-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.shop-cover { aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; position: relative; }
+.shop-emoji { font-size: 70px; filter: drop-shadow(0 4px 8px rgba(0,0,0,.18)); }
+.shop-badges { position: absolute; left: 10px; top: 10px; display: flex; gap: 4px; flex-wrap: wrap; }
+.shop-badges .bd { background: rgba(0,0,0,.45); color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; backdrop-filter: blur(6px); }
+.days-chip { position: absolute; right: 10px; top: 10px; background: rgba(255,255,255,.92); color: var(--ink-900); font-size: 11.5px; font-weight: 800; padding: 2px 9px; border-radius: 999px; }
+.shop-body { padding: 14px 16px 16px; }
+.shop-cat { font-size: 11.5px; color: var(--ink-400); }
+.shop-name { font-weight: 700; font-size: 14.5px; color: var(--ink-900); margin: 4px 0 6px; min-height: 2.6em; line-height: 1.35; }
+.shop-meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--ink-500); }
+.shop-meta .rating { color: var(--accent-600); font-weight: 700; }
+.shop-price { display: flex; align-items: baseline; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+.shop-price .y { font-size: 13px; color: var(--danger); font-weight: 700; }
+.shop-price b { font-size: 22px; color: var(--danger); font-weight: 900; }
+.shop-price .suffix { font-size: 12px; color: var(--ink-500); }
+.p-orig { font-size: 12px; color: var(--ink-400); font-weight: 500; }
+
+.city-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.city-tile {
+  display: flex; align-items: center; gap: 12px; padding: 18px 16px; border-radius: var(--r-md); color: #fff;
+  text-decoration: none !important; position: relative; overflow: hidden; transition: all .15s;
 }
-.cat-icon { font-size: 28px; margin-bottom: 4px; }
-.cat-label { font-weight: 700; font-size: 14px; color: var(--ink-900); }
-.cat-q { font-size: 11.5px; color: var(--ink-500); margin-top: 4px; line-height: 1.4; }
+.city-tile:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(15,23,42,.18); }
+.city-emoji { font-size: 30px; filter: drop-shadow(0 2px 6px rgba(0,0,0,.18)); }
+.city-name { font-weight: 800; font-size: 16px; letter-spacing: -.01em; }
+.city-hint { font-size: 11.5px; opacity: .85; margin-top: 2px; }
+.city-arrow { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; opacity: .7; }
+
+.assure-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.assure-card { padding: 22px 24px; }
+.as-emoji { font-size: 28px; margin-bottom: 8px; }
+.as-title { font-weight: 800; font-size: 15.5px; color: var(--ink-900); }
+.as-desc { font-size: 13px; color: var(--ink-500); margin-top: 6px; line-height: 1.7; }
+
+@media (max-width: 980px) {
+  .hero-inner { grid-template-columns: 1fr; }
+  .hero-right { grid-template-columns: repeat(4, 1fr); }
+  .cat-strip { grid-template-columns: repeat(3, 1fr); }
+  .shop-grid { grid-template-columns: repeat(2, 1fr); }
+  .city-row { grid-template-columns: repeat(3, 1fr); }
+  .assure-grid { grid-template-columns: repeat(2, 1fr); }
+}
 @media (max-width: 900px) {
-  .cat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .plan-card { grid-template-columns: 1fr; gap: 28px; padding: 30px 24px; }
+  .pf-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 540px) {
-  .cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero-right { grid-template-columns: repeat(2, 1fr); }
+  .cat-strip { grid-template-columns: repeat(2, 1fr); }
+  .shop-grid { grid-template-columns: 1fr; }
+  .city-row { grid-template-columns: repeat(2, 1fr); }
+  .assure-grid { grid-template-columns: 1fr; }
 }
-
-/* RAG 快捷问答卡 */
-.rag-home-card { padding: 22px 24px; max-width: 920px; }
-.rag-shortcuts { margin-top: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--ink-500); }
-.rag-shortcuts .chip-outline {
-  background: transparent; border: 1px solid var(--brand-200); color: var(--brand-700);
-  padding: 4px 12px; border-radius: 999px; font-size: 12.5px; cursor: pointer; transition: all .15s;
-}
-.rag-shortcuts .chip-outline:hover { background: var(--brand-50); border-color: var(--brand-500); }
 </style>

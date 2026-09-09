@@ -1,5 +1,15 @@
 // 统一 API 封装：同源相对路径（dev 由 Vite proxy 转发到 FastAPI）
+//
+// 全部数据走真实后端 /api（商业闭环 /api/plan-products、/api/orders、/api/favorites，
+// 标品素材库 /api/products，标品线路 /api/routes，标品 RAG 选品与组装 /api/composer/*，
+// 知识背书 /api/catalog/*，覆盖率 /api/stats/product-coverage*）。旧 mock 层已随旧前端移除。
 const BASE = '/api'
+
+// 查询串工具：过滤空值，避免 /x?foo=undefined
+const toQs = (params = {}) => {
+  const q = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== ''))
+  return q.toString() ? `?${q.toString()}` : ''
+}
 
 async function request(method, path, body, opts = {}) {
   const headers = { ...(opts.headers || {}) }
@@ -98,6 +108,8 @@ export const svcApi = {
     api.get(`/services/travel?destination=${encodeURIComponent(destination)}&origin=${encodeURIComponent(origin)}&days=${days}`),
   byKind: (kind, destination, origin) =>
     api.get(`/services/${kind}?destination=${encodeURIComponent(destination)}&origin=${encodeURIComponent(origin)}`),
+  cityPhoto: (destination) =>
+    api.get(`/services/city/photo?destination=${encodeURIComponent(destination)}`),
   bookingClick: (kind, jobId = null) => api.post('/services/booking/click', { kind, job_id: jobId }),
 }
 
@@ -171,11 +183,13 @@ export const ragApi = {
   },
 }
 
-/* ---------- 标品 → 行程（行程积木组装器） ---------- */
+/* ---------- 标品 → 行程（RAG 选品 + 行程积木组装器） ---------- */
 export const composerApi = {
   // 拉取标品目录（按分类），供 Composer 选择
   listProducts: (params = {}) => api.get('/composer/products', { params }),
-  // 提交标品 ID 列表，生成行程模板
+  // RAG 语义选品：自然语言主题 → 混合检索标品知识语料（命中含匹配分与语料摘要）
+  searchProducts: (q, params = {}) => api.get(`/composer/search${toQs({ q, ...params })}`),
+  // 提交标品 ID 列表，生成行程模板（含 RAG 知识背书）
   compose: (body) => api.post('/composer/from-products', body),
   // 预览单步（拖拽过程中实时计算时间冲突 / 距离）
   preview: (body) => api.post('/composer/preview', body),
@@ -194,4 +208,97 @@ export const coverageApi = {
   overview: (params = {}) => api.get('/stats/product-coverage', { params }),
   trend: (params = {}) => api.get('/stats/product-coverage/trend', { params }),
   missing: (params = {}) => api.get('/stats/product-coverage/missing', { params }),
+}
+
+/* =====================================================================
+ * 商业闭环聚合出口（全部真实后端 /api）：
+ *   planShopApi  线路方案馆：目录/详情/榜单 + toB 上架管理（/api/plan-products*）。
+ *   productsApi  标品素材库目录与素材管理（/api/products*）。
+ *   ordersApi    订单：真实落库 /api/orders；pay=演示级支付回执，未支付才可取消。
+ *   favApi       收藏：真实落库 /api/favorites，按登录用户隔离（未登录 guest 账本）。
+ * ===================================================================== */
+export const planShopApi = {
+  list: (params = {}) => api.get(`/plan-products${toQs(params)}`),
+  categories: () => api.get('/plan-products/categories'),
+  detail: (id) => api.get(`/plan-products/${encodeURIComponent(id)}`),
+  featured: () => api.get('/plan-products/featured'),
+  top: () => api.get('/plan-products/top'),
+  manageList: (p = {}) => api.get(`/plan-products/manage${toQs(p)}`),
+  create: (d) => api.post('/plan-products', d),
+  update: (id, patch) => api.put(`/plan-products/${encodeURIComponent(id)}`, patch),
+  setStatus: (id, listed) => api.post(`/plan-products/${encodeURIComponent(id)}/status`, { listed }),
+  remove: (id) => api.delete(`/plan-products/${encodeURIComponent(id)}`),
+}
+export const productsApi = {
+  categories: () => api.get('/products/categories'),
+  list: (p = {}) => api.get(`/products${toQs(p)}`),
+  detail: (id) => api.get(`/products/${encodeURIComponent(id)}`),
+  manageList: (p = {}) => api.get(`/products/manage${toQs(p)}`),
+  create: (d) => api.post('/products', d),
+  update: (id, patch) => api.put(`/products/${encodeURIComponent(id)}`, patch),
+  setStatus: (id, listed) => api.post(`/products/${encodeURIComponent(id)}/status`, { listed }),
+  remove: (id) => api.delete(`/products/${encodeURIComponent(id)}`),
+}
+
+export const ordersApi = {
+  list: (params = {}) => api.get(`/orders${toQs(params)}`),
+  detail: (id) => api.get(`/orders/${encodeURIComponent(id)}`),
+  create: (payload) => api.post('/orders', payload),
+  pay: (id, opts) => {
+    const body = typeof opts === 'string' ? { method: opts } : (opts || {})
+    return api.post(`/orders/${encodeURIComponent(id)}/pay`, body)
+  },
+  cancel: (id, reason) => api.post(`/orders/${encodeURIComponent(id)}/cancel`, reason ? { reason } : undefined),
+  complete: (id) => api.post(`/orders/${encodeURIComponent(id)}/complete`),
+  refund: (id) => api.post(`/orders/${encodeURIComponent(id)}/refund`),
+  stats: () => api.get('/orders/stats'),
+}
+
+export const favApi = {
+  list: () => api.get('/favorites'),
+  add: (id) => api.put(`/favorites/${encodeURIComponent(id)}`),
+  remove: (id) => api.delete(`/favorites/${encodeURIComponent(id)}`),
+  toggle: (id) => api.post(`/favorites/${encodeURIComponent(id)}/toggle`),
+}
+
+/* ---------- 标品路线模板（GET /api/routes，详情自动 RAG 知识渲染 enrich_knowledge） ---------- */
+// 后端线路记录 → 前端模板契约（route_id→id；缺省的展示字段给默认值，保证卡片/编排可用）
+function toRouteTemplate(raw = {}) {
+  return {
+    ...raw,
+    id: raw.route_id || raw.id,
+    cover: raw.cover || { emoji: '🧩', gradient: 'linear-gradient(135deg,#60A5FA,#8B5CF6)' },
+    badges: raw.badges || [],
+    product_ids: raw.product_ids || [],
+    price_total: Number(raw.price_total) || 0,
+    original_total: Number(raw.original_total) || Number(raw.price_total) || 0,
+    sales: Number(raw.sales) || 0,
+    rating: Number(raw.rating) || 4.5,
+    review_count: Number(raw.review_count) || 0,
+  }
+}
+
+const routeQuery = (params = {}) => {
+  const q = new URLSearchParams()
+  if (params.city) q.set('city', params.city)
+  return q.toString() ? `?${q.toString()}` : ''
+}
+
+export const routeTemplatesApi = {
+  list: async (params = {}) => {
+    const data = await api.get(`/routes${routeQuery(params)}`)
+    const items = (Array.isArray(data && data.routes) ? data.routes : []).map(toRouteTemplate)
+    return { total: items.length, items }
+  },
+  detail: async (id) => {
+    const data = await api.get(`/routes/${encodeURIComponent(id)}`)
+    if (!data || !(data.route_id || data.id)) throw new Error('模板不存在')
+    return { template: toRouteTemplate(data) }
+  },
+}
+
+/* ---------- 标品知识背书（RAG）：逐点检索语料、返回原文与出处 ---------- */
+export const catalogApi = {
+  health: () => api.get('/catalog/health'),
+  ground: (terms, tenantId) => api.post('/catalog/grounding', { terms, tenant_id: tenantId || null }),
 }

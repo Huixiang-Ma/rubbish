@@ -82,6 +82,28 @@ class LLMClient:
             return "MALICIOUS" if "MALICIOUS" in labels else labels[-1]
         return labels[0]
 
+    def generate_text(self, prompt: str, system: str = "", max_tokens: int = 1600) -> str:
+        """普通文本生成（非 JSON）：real 走 httpx→socket 兜底通道，mock/失败返回空串。
+
+        RAG 问答等自然语言生成统一走此入口，复用与 try_generate_json 相同的
+        WAF 兜底链（实测部分网关按 TLS 指纹拒绝 httpx，raw socket 稳定）。
+        """
+        if self.mode != "real" or not self.api_key:
+            return ""
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+        payload = {"model": self.model, "messages": messages,
+                   "temperature": self.temperature, "max_tokens": max_tokens}
+        try:
+            return self._chat_via_httpx(payload)
+        except Exception:
+            try:
+                return self._chat_via_socket(payload)
+            except Exception:
+                return ""
+
     def _chat_completion(self, prompt: str, max_tokens: int = 1600) -> str:
         payload = {
             "model": self.model,
