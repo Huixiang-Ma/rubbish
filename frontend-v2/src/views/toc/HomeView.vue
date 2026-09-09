@@ -81,12 +81,11 @@
                 <label>预算（元）</label>
                 <input v-model.number="plan.budget" class="input" type="number" min="0" step="100" placeholder="8000" />
               </div>
-              <div class="pf-field">
-                <label>出行日期</label>
-                <button type="button" class="date-text" @click="dateOpen = true">
-                  {{ dateRangeText || '选择出发 / 返程日期' }} <span class="dt-edit">{{ dateRangeText ? '修改' : '' }}</span>
-                </button>
-              </div>
+              <button type="button" class="date-btn" @click="dateOpen = true">
+                <span class="db-ico">📅</span>
+                <span class="db-text">{{ dateRangeText || '出行日期' }}</span>
+                <span class="db-chev">▾</span>
+              </button>
             </div>
 
             <!-- 偏好设置（携程 AI 行程式问卷）：可收纳，默认收起；展开再点选，收起时显示已选摘要 -->
@@ -540,15 +539,15 @@ onMounted(load)
 .pf-tip { font-size: 12px; color: var(--ink-400); text-align: center; margin: 2px 0 0; }
 
 /* 出行日期按钮 + 弹窗 */
-.date-text {
-  border: none; background: none; padding: 2px 0; cursor: pointer; text-align: left;
-  font-size: 14px; font-weight: 700; color: var(--brand-600);
+.date-btn {
+  height: 42px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  background: #fff; border: 1px solid var(--ink-200); border-radius: 10px;
+  padding: 0 14px; transition: border .15s, box-shadow .15s;
 }
-.date-text:hover { text-decoration: underline; }
-.date-text .dt-edit {
-  font-size: 11px; font-weight: 600; color: #fff; background: var(--brand-500);
-  border-radius: 999px; padding: 1px 8px; margin-left: 4px;
-}
+.date-btn:hover { border-color: var(--brand-500); box-shadow: 0 2px 10px rgba(37,99,235,.12); }
+.date-btn .db-ico { font-size: 15px; }
+.date-btn .db-text { font-size: 14px; font-weight: 700; color: var(--ink-800); white-space: nowrap; }
+.date-btn .db-chev { font-size: 11px; color: var(--ink-400); }
 .pf-actions { display: flex; gap: 12px; align-items: stretch; margin-top: 6px; }
 .pf-actions .manual-btn { flex: none; display: flex; flex-direction: column; align-items: flex-start; gap: 0; font-weight: 700; }
 .pf-actions .manual-btn small { font-weight: 400; font-size: 11px; color: var(--ink-400); }
