@@ -191,32 +191,40 @@
           <i class="ct-cnt">{{ c.count }}</i>
         </button>
       </div>
-      <p class="shop-sub">{{ shopCat ? `「${shopCat}」在售方案` : '全部在售方案' }} · 按人计价一价全包</p>
-      <div class="shop-grid">
-        <router-link v-for="p in shopPlans" :key="p.id"
-                     :to="{ name: 'malls-product', params: { id: p.id } }"
-                     class="shop-card card card-hover">
-          <PhotoCover :cover="p.cover" :photos="p.photos || []" auto>
-            <div class="shop-badges">
-              <span v-for="b in p.badges" :key="b" class="bd">{{ b }}</span>
+      <p class="shop-sub">{{ shopCat ? `「${shopCat}」在售方案` : '全部在售方案' }} · 按目的地分组，一价全包</p>
+      <div v-for="g in shopGroups" :key="g.city" class="city-block">
+        <div class="cb-head">
+          <b class="cb-city">📍 {{ g.city }}</b>
+          <i class="cb-cnt">{{ g.plans.length }} 条方案</i>
+          <router-link :to="{ name: 'malls-search', query: { city: g.city } }" class="cb-more">该城市全部 →</router-link>
+        </div>
+        <div class="cb-row">
+          <router-link v-for="p in g.plans" :key="p.id"
+                       :to="{ name: 'malls-product', params: { id: p.id } }"
+                       class="shop-card card card-hover">
+            <PhotoCover :cover="p.cover" :photos="p.photos || []" auto>
+              <div class="shop-badges">
+                <span v-for="b in p.badges" :key="b" class="bd">{{ b }}</span>
+              </div>
+              <span class="days-chip">{{ p.days }} 日</span>
+            </PhotoCover>
+            <div class="shop-body">
+              <div class="shop-cat">{{ p.category }}</div>
+              <div class="shop-name">{{ p.name }}</div>
+              <div class="shop-meta">
+                <span class="rating">★ {{ p.rating.toFixed(1) }}</span>
+                <span>售 {{ formatSales(p.sales) }}</span>
+                <span>{{ p.poi_count }} 点位 · {{ p.pace_zh }}</span>
+              </div>
+              <div class="shop-price">
+                <span class="y">¥</span><b>{{ p.per_price }}</b><span class="suffix"> /人 整订</span>
+                <s v-if="p.original_per_price > p.per_price" class="p-orig">¥{{ p.original_per_price }}</s>
+              </div>
             </div>
-            <span class="days-chip">{{ p.days }} 日</span>
-          </PhotoCover>
-          <div class="shop-body">
-            <div class="shop-cat">{{ p.category }} · {{ p.city }}</div>
-            <div class="shop-name">{{ p.name }}</div>
-            <div class="shop-meta">
-              <span class="rating">★ {{ p.rating.toFixed(1) }}</span>
-              <span>售 {{ formatSales(p.sales) }}</span>
-              <span>{{ p.poi_count }} 点位 · {{ p.pace_zh }}</span>
-            </div>
-            <div class="shop-price">
-              <span class="y">¥</span><b>{{ p.per_price }}</b><span class="suffix"> /人 整订</span>
-              <s v-if="p.original_per_price > p.per_price" class="p-orig">¥{{ p.original_per_price }}</s>
-            </div>
-          </div>
-        </router-link>
+          </router-link>
+        </div>
       </div>
+      <div v-if="!shopGroups.length" class="shop-sub" style="text-align:center; padding:20px 0;">该类目暂无在售方案，换个玩法看看</div>
     </section>
 
     <!-- 城市 -->
@@ -285,6 +293,16 @@ const ORIGIN_CITIES = ['上海', '南京', '杭州', '北京', '苏州', '无锡
 // 玩法类目选择的方案过滤（电商式：tab=类目，卡片=该类目在售方案）
 const shopCat = ref('')
 const shopPlans = computed(() => (shopCat.value ? plans.value.filter(p => p.category === shopCat.value) : plans.value))
+// 同一目的地的方案合并为一组（电商"城市专区"形态）；新增方案按 city 自动归组
+const shopGroups = computed(() => {
+  const map = new Map()
+  for (const p of shopPlans.value) {
+    const city = String(p.city || '其他').split('·')[0].trim() || '其他'
+    if (!map.has(city)) map.set(city, { city, plans: [] })
+    map.get(city).plans.push(p)
+  }
+  return [...map.values()]
+})
 
 function filterShopByCat() { /* 响应式 computed 已联动，这里只留 tab 切换语义 */ }
 const today = new Date().toISOString().slice(0, 10)
@@ -616,6 +634,21 @@ onMounted(load)
 }
 .cat-tab.on .ct-cnt { background: rgba(255,255,255,.25); }
 .shop-sub { font-size: 13px; color: var(--ink-500); margin: 0 0 12px; font-weight: 600; }
+
+/* 城市分组区块：组头 + 横滑方案卡 */
+.city-block { margin-bottom: 22px; }
+.cb-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.cb-city { font-size: 15.5px; font-weight: 800; color: var(--ink-900); }
+.cb-cnt { font-style: normal; font-size: 12px; color: var(--ink-400); }
+.cb-more { margin-left: auto; font-size: 12.5px; color: var(--brand-600); font-weight: 700; text-decoration: none !important; }
+.cb-more:hover { text-decoration: underline; }
+.cb-row {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(228px, 260px);
+  gap: 14px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x proximity;
+}
+.cb-row::-webkit-scrollbar { height: 6px; }
+.cb-row::-webkit-scrollbar-thumb { background: var(--ink-200); border-radius: 3px; }
+.cb-row .shop-card { scroll-snap-align: start; }
 .ct-label { font-weight: 800; font-size: 14px; }
 
 .shop-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
