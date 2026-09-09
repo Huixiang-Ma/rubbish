@@ -132,7 +132,7 @@
             </div>
             <div class="pf-actions">
               <button type="button" class="btn btn-ghost manual-btn" @click="goManual">
-                🧩 手动行程规划 <small>从标品库自己拼</small>
+                🧩 手动行程规划
               </button>
               <button class="btn btn-primary btn-lg plan-btn" :disabled="creating || !plan.destination" @click="onPlanSubmit">
                 <span v-if="creating" class="spinner" style="width:16px;height:16px;border-width:2.5px"></span>
