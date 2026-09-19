@@ -54,16 +54,40 @@ def _save_users(users: dict) -> None:
     _USERS_FILE.write_text(json.dumps(users, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def register(username: str, password: str, display: str | None) -> tuple[str | None, str | None]:
+def reset_password_by_phone(phone: str, new_password: str) -> tuple[dict | None, str | None]:
+    """手机号验证码找回密码：按 用户名==手机号 或 user.phone==手机号 定位账号并重置口令。"""
+    if not phone or not new_password or len(new_password) < 6:
+        return None, "手机号或新密码不合法（密码至少 6 位）"
+    users = _load_users()
+    target = None
+    if phone in users:
+        target = phone
+    else:
+        target = next((u for u, meta in users.items() if meta.get("phone") == phone), None)
+    if not target:
+        return None, "该手机号未注册"
+    meta = users[target]
+    meta["salt"] = secrets.token_hex(8)
+    meta["hash"] = _hash(new_password, meta["salt"])
+    if not meta.get("phone"):
+        meta["phone"] = phone
+    _save_users(users)
+    return {"username": target, "role": "traveler"}, None
+
+
+def register(username: str, password: str, display: str | None, phone: str | None = None) -> tuple[str | None, str | None]:
     if not username or not password:
         return None, "用户名或密码不能为空"
     users = _load_users()
     if username in users or username == _toc_demo_name():
         return None, "用户名已存在"
     salt = secrets.token_hex(8)
-    users[username] = {"salt": salt, "hash": _hash(password, salt), "display": display or username}
+    row = {"salt": salt, "hash": _hash(password, salt), "display": display or username}
+    if phone:
+        row["phone"] = phone
+    users[username] = row
     _save_users(users)
-    return users[username]["display"], None
+    return row["display"], None
 
 
 # toB 演示账号：口令走 .env（TOB_SUPERVISOR_PASSWORD / TOB_CONSULTANT_PASSWORD），代码不持有固定口令

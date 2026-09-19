@@ -1,7 +1,7 @@
 """标品知识化（B 档）：让"标品"内容由知识语料实时检索支撑，而非只读静态文案。
 
 数据源：app/data/catalog_knowledge.json —— 一条 doc 对应一个标品，
-        id 与 frontend-v2 mock PRODUCT_CATALOG / 线路 product_ids 逐一对齐。
+        id 与当前标品目录及线路 product_ids 逐一对齐。
 摄入：ensure_corpus() 惰性调用 semantic.add_chunk 逐条入库
       （DATABASE_URL 未配 → 进程内存兜底；embedding 不可达 → 自动降级为"无背书"）。
 背书：ground_terms() 对站点名做「本体锚定 + BM25」确定性检索——

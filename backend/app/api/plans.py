@@ -246,7 +246,8 @@ def list_plans(
             continue
         if customer and state.get("customer") != customer:
             continue
-        if tenant and state.get("tenant") != tenant:
+        # 未归属租户的历史任务归入默认租户 wl，否则主管/顾问会因 tenant 不匹配看不到任何任务
+        if tenant and (state.get("tenant") or "wl") != tenant:
             continue
         items.append(_list_item(state))
     items.sort(key=lambda item: item.get("updated_at") or "", reverse=True)

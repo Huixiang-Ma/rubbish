@@ -11,7 +11,7 @@ import json
 import re
 from typing import Any
 
-from fastapi import APIRouter, Body, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from app.services import catalog_rag, composer_service, coverage_service, material_store

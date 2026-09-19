@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import json
-import time
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +17,7 @@ from app.services.semantic import search_similar
 VALID_STATUS = {"draft", "reviewed", "published"}
 DAILY_CHECK_FIELDS = ("closure", "weather", "booking")
 
-# 本地演示种子：DATABASE_URL 未配置时 /api/routes 的兜底数据源（与 frontend-v2 mock 同源迁移）。
+# 本地演示种子：DATABASE_URL 未配置时 /api/routes 的兜底数据源。
 _SEED_FILE = Path(__file__).resolve().parents[1] / "data" / "route_templates_seed.json"
 _SEED_CACHE: list[dict[str, Any]] | None = None
 

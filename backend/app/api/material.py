@@ -6,11 +6,11 @@
 """
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, Body, HTTPException, Query, Request
 
-from app.api._staff import caller, require_staff
+from app.api._staff import require_staff
 from app.services import material_store
 
 router = APIRouter(tags=["标品素材库：目录 / 素材管理"])

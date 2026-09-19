@@ -9,7 +9,6 @@
 """
 from __future__ import annotations
 
-import copy
 import datetime
 import json
 import os
@@ -19,7 +18,6 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from app.config import get_settings
 from app.services.paths import DATA_ROOT
 from app.services import auth_service  # noqa: F401  (转接验证时避免循环 import)
 
@@ -262,6 +260,20 @@ def plan_create(payload: dict[str, Any]) -> dict[str, Any]:
         "created_at": _now_iso(), "updated_at": _now_iso(),
     }
     _write_plan_overlay(plan)
+    # 数据智能闭环：新方案自动生成 plan: 语料入检索层（RAG 问答可推荐在售方案）
+    try:
+        from app.services import semantic
+
+        text = (
+            f"在售线路方案：{plan.get('title')}。{plan.get('subtitle') or ''}"
+            f"{city}{days} 日游，人均 {per} 元（原价 {orig}），{plan.get('pace_zh') or ''}，"
+            f"余位 {plan.get('stock')}，评分 {plan.get('rating')}。"
+            f"亮点：{('、'.join(plan.get('badges') or [])[:2]) or category}。"
+            f"每日安排：{('；'.join(str(t) for t in plan.get('day_titles') or []))[:120]}。"
+        )
+        semantic.add_chunk(f"plan:{plan.get('id')}", text, "default")
+    except Exception:
+        pass  # 语义层不可用不阻断方案上架
     return plan
 
 

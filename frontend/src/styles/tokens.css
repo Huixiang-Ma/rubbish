@@ -1,0 +1,168 @@
+/* ============================================================
+   迹程智游 · 重做版设计令牌
+   —— 浅色基调、克制点缀、高级质感、充足留白
+   ============================================================ */
+:root {
+  /* —— 表面 —— */
+  --bg:           #FAF9F6;   /* 米白底色 */
+  --bg-soft:      #F4F2ED;   /* 浅灰次背景 */
+  --surface:      #FFFFFF;   /* 卡片白 */
+  --surface-2:    #FCFBF8;   /* 卡片淡白 */
+  --border:       #E8E4DC;   /* 淡边框 */
+  --border-soft:  #F0EDE6;   /* 更淡边框 */
+  --border-strong:#D4CFC4;   /* 强边框 */
+
+  /* —— 文字 —— */
+  --text:         #1F1D1A;   /* 主文字 · 近黑偏暖 */
+  --text-2:       #5C5853;   /* 次文字 */
+  --text-3:       #8E8A82;   /* 辅助 */
+  --text-faint:   #B5B0A6;   /* 极淡 */
+  --text-on-dark: #FAF9F6;
+
+  /* —— 点缀(克制、低饱和) —— */
+  --accent:       #6B7A5C;   /* 苔绿 · 主点缀 */
+  --accent-soft:  #EEF0EA;   /* 苔绿淡背景 */
+  --accent-2:     #B08968;   /* 暖驼 · 次点缀 */
+  --accent-2-soft:#F5EFE7;
+  --accent-3:     #7B8DA0;   /* 淡蓝灰 · 数据点缀 */
+  --accent-3-soft:#EEF2F6;
+
+  /* —— 语义色(柔和) —— */
+  --ok:           #6B9A7E;
+  --ok-soft:      #ECF3EE;
+  --warn:         #C4A87C;
+  --warn-soft:    #F6F0E5;
+  --danger:       #C1857E;
+  --danger-soft:  #F6EBE9;
+  --info:         #7B8DA0;
+  --info-soft:    #EEF2F6;
+
+  /* —— 图表色板(浅淡) —— */
+  --chart-1: #B8C5A8;
+  --chart-2: #C9B299;
+  --chart-3: #A8B7C4;
+  --chart-4: #B5A88E;
+  --chart-5: #C4B8A8;
+  --chart-6: #9CA8B5;
+
+  /* —— 圆角 —— */
+  --r-sm:    6px;
+  --r:       10px;
+  --r-md:    14px;
+  --r-lg:    20px;
+  --r-xl:    28px;
+  --r-pill:  999px;
+
+  /* —— 阴影(微妙) —— */
+  --shadow-xs: 0 1px 2px rgba(31,29,26,.04);
+  --shadow-sm: 0 2px 6px rgba(31,29,26,.04), 0 1px 2px rgba(31,29,26,.02);
+  --shadow:   0 4px 16px rgba(31,29,26,.05), 0 1px 3px rgba(31,29,26,.03);
+  --shadow-md: 0 8px 24px rgba(31,29,26,.06), 0 2px 6px rgba(31,29,26,.03);
+  --shadow-lg: 0 16px 48px rgba(31,29,26,.08), 0 4px 12px rgba(31,29,26,.04);
+
+  /* —— 字体 —— */
+  --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI",
+          "Microsoft YaHei", system-ui, "Helvetica Neue", sans-serif;
+  --mono: "JetBrains Mono", "SF Mono", "Cascadia Code", Consolas, monospace;
+
+  /* —— 字号 —— */
+  --fs-xs:   12px;
+  --fs-sm:   13px;
+  --fs-base: 15px;
+  --fs-md:   17px;
+  --fs-lg:   20px;
+  --fs-xl:   24px;
+  --fs-2xl:  32px;
+  --fs-3xl:  42px;
+  --fs-4xl:  56px;
+
+  /* —— 行高 —— */
+  --lh-tight: 1.15;
+  --lh-snug:  1.35;
+  --lh-base:  1.55;
+  --lh-loose: 1.75;
+
+  /* —— 字重 —— */
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semi:    600;
+  --fw-bold:    700;
+
+  /* —— 间距(宽松) —— */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+  --s-9: 96px;
+  --s-10:128px;
+
+  /* —— 布局 —— */
+  --nav-h: 68px;
+  --content-w: 1180px;
+  --content-w-wide: 1320px;
+
+  /* —— 动效 —— */
+  --ease:   cubic-bezier(.2,.6,.2,1);
+  --ease-out: cubic-bezier(.16,.84,.32,1);
+  --dur-1:  140ms;
+  --dur-2:  240ms;
+  --dur-3:  380ms;
+  --dur-4:  560ms;
+}
+
+/* —— 全局 reset + 基础 —— */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  font-family: var(--font);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "tnum";
+  text-rendering: optimizeLegibility;
+}
+img, svg { display: block; max-width: 100%; }
+button { font-family: inherit; cursor: pointer; }
+input, select, textarea, button { font-family: inherit; font-size: inherit; color: inherit; }
+a { color: inherit; text-decoration: none; }
+
+::selection { background: var(--accent-soft); color: var(--accent); }
+
+/* —— 滚动条 —— */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+
+/* —— 排版基础 —— */
+h1, h2, h3, h4, h5, h6 { margin: 0; font-weight: var(--fw-semi); letter-spacing: -0.01em; line-height: var(--lh-tight); }
+h1 { font-size: var(--fs-3xl); font-weight: var(--fw-bold); letter-spacing: -0.02em; }
+h2 { font-size: var(--fs-2xl); font-weight: var(--fw-semi); letter-spacing: -0.015em; }
+h3 { font-size: var(--fs-xl); font-weight: var(--fw-semi); }
+h4 { font-size: var(--fs-lg); font-weight: var(--fw-semi); }
+p  { margin: 0; }
+
+/* —— 实用类 —— */
+.container { width: 100%; max-width: var(--content-w); margin: 0 auto; padding: 0 var(--s-5); }
+.container-wide { width: 100%; max-width: var(--content-w-wide); margin: 0 auto; padding: 0 var(--s-5); }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  font-size: var(--fs-xs); font-weight: var(--fw-medium);
+  color: var(--text-3); text-transform: uppercase; letter-spacing: 0.12em;
+}
+.eyebrow::before {
+  content: ""; width: 18px; height: 1px;
+  background: var(--text-faint);
+}

@@ -1,0 +1,1061 @@
+{
+  "generated_at": "2026-09-09T00:28:01.831Z",
+  "total": 4,
+  "tax": [
+    {
+      "name": "园林古建",
+      "emoji": "🏯",
+      "color": "#C2683A",
+      "desc": "园林 · 古建 · 世界遗产"
+    },
+    {
+      "name": "亲子研学",
+      "emoji": "👨‍👩‍👧",
+      "color": "#2F9E68",
+      "desc": "带娃友好 · 边玩边学"
+    },
+    {
+      "name": "文化漫游",
+      "emoji": "📜",
+      "color": "#6D5BD0",
+      "desc": "博物馆 · 非遗 · 老字号"
+    },
+    {
+      "name": "美食寻味",
+      "emoji": "🍜",
+      "color": "#D97B3C",
+      "desc": "老字号 · 风味小吃"
+    },
+    {
+      "name": "都市周边",
+      "emoji": "🌆",
+      "color": "#3B82F6",
+      "desc": "周末微度假 · 近郊"
+    }
+  ],
+  "plans": [
+    {
+      "id": "rt_suzhou_2d",
+      "title": "苏州园林经典 2 日游",
+      "city": "苏州",
+      "theme": "园林 · 文化",
+      "days": 2,
+      "pace": "standard",
+      "audience": "家庭 / 文化爱好者",
+      "season": "春秋",
+      "cover": {
+        "emoji": "🌸",
+        "gradient": "linear-gradient(135deg,#F472B6 0%,#FB923C 100%)"
+      },
+      "product_ids": [
+        "p_zhuozhengyuan",
+        "p_lion_woods",
+        "p_museum_suz",
+        "p_pingjiang_road",
+        "p_food_1",
+        "p_hotel_1",
+        "p_train_1"
+      ],
+      "price_total": 1798,
+      "original_total": 1998,
+      "sales": 1280,
+      "rating": 4.8,
+      "review_count": 412,
+      "badges": [
+        "热销",
+        "经典"
+      ],
+      "kind": "plan",
+      "category": "园林古建",
+      "subtitle": "两天把世界遗产园林走透，住进园林酒店",
+      "city_tag": "苏州 · 2日",
+      "pace_zh": "适中节奏",
+      "day_titles": [
+        "抵达 · 园林初探（拙政园/狮子林）",
+        "古城西畔 · 博物馆与平江路"
+      ],
+      "include": [
+        "行程内 2 座经典园林门票",
+        "1 晚精选园林酒店（含早）",
+        "老字号正餐推荐与订位",
+        "全程电子导览与路线保障"
+      ],
+      "exclude": [
+        "往返大交通",
+        "个人消费"
+      ],
+      "intro": "专为园林与江南文化爱好者设计的经典双日方案：拙政园赏四季造景、狮子林穿假山迷宫，夜宿园林酒店，第二天从苏州博物馆的新馆对话古园，再沿平江路慢慢走回姑苏旧梦。",
+      "per_price": 1798,
+      "original_per_price": 1998,
+      "min_persons": 2,
+      "stock": 40,
+      "pickup": "导游按行程单在首站集合，电子凭证核销",
+      "refund_policy": "出行前 1 天 18:00 前可全额退（除已订门票外）",
+      "available_from": "可订 90 天内团期",
+      "itinerary": [
+        {
+          "day": 1,
+          "blocks": [
+            {
+              "key": "b_mttd0n12_c8fjk",
+              "period": "morning",
+              "start": "08:00",
+              "tag": "去程",
+              "product": {
+                "id": "p_train_1",
+                "name": "G7068 上海→苏州",
+                "category": "交通",
+                "city": "上海→苏州",
+                "badges": [],
+                "tags": [
+                  "高铁"
+                ],
+                "price_min": 0,
+                "level": "高铁",
+                "coords": [
+                  121,
+                  31.1
+                ]
+              }
+            },
+            {
+              "key": "b_mttd0n12_ojlw1",
+              "period": "morning",
+              "start": "08:30",
+              "tag": "",
+              "product": {
+                "id": "p_zhuozhengyuan",
+                "name": "拙政园",
+                "category": "景点",
+                "city": "苏州",
+                "badges": [],
+                "tags": [
+                  "园林",
+                  "世界遗产"
+                ],
+                "price_min": 0,
+                "level": "5A",
+                "coords": [
+                  120.629,
+                  31.324
+                ]
+              }
+            },
+            {
+              "key": "b_mttd0n12_g0kev",
+              "period": "midday",
+              "start": "11:30",
+              "tag": "",
+              "product": {
+                "id": "p_lion_woods",
+                "name": "狮子林",
+                "category": "景点",
+                "city": "苏州",
+                "badges": [],
+                "tags": [
+                  "园林",
+                  "假山"
+                ],
+                "price_min": 0,
+                "level": "4A",
+                "coords": [
+                  120.624,
+                  31.327
+                ]
+              }
+            },
+            {
+              "key": "b_mttd0n12_hdh7d",
+              "period": "afternoon",
+              "start": "14:00",
+              "tag": "",
+              "product": {
+                "id": "p_museum_suz",
+                "name": "苏州博物馆",
+                "category": "景点",
+                "city": "苏州",
+                "badges": [],
+                "tags": [
+                  "博物馆",
+                  "贝聿铭"
+                ],
+                "price_min": 0,
+                "level": "免费",
+                "coords": [
+                  120.626,
+                  31.325
+                ]
+              }
+            },
+            {
+              "key": "b_mttd0n12_hms9h",
+              "period": "night",
+              "start": "21:00",
+              "tag": "入住",
+              "product": {
+                "id": "p_hotel_1",
+                "name": "南园宾馆",
+                "category": "住宿",
+                "city": "苏州",
+                "badges": [],
+                "tags": [
+                  "园林",
+                  "五星"
+                ],
+                "price_min": 0,
+                "level": "园林酒店",
+                "coords": [
+                  120.625,
+                  31.32
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "blocks": [
+            {
+              "key": "b_mttd0n12_gqk2e",
+              "period": "morning",
+              "start": "08:30",
+              "tag": "",
+              "product": {
+                "id": "p_pingjiang_road",
+                "name": "平江路历史街区",
+                "category": "景点",
+                "city": "苏州",
+                "badges": [],
+                "tags": [
+                  "历史街区",
+                  "美食"
+                ],
+                "price_min": 0,
+                "level": "-",
+                "coords": [
+                  120.633,
+                  31.323
+                ]
+              }
+            },
+            {
+              "key": "b_mttd0n12_xmjmr",
+              "period": "midday",
+              "start": "11:30",
+              "tag": "",
+              "product": {
+                "id": "p_food_1",
+                "name": "松鹤楼(观前街店)",
+                "category": "餐饮",
+                "city": "苏州",
+                "badges": [],
+                "tags": [
+                  "苏帮菜"
+                ],
+                "price_min": 0,
+                "level": "老字号",
+                "coords": [
+                  120.628,
+                  31.318
+                ]
+              }
+            },
+            {
+              "key": "b_mttd0n12_9v9dp",
+              "period": "night",
+              "start": "21:00",
+              "tag": "入住",
+              "product": {
+                "id": "p_hotel_1",
+                "name": "南园宾馆",
+                "category": "住宿",
+                "city": "苏州",
+                "badges": [],
+                "tags": [
+                  "园林",
+                  "五星"
+                ],
+                "price_min": 0,
+                "level": "园林酒店",
+                "coords": [
+                  120.625,
+                  31.32
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "poi_count": 7,
+      "coords": [
+        {
+          "id": "p_zhuozhengyuan",
+          "name": "拙政园",
+          "category": "景点",
+          "coords": [
+            120.629,
+            31.324
+          ]
+        },
+        {
+          "id": "p_lion_woods",
+          "name": "狮子林",
+          "category": "景点",
+          "coords": [
+            120.624,
+            31.327
+          ]
+        },
+        {
+          "id": "p_museum_suz",
+          "name": "苏州博物馆",
+          "category": "景点",
+          "coords": [
+            120.626,
+            31.325
+          ]
+        },
+        {
+          "id": "p_pingjiang_road",
+          "name": "平江路历史街区",
+          "category": "景点",
+          "coords": [
+            120.633,
+            31.323
+          ]
+        },
+        {
+          "id": "p_food_1",
+          "name": "松鹤楼(观前街店)",
+          "category": "餐饮",
+          "coords": [
+            120.628,
+            31.318
+          ]
+        },
+        {
+          "id": "p_hotel_1",
+          "name": "南园宾馆",
+          "category": "住宿",
+          "coords": [
+            120.625,
+            31.32
+          ]
+        },
+        {
+          "id": "p_train_1",
+          "name": "G7068 上海→苏州",
+          "category": "交通",
+          "coords": [
+            121,
+            31.1
+          ]
+        }
+      ],
+      "listed": true,
+      "created_at": "2026-08-01T10:00:00",
+      "_seed": true
+    },
+    {
+      "id": "rt_beijing_3d",
+      "title": "北京皇城亲子 3 日游",
+      "city": "北京",
+      "theme": "历史 · 亲子",
+      "days": 3,
+      "pace": "standard",
+      "audience": "亲子家庭",
+      "season": "全年",
+      "cover": {
+        "emoji": "🏯",
+        "gradient": "linear-gradient(135deg,#FCA5A5 0%,#FCD34D 100%)"
+      },
+      "product_ids": [
+        "p_forbidden",
+        "p_temple_heaven",
+        "p_summer_palace",
+        "p_nanluoguxiang",
+        "p_quanjude",
+        "p_hutong_r",
+        "p_beijing_ktm"
+      ],
+      "price_total": 3260,
+      "original_total": 3680,
+      "sales": 980,
+      "rating": 4.7,
+      "review_count": 312,
+      "badges": [
+        "亲子",
+        "热销"
+      ],
+      "kind": "plan",
+      "category": "亲子研学",
+      "subtitle": "故宫、天坛、颐和园，一套亲子友好的皇城动线",
+      "city_tag": "北京 · 3日",
+      "pace_zh": "宽松节奏",
+      "day_titles": [
+        "中轴线 · 故宫与天坛",
+        "皇家园林 · 颐和园与胡同夜",
+        "老字号寻味 · 南锣鼓巷"
+      ],
+      "include": [
+        "故宫/天坛/颐和园门票（讲解耳机）",
+        "2 晚胡同民宿（含早）",
+        "全聚德等老字号订位",
+        "亲子研学手册"
+      ],
+      "exclude": [
+        "往返大交通",
+        "个人消费"
+      ],
+      "intro": "把\"读历史\"变成亲子游戏：故宫里找脊兽、天坛算回音壁、颐和园长廊猜彩画，晚上住进南锣胡同，第二天给娃安排一场老字号寻味，寓教于乐不赶路。",
+      "per_price": 3260,
+      "original_per_price": 3680,
+      "min_persons": 2,
+      "stock": 40,
+      "pickup": "导游按行程单在首站集合，电子凭证核销",
+      "refund_policy": "出行前 1 天 18:00 前可全额退（除已订门票外）",
+      "available_from": "可订 90 天内团期",
+      "itinerary": [
+        {
+          "day": 1,
+          "blocks": [
+            {
+              "key": "b_mttd0n12_os9jm",
+              "period": "morning",
+              "start": "08:00",
+              "tag": "去程",
+              "product": {
+                "id": "p_beijing_ktm",
+                "name": "北京西站→上海虹桥 G1",
+                "category": "交通",
+                "city": "北京→上海",
+                "badges": [],
+                "tags": [
+                  "高铁"
+                ],
+                "price_min": 0,
+                "level": "高铁",
+                "coords": [
+                  116.32,
+                  39.89
+                ]
+              }
+            },
+            {
+              "key": "b_mttd0n12_sjy0q",
+              "period": "morning",
+              "start": "08:30",
+              "tag": "",
+              "product": {
+                "id": "p_forbidden",
+                "name": "故宫博物院",
+                "category": "景点",
+                "city": "北京",
+                "badges": [],
+                "tags": [
+                  "博物馆",
+                  "世界遗产"
+                ],
+                "price_min": 0,
+                "level": "5A",
+                "coords": [
+                  116.397,
+                  39.916
+                ]
+              }
+            },
+            {
+              "key": "b_mttd0n12_7yqtf",
+              "period": "midday",
+              "start": "11:30",
+              "tag": "",
+              "product": {
+                "id": "p_temple_heaven",
+                "name": "天坛公园",
+                "category": "景点",
+                "city": "北京",
+                "badges": [],
+                "tags": [
+                  "古建"
+                ],
+                "price_min": 0,
+                "level": "5A",
+                "coords": [
+                  116.411,
+                  39.882
+                ]
+              }
+            },
+            {
+              "key": "b_mttd0n12_9jux0",
+              "period": "night",
+              "start": "21:00",
+              "tag": "入住",
+              "product": {
+                "id": "p_hutong_r",
+                "name": "胡同民宿(南锣店)",
+                "category": "住宿",
+                "city": "北京",
+                "badges": [],
+                "tags": [
+                  "民宿"
+                ],
+                "price_min": 0,
+                "level": "民宿",
+                "coords": [
+                  116.404,
+                  39.937
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "blocks": [
+            {
+              "key": "b_mttd0n12_lt88s",
+              "period": "morning",
+              "start": "08:30",
+              "tag": "",
+              "product": {
+                "id": "p_summer_palace",
+                "name": "颐和园",
+                "category": "景点",
+                "city": "北京",
+                "badges": [],
+                "tags": [
+                  "园林"
+                ],
+                "price_min": 0,
+                "level": "5A",
+                "coords": [
+                  116.275,
+                  39.999
+                ]
+              }
+            },
+            {
+              "key": "b_mttd0n12_ct285",
+              "period": "midday",
+              "start": "11:30",
+              "tag": "",
+              "product": {
+                "id": "p_nanluoguxiang",
+                "name": "南锣鼓巷",
+                "category": "景点",
+                "city": "北京",
+                "badges": [],
+                "tags": [
+                  "胡同",
+                  "美食"
+                ],
+                "price_min": 0,
+                "level": "-",
+                "coords": [
+                  116.403,
+                  39.937
+                ]
+              }
+            },
+            {
+              "key": "b_mttd0n12_rzqg6",
+              "period": "night",
+              "start": "21:00",
+              "tag": "入住",
+              "product": {
+                "id": "p_hutong_r",
+                "name": "胡同民宿(南锣店)",
+                "category": "住宿",
+                "city": "北京",
+                "badges": [],
+                "tags": [
+                  "民宿"
+                ],
+                "price_min": 0,
+                "level": "民宿",
+                "coords": [
+                  116.404,
+                  39.937
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "blocks": [
+            {
+              "key": "b_mttd0n12_f9xdb",
+              "period": "midday",
+              "start": "11:30",
+              "tag": "",
+              "product": {
+                "id": "p_quanjude",
+                "name": "全聚德(前门店)",
+                "category": "餐饮",
+                "city": "北京",
+                "badges": [],
+                "tags": [
+                  "烤鸭"
+                ],
+                "price_min": 0,
+                "level": "老字号",
+                "coords": [
+                  116.397,
+                  39.898
+                ]
+              }
+            },
+            {
+              "key": "b_mttd0n12_avdj8",
+              "period": "night",
+              "start": "21:00",
+              "tag": "入住",
+              "product": {
+                "id": "p_hutong_r",
+                "name": "胡同民宿(南锣店)",
+                "category": "住宿",
+                "city": "北京",
+                "badges": [],
+                "tags": [
+                  "民宿"
+                ],
+                "price_min": 0,
+                "level": "民宿",
+                "coords": [
+                  116.404,
+                  39.937
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "poi_count": 7,
+      "coords": [
+        {
+          "id": "p_forbidden",
+          "name": "故宫博物院",
+          "category": "景点",
+          "coords": [
+            116.397,
+            39.916
+          ]
+        },
+        {
+          "id": "p_temple_heaven",
+          "name": "天坛公园",
+          "category": "景点",
+          "coords": [
+            116.411,
+            39.882
+          ]
+        },
+        {
+          "id": "p_summer_palace",
+          "name": "颐和园",
+          "category": "景点",
+          "coords": [
+            116.275,
+            39.999
+          ]
+        },
+        {
+          "id": "p_nanluoguxiang",
+          "name": "南锣鼓巷",
+          "category": "景点",
+          "coords": [
+            116.403,
+            39.937
+          ]
+        },
+        {
+          "id": "p_quanjude",
+          "name": "全聚德(前门店)",
+          "category": "餐饮",
+          "coords": [
+            116.397,
+            39.898
+          ]
+        },
+        {
+          "id": "p_hutong_r",
+          "name": "胡同民宿(南锣店)",
+          "category": "住宿",
+          "coords": [
+            116.404,
+            39.937
+          ]
+        },
+        {
+          "id": "p_beijing_ktm",
+          "name": "北京西站→上海虹桥 G1",
+          "category": "交通",
+          "coords": [
+            116.32,
+            39.89
+          ]
+        }
+      ],
+      "listed": true,
+      "created_at": "2026-08-01T10:00:00",
+      "_seed": true
+    },
+    {
+      "id": "rt_suzhou_1d",
+      "title": "苏州一日 · 古典园林轻徒步",
+      "city": "苏州",
+      "theme": "园林 · 美食",
+      "days": 1,
+      "pace": "tight",
+      "audience": "时间紧张 / 商旅",
+      "season": "春秋",
+      "cover": {
+        "emoji": "🍃",
+        "gradient": "linear-gradient(135deg,#86EFAC 0%,#60A5FA 100%)"
+      },
+      "product_ids": [
+        "p_zhuozhengyuan",
+        "p_museum_suz",
+        "p_pingjiang_road",
+        "p_food_2"
+      ],
+      "price_total": 580,
+      "original_total": 680,
+      "sales": 540,
+      "rating": 4.6,
+      "review_count": 162,
+      "badges": [
+        "限时优惠"
+      ],
+      "kind": "plan",
+      "category": "园林古建",
+      "subtitle": "一日轻徒步：拙政园 → 苏博 → 平江路",
+      "city_tag": "苏州 · 1日",
+      "pace_zh": "紧凑节奏",
+      "day_titles": [
+        "一日园林轻徒步"
+      ],
+      "include": [
+        "拙政园门票",
+        "苏博预约 + 电子讲解",
+        "生煎/苏式小吃推荐",
+        "平江路手摇船体验"
+      ],
+      "exclude": [
+        "往返大交通",
+        "个人消费"
+      ],
+      "intro": "给时间紧张的商旅人一份浓缩的姑苏：早上进拙政园赶人少光影，中午苏博看贝聿铭，下午平江路听评弹坐手摇船，一天也能把苏州看个七分。",
+      "per_price": 580,
+      "original_per_price": 680,
+      "min_persons": 2,
+      "stock": 40,
+      "pickup": "导游按行程单在首站集合，电子凭证核销",
+      "refund_policy": "出行前 1 天 18:00 前可全额退（除已订门票外）",
+      "available_from": "可订 90 天内团期",
+      "itinerary": [
+        {
+          "day": 1,
+          "blocks": [
+            {
+              "key": "b_mttd0n13_lzeg6",
+              "period": "morning",
+              "start": "08:30",
+              "tag": "",
+              "product": {
+                "id": "p_zhuozhengyuan",
+                "name": "拙政园",
+                "category": "景点",
+                "city": "苏州",
+                "badges": [],
+                "tags": [
+                  "园林",
+                  "世界遗产"
+                ],
+                "price_min": 0,
+                "level": "5A",
+                "coords": [
+                  120.629,
+                  31.324
+                ]
+              }
+            },
+            {
+              "key": "b_mttd0n13_jn91x",
+              "period": "midday",
+              "start": "11:30",
+              "tag": "",
+              "product": {
+                "id": "p_museum_suz",
+                "name": "苏州博物馆",
+                "category": "景点",
+                "city": "苏州",
+                "badges": [],
+                "tags": [
+                  "博物馆",
+                  "贝聿铭"
+                ],
+                "price_min": 0,
+                "level": "免费",
+                "coords": [
+                  120.626,
+                  31.325
+                ]
+              }
+            },
+            {
+              "key": "b_mttd0n13_5r2qi",
+              "period": "afternoon",
+              "start": "14:00",
+              "tag": "",
+              "product": {
+                "id": "p_pingjiang_road",
+                "name": "平江路历史街区",
+                "category": "景点",
+                "city": "苏州",
+                "badges": [],
+                "tags": [
+                  "历史街区",
+                  "美食"
+                ],
+                "price_min": 0,
+                "level": "-",
+                "coords": [
+                  120.633,
+                  31.323
+                ]
+              }
+            },
+            {
+              "key": "b_mttd0n13_8dy8m",
+              "period": "evening",
+              "start": "17:30",
+              "tag": "",
+              "product": {
+                "id": "p_food_2",
+                "name": "哑巴生煎(临顿路店)",
+                "category": "餐饮",
+                "city": "苏州",
+                "badges": [],
+                "tags": [
+                  "小吃"
+                ],
+                "price_min": 0,
+                "level": "名店",
+                "coords": [
+                  120.628,
+                  31.321
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "poi_count": 4,
+      "coords": [
+        {
+          "id": "p_zhuozhengyuan",
+          "name": "拙政园",
+          "category": "景点",
+          "coords": [
+            120.629,
+            31.324
+          ]
+        },
+        {
+          "id": "p_museum_suz",
+          "name": "苏州博物馆",
+          "category": "景点",
+          "coords": [
+            120.626,
+            31.325
+          ]
+        },
+        {
+          "id": "p_pingjiang_road",
+          "name": "平江路历史街区",
+          "category": "景点",
+          "coords": [
+            120.633,
+            31.323
+          ]
+        },
+        {
+          "id": "p_food_2",
+          "name": "哑巴生煎(临顿路店)",
+          "category": "餐饮",
+          "coords": [
+            120.628,
+            31.321
+          ]
+        }
+      ],
+      "listed": true,
+      "created_at": "2026-08-01T10:00:00",
+      "_seed": true
+    },
+    {
+      "id": "rt_beijing_culture",
+      "title": "北京老字号文化 1 日游",
+      "city": "北京",
+      "theme": "文化 · 伴手礼",
+      "days": 1,
+      "pace": "relaxed",
+      "audience": "文化爱好者",
+      "season": "全年",
+      "cover": {
+        "emoji": "📜",
+        "gradient": "linear-gradient(135deg,#A78BFA 0%,#818CF8 100%)"
+      },
+      "product_ids": [
+        "p_liulichang",
+        "p_quanjude",
+        "p_panjiayuan"
+      ],
+      "price_total": 388,
+      "original_total": 488,
+      "sales": 240,
+      "rating": 4.5,
+      "review_count": 78,
+      "badges": [
+        "深度文化"
+      ],
+      "kind": "plan",
+      "category": "文化漫游",
+      "subtitle": "琉璃厂、全聚德、潘家园：老字号人文漫游",
+      "city_tag": "北京 · 1日",
+      "pace_zh": "悠闲节奏",
+      "day_titles": [
+        "老字号文化漫游"
+      ],
+      "include": [
+        "琉璃厂文化街导览",
+        "全聚德烤鸭午宴订位",
+        "潘家园淘货伴游",
+        "非遗手作体验券"
+      ],
+      "exclude": [
+        "往返大交通",
+        "个人消费"
+      ],
+      "intro": "不赶景点的\"老北京\"一日：上午琉璃厂看字画文房，中午一只全聚德烤鸭吃到尽兴，下午潘家园逛地摊淘旧货，为喜欢市井文化的人准备。",
+      "per_price": 388,
+      "original_per_price": 488,
+      "min_persons": 2,
+      "stock": 40,
+      "pickup": "导游按行程单在首站集合，电子凭证核销",
+      "refund_policy": "出行前 1 天 18:00 前可全额退（除已订门票外）",
+      "available_from": "可订 90 天内团期",
+      "itinerary": [
+        {
+          "day": 1,
+          "blocks": [
+            {
+              "key": "b_mttd0n13_0phex",
+              "period": "morning",
+              "start": "08:30",
+              "tag": "",
+              "product": {
+                "id": "p_liulichang",
+                "name": "琉璃厂文化街",
+                "category": "文化",
+                "city": "北京",
+                "badges": [],
+                "tags": [
+                  "古街",
+                  "字画"
+                ],
+                "price_min": 0,
+                "level": "-",
+                "coords": [
+                  116.387,
+                  39.901
+                ]
+              }
+            },
+            {
+              "key": "b_mttd0n13_kn08k",
+              "period": "midday",
+              "start": "11:30",
+              "tag": "",
+              "product": {
+                "id": "p_quanjude",
+                "name": "全聚德(前门店)",
+                "category": "餐饮",
+                "city": "北京",
+                "badges": [],
+                "tags": [
+                  "烤鸭"
+                ],
+                "price_min": 0,
+                "level": "老字号",
+                "coords": [
+                  116.397,
+                  39.898
+                ]
+              }
+            },
+            {
+              "key": "b_mttd0n13_xouym",
+              "period": "afternoon",
+              "start": "14:00",
+              "tag": "",
+              "product": {
+                "id": "p_panjiayuan",
+                "name": "潘家园旧货市场",
+                "category": "购物",
+                "city": "北京",
+                "badges": [],
+                "tags": [
+                  "古玩",
+                  "集市"
+                ],
+                "price_min": 0,
+                "level": "-",
+                "coords": [
+                  116.435,
+                  39.876
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "poi_count": 3,
+      "coords": [
+        {
+          "id": "p_quanjude",
+          "name": "全聚德(前门店)",
+          "category": "餐饮",
+          "coords": [
+            116.397,
+            39.898
+          ]
+        },
+        {
+          "id": "p_panjiayuan",
+          "name": "潘家园旧货市场",
+          "category": "购物",
+          "coords": [
+            116.435,
+            39.876
+          ]
+        },
+        {
+          "id": "p_liulichang",
+          "name": "琉璃厂文化街",
+          "category": "文化",
+          "coords": [
+            116.387,
+            39.901
+          ]
+        }
+      ],
+      "listed": true,
+      "created_at": "2026-08-01T10:00:00",
+      "_seed": true
+    }
+  ]
+}

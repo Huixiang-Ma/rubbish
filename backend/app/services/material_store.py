@@ -178,6 +178,19 @@ def create_product(payload: dict[str, Any]) -> dict[str, Any]:
     row = _norm_row(None, payload, pid)
     row.setdefault("created_at", _now_iso())
     _store_row(row)
+    # 数据智能闭环：新素材自动生成 cat: 语料入检索层（立即可被行程背书引用）
+    try:
+        from app.services import semantic
+
+        prices = [int(s.get("price") or 0) for s in (row.get("skus") or []) if s.get("price")]
+        text = (
+            f"{row.get('name')}。位于{row.get('city')}。类型：{row.get('category')}。"
+            f"参考票价 {min([x for x in prices if x > 0], default=row.get('price_min') or 0)} 元起。"
+            f"建议游玩 {row.get('typical_dwell') or '2h'}。{row.get('description') or ''}"
+        )
+        semantic.add_chunk(f"cat:{pid}", text, "default")
+    except Exception:
+        pass  # 语义层不可用不阻断素材入库（ensure_corpus 可重试）
     return row
 
 

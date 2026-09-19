@@ -1,0 +1,2224 @@
+{
+  "generated_at": "2026-09-09T00:44:20.305Z",
+  "total": 22,
+  "products": [
+    {
+      "id": "p_forbidden",
+      "name": "故宫博物院",
+      "category": "景点",
+      "city": "北京",
+      "level": "5A",
+      "open": "08:30-16:00",
+      "typical_dwell": "4h",
+      "best_slot": "morning",
+      "coords": [
+        116.397,
+        39.916
+      ],
+      "tags": [
+        "博物馆",
+        "世界遗产"
+      ],
+      "demand": 0.98,
+      "cover": {
+        "emoji": "🏛",
+        "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+        "caption": "故宫博物院"
+      },
+      "gallery": [
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "故宫博物院 图 1"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "故宫博物院 图 2"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "故宫博物院 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_forbidden_adult",
+          "spec": "成人票",
+          "label": "成人",
+          "price": 40,
+          "original_price": 50,
+          "stock": 2000,
+          "limit_per_user": 40
+        },
+        {
+          "sku_id": "p_forbidden_student",
+          "spec": "学生票",
+          "label": "学生",
+          "price": 20,
+          "original_price": 25,
+          "stock": 800,
+          "limit_per_user": 16
+        },
+        {
+          "sku_id": "p_forbidden_child",
+          "spec": "儿童票",
+          "label": "儿童",
+          "price": 0,
+          "original_price": 0,
+          "stock": 500,
+          "limit_per_user": 10
+        },
+        {
+          "sku_id": "p_forbidden_family",
+          "spec": "亲子套餐(2大1小)",
+          "label": "亲子套餐",
+          "price": 92,
+          "original_price": 104,
+          "stock": 120,
+          "limit_per_user": 2
+        }
+      ],
+      "price_min": 20,
+      "price_max": 92,
+      "description": "故宫博物院位于北京，5A级景区。开放时间 08:30-16:00。建议游览时长 4h，最佳时段为上午。已被列入《世界遗产名录》，是到访该城市不可错过的文化地标。",
+      "brand": "故宫博物院",
+      "vendor": "北京文旅",
+      "refund_policy": "未使用 23:59 前退",
+      "pickup": "刷身份证入园",
+      "free_shipping": false,
+      "rating": 5,
+      "review_count": 5747,
+      "sales": 17960,
+      "badges": [
+        "电子票",
+        "免预约"
+      ],
+      "available_from": "今日",
+      "available_to": "30 天内",
+      "related": [
+        "p_景点",
+        "p_zhuozhengyuan",
+        "p_lion_woods"
+      ],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_zhuozhengyuan",
+      "name": "拙政园",
+      "category": "景点",
+      "city": "苏州",
+      "level": "5A",
+      "open": "07:30-17:30",
+      "typical_dwell": "2.5h",
+      "best_slot": "morning",
+      "coords": [
+        120.629,
+        31.324
+      ],
+      "tags": [
+        "园林",
+        "世界遗产"
+      ],
+      "demand": 0.95,
+      "cover": {
+        "emoji": "🏛",
+        "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+        "caption": "拙政园"
+      },
+      "gallery": [
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "拙政园 图 1"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "拙政园 图 2"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "拙政园 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_zhuozhengyuan_adult",
+          "spec": "成人票",
+          "label": "成人",
+          "price": 70,
+          "original_price": 80,
+          "stock": 2000,
+          "limit_per_user": 40
+        },
+        {
+          "sku_id": "p_zhuozhengyuan_student",
+          "spec": "学生票",
+          "label": "学生",
+          "price": 35,
+          "original_price": 40,
+          "stock": 800,
+          "limit_per_user": 16
+        },
+        {
+          "sku_id": "p_zhuozhengyuan_child",
+          "spec": "儿童票",
+          "label": "儿童",
+          "price": 0,
+          "original_price": 0,
+          "stock": 500,
+          "limit_per_user": 10
+        },
+        {
+          "sku_id": "p_zhuozhengyuan_family",
+          "spec": "亲子套餐(2大1小)",
+          "label": "亲子套餐",
+          "price": 161,
+          "original_price": 182,
+          "stock": 120,
+          "limit_per_user": 2
+        }
+      ],
+      "price_min": 35,
+      "price_max": 161,
+      "description": "拙政园位于苏州，5A级景区。开放时间 07:30-17:30。建议游览时长 2.5h，最佳时段为上午。已被列入《世界遗产名录》，是到访该城市不可错过的文化地标。",
+      "brand": "拙政园",
+      "vendor": "苏州文旅",
+      "refund_policy": "未使用 23:59 前退",
+      "pickup": "刷身份证入园",
+      "free_shipping": false,
+      "rating": 5,
+      "review_count": 5574,
+      "sales": 17420,
+      "badges": [
+        "电子票",
+        "免预约"
+      ],
+      "available_from": "今日",
+      "available_to": "30 天内",
+      "related": [
+        "p_景点",
+        "p_lion_woods",
+        "p_museum_suz"
+      ],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_quanjude",
+      "name": "全聚德(前门店)",
+      "category": "餐饮",
+      "city": "北京",
+      "level": "老字号",
+      "open": "11:00-21:00",
+      "typical_dwell": "1.5h",
+      "best_slot": "midday",
+      "coords": [
+        116.397,
+        39.898
+      ],
+      "tags": [
+        "烤鸭"
+      ],
+      "demand": 0.92,
+      "cover": {
+        "emoji": "🍜",
+        "gradient": "linear-gradient(135deg,#FCD34D 0%,#F472B6 100%)",
+        "caption": "全聚德(前门店)"
+      },
+      "gallery": [
+        {
+          "emoji": "🍜",
+          "gradient": "linear-gradient(135deg,#FCD34D 0%,#F472B6 100%)",
+          "caption": "全聚德(前门店) 图 1"
+        },
+        {
+          "emoji": "🍜",
+          "gradient": "linear-gradient(135deg,#FCD34D 0%,#F472B6 100%)",
+          "caption": "全聚德(前门店) 图 2"
+        },
+        {
+          "emoji": "🍜",
+          "gradient": "linear-gradient(135deg,#FCD34D 0%,#F472B6 100%)",
+          "caption": "全聚德(前门店) 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_quanjude_set2",
+          "spec": "双人套餐",
+          "label": "双人套餐",
+          "price": 324,
+          "original_price": 432,
+          "stock": 150,
+          "limit_per_user": 3
+        },
+        {
+          "sku_id": "p_quanjude_set4",
+          "spec": "四人套餐",
+          "label": "四人套餐",
+          "price": 594,
+          "original_price": 792,
+          "stock": 80,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_quanjude_vip",
+          "spec": "招牌主厨套餐",
+          "label": "主厨套餐",
+          "price": 468,
+          "original_price": 576,
+          "stock": 40,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_quanjude_card",
+          "spec": "代金券",
+          "label": "¥100 代金券",
+          "price": 88,
+          "original_price": 100,
+          "stock": 500,
+          "limit_per_user": 10
+        }
+      ],
+      "price_min": 88,
+      "price_max": 594,
+      "description": "全聚德(前门店) 是 北京 的老字号代表，主打烤鸭。营业时间 11:00-21:00，人均消费约 ¥180。百年传承，主厨讲究火候与刀工，建议提前 1 天预约。",
+      "brand": "全聚德(前门店)",
+      "vendor": "全聚德",
+      "refund_policy": "未使用 2h 前退",
+      "pickup": "到店出示券码",
+      "free_shipping": false,
+      "rating": 4.9,
+      "review_count": 2059,
+      "sales": 5148,
+      "badges": [
+        "老字号",
+        "招牌菜"
+      ],
+      "available_from": "今日",
+      "available_to": "60 天内",
+      "related": [
+        "p_food_1",
+        "p_food_2",
+        "p_zhuozhengyuan"
+      ],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_train_1",
+      "name": "G7068 上海→苏州",
+      "category": "交通",
+      "city": "上海→苏州",
+      "level": "高铁",
+      "open": "08:00-08:25",
+      "typical_dwell": "0.5h",
+      "best_slot": "morning",
+      "coords": [
+        121,
+        31.1
+      ],
+      "tags": [
+        "高铁"
+      ],
+      "demand": 0.9,
+      "cover": {
+        "emoji": "🚄",
+        "gradient": "linear-gradient(135deg,#86EFAC 0%,#22D3EE 100%)",
+        "caption": "G7068 上海→苏州"
+      },
+      "gallery": [
+        {
+          "emoji": "🚄",
+          "gradient": "linear-gradient(135deg,#86EFAC 0%,#22D3EE 100%)",
+          "caption": "G7068 上海→苏州 图 1"
+        },
+        {
+          "emoji": "🚄",
+          "gradient": "linear-gradient(135deg,#86EFAC 0%,#22D3EE 100%)",
+          "caption": "G7068 上海→苏州 图 2"
+        },
+        {
+          "emoji": "🚄",
+          "gradient": "linear-gradient(135deg,#86EFAC 0%,#22D3EE 100%)",
+          "caption": "G7068 上海→苏州 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_train_1_second",
+          "spec": "二等座",
+          "label": "二等座",
+          "price": 40,
+          "original_price": 45,
+          "limit_per_user": 5,
+          "stock": 120
+        },
+        {
+          "sku_id": "p_train_1_first",
+          "spec": "一等座",
+          "label": "一等座",
+          "price": 60,
+          "original_price": 64,
+          "limit_per_user": 5,
+          "stock": 60
+        },
+        {
+          "sku_id": "p_train_1_biz",
+          "spec": "商务座",
+          "label": "商务座",
+          "price": 120,
+          "original_price": 128,
+          "limit_per_user": 5,
+          "stock": 20
+        }
+      ],
+      "price_min": 40,
+      "price_max": 120,
+      "description": "G7068 上海→苏州：08:00-08:25 区间运行，高铁直达，准点率高。¥ 39.5 起售。出行前 1.5h 可线上改签。",
+      "brand": "中国铁路",
+      "vendor": "12306",
+      "refund_policy": "开车/起飞 30min 前退",
+      "pickup": "刷身份证进站",
+      "free_shipping": true,
+      "rating": 4.9,
+      "review_count": 4032,
+      "sales": 22400,
+      "badges": [
+        "电子票",
+        "准点"
+      ],
+      "available_from": "08:00",
+      "available_to": "15 天内",
+      "related": [],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_train_2",
+      "name": "G7219 苏州→上海",
+      "category": "交通",
+      "city": "苏州→上海",
+      "level": "高铁",
+      "open": "18:30-18:55",
+      "typical_dwell": "0.5h",
+      "best_slot": "evening",
+      "coords": [
+        121,
+        31.1
+      ],
+      "tags": [
+        "高铁"
+      ],
+      "demand": 0.9,
+      "cover": {
+        "emoji": "🚄",
+        "gradient": "linear-gradient(135deg,#86EFAC 0%,#22D3EE 100%)",
+        "caption": "G7219 苏州→上海"
+      },
+      "gallery": [
+        {
+          "emoji": "🚄",
+          "gradient": "linear-gradient(135deg,#86EFAC 0%,#22D3EE 100%)",
+          "caption": "G7219 苏州→上海 图 1"
+        },
+        {
+          "emoji": "🚄",
+          "gradient": "linear-gradient(135deg,#86EFAC 0%,#22D3EE 100%)",
+          "caption": "G7219 苏州→上海 图 2"
+        },
+        {
+          "emoji": "🚄",
+          "gradient": "linear-gradient(135deg,#86EFAC 0%,#22D3EE 100%)",
+          "caption": "G7219 苏州→上海 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_train_2_second",
+          "spec": "二等座",
+          "label": "二等座",
+          "price": 40,
+          "original_price": 45,
+          "limit_per_user": 5,
+          "stock": 120
+        },
+        {
+          "sku_id": "p_train_2_first",
+          "spec": "一等座",
+          "label": "一等座",
+          "price": 60,
+          "original_price": 64,
+          "limit_per_user": 5,
+          "stock": 60
+        },
+        {
+          "sku_id": "p_train_2_biz",
+          "spec": "商务座",
+          "label": "商务座",
+          "price": 120,
+          "original_price": 128,
+          "limit_per_user": 5,
+          "stock": 20
+        }
+      ],
+      "price_min": 40,
+      "price_max": 120,
+      "description": "G7219 苏州→上海：18:30-18:55 区间运行，高铁直达，准点率高。¥ 39.5 起售。出行前 1.5h 可线上改签。",
+      "brand": "中国铁路",
+      "vendor": "12306",
+      "refund_policy": "开车/起飞 30min 前退",
+      "pickup": "刷身份证进站",
+      "free_shipping": true,
+      "rating": 4.9,
+      "review_count": 4032,
+      "sales": 22400,
+      "badges": [
+        "电子票",
+        "准点"
+      ],
+      "available_from": "18:30",
+      "available_to": "15 天内",
+      "related": [],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_museum_suz",
+      "name": "苏州博物馆",
+      "category": "景点",
+      "city": "苏州",
+      "level": "免费",
+      "open": "09:00-17:00",
+      "typical_dwell": "2h",
+      "best_slot": "midday",
+      "coords": [
+        120.626,
+        31.325
+      ],
+      "tags": [
+        "博物馆",
+        "贝聿铭"
+      ],
+      "demand": 0.88,
+      "cover": {
+        "emoji": "🏛",
+        "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+        "caption": "苏州博物馆"
+      },
+      "gallery": [
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "苏州博物馆 图 1"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "苏州博物馆 图 2"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "苏州博物馆 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_museum_suz_adult",
+          "spec": "成人票",
+          "label": "成人",
+          "price": 80,
+          "original_price": 90,
+          "stock": 2000,
+          "limit_per_user": 40
+        },
+        {
+          "sku_id": "p_museum_suz_student",
+          "spec": "学生票",
+          "label": "学生",
+          "price": 40,
+          "original_price": 45,
+          "stock": 800,
+          "limit_per_user": 16
+        },
+        {
+          "sku_id": "p_museum_suz_child",
+          "spec": "儿童票",
+          "label": "儿童",
+          "price": 0,
+          "original_price": 0,
+          "stock": 500,
+          "limit_per_user": 10
+        },
+        {
+          "sku_id": "p_museum_suz_family",
+          "spec": "亲子套餐(2大1小)",
+          "label": "亲子套餐",
+          "price": 184,
+          "original_price": 208,
+          "stock": 120,
+          "limit_per_user": 2
+        }
+      ],
+      "price_min": 40,
+      "price_max": 184,
+      "description": "苏州博物馆位于苏州，免费开放。开放时间 09:00-17:00。建议游览时长 2h，最佳时段为午间。周边餐饮、住宿、文创一应俱全。",
+      "brand": "苏州博物馆",
+      "vendor": "苏州文旅",
+      "refund_policy": "免费入场，无需退款",
+      "pickup": "刷身份证入园",
+      "free_shipping": false,
+      "rating": 4.9,
+      "review_count": 5171,
+      "sales": 16160,
+      "badges": [
+        "电子票",
+        "免预约"
+      ],
+      "available_from": "今日",
+      "available_to": "30 天内",
+      "related": [
+        "p_景点",
+        "p_zhuozhengyuan",
+        "p_lion_woods"
+      ],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_summer_palace",
+      "name": "颐和园",
+      "category": "景点",
+      "city": "北京",
+      "level": "5A",
+      "open": "06:30-18:00",
+      "typical_dwell": "4h",
+      "best_slot": "morning",
+      "coords": [
+        116.275,
+        39.999
+      ],
+      "tags": [
+        "园林"
+      ],
+      "demand": 0.86,
+      "cover": {
+        "emoji": "🏛",
+        "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+        "caption": "颐和园"
+      },
+      "gallery": [
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "颐和园 图 1"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "颐和园 图 2"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "颐和园 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_summer_palace_adult",
+          "spec": "成人票",
+          "label": "成人",
+          "price": 30,
+          "original_price": 40,
+          "stock": 2000,
+          "limit_per_user": 40
+        },
+        {
+          "sku_id": "p_summer_palace_student",
+          "spec": "学生票",
+          "label": "学生",
+          "price": 15,
+          "original_price": 20,
+          "stock": 800,
+          "limit_per_user": 16
+        },
+        {
+          "sku_id": "p_summer_palace_child",
+          "spec": "儿童票",
+          "label": "儿童",
+          "price": 0,
+          "original_price": 0,
+          "stock": 500,
+          "limit_per_user": 10
+        },
+        {
+          "sku_id": "p_summer_palace_family",
+          "spec": "亲子套餐(2大1小)",
+          "label": "亲子套餐",
+          "price": 69,
+          "original_price": 78,
+          "stock": 120,
+          "limit_per_user": 2
+        }
+      ],
+      "price_min": 15,
+      "price_max": 69,
+      "description": "颐和园位于北京，5A级景区。开放时间 06:30-18:00。建议游览时长 4h，最佳时段为上午。周边餐饮、住宿、文创一应俱全。",
+      "brand": "颐和园",
+      "vendor": "北京文旅",
+      "refund_policy": "未使用 23:59 前退",
+      "pickup": "刷身份证入园",
+      "free_shipping": false,
+      "rating": 4.9,
+      "review_count": 5056,
+      "sales": 15800,
+      "badges": [
+        "电子票",
+        "免预约"
+      ],
+      "available_from": "今日",
+      "available_to": "30 天内",
+      "related": [
+        "p_景点",
+        "p_zhuozhengyuan",
+        "p_lion_woods"
+      ],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_food_1",
+      "name": "松鹤楼(观前街店)",
+      "category": "餐饮",
+      "city": "苏州",
+      "level": "老字号",
+      "open": "10:30-20:30",
+      "typical_dwell": "1.5h",
+      "best_slot": "midday",
+      "coords": [
+        120.628,
+        31.318
+      ],
+      "tags": [
+        "苏帮菜"
+      ],
+      "demand": 0.85,
+      "cover": {
+        "emoji": "🍜",
+        "gradient": "linear-gradient(135deg,#FCD34D 0%,#F472B6 100%)",
+        "caption": "松鹤楼(观前街店)"
+      },
+      "gallery": [
+        {
+          "emoji": "🍜",
+          "gradient": "linear-gradient(135deg,#FCD34D 0%,#F472B6 100%)",
+          "caption": "松鹤楼(观前街店) 图 1"
+        },
+        {
+          "emoji": "🍜",
+          "gradient": "linear-gradient(135deg,#FCD34D 0%,#F472B6 100%)",
+          "caption": "松鹤楼(观前街店) 图 2"
+        },
+        {
+          "emoji": "🍜",
+          "gradient": "linear-gradient(135deg,#FCD34D 0%,#F472B6 100%)",
+          "caption": "松鹤楼(观前街店) 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_food_1_set2",
+          "spec": "双人套餐",
+          "label": "双人套餐",
+          "price": 216,
+          "original_price": 288,
+          "stock": 150,
+          "limit_per_user": 3
+        },
+        {
+          "sku_id": "p_food_1_set4",
+          "spec": "四人套餐",
+          "label": "四人套餐",
+          "price": 396,
+          "original_price": 528,
+          "stock": 80,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_food_1_vip",
+          "spec": "招牌主厨套餐",
+          "label": "主厨套餐",
+          "price": 312,
+          "original_price": 384,
+          "stock": 40,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_food_1_card",
+          "spec": "代金券",
+          "label": "¥100 代金券",
+          "price": 88,
+          "original_price": 100,
+          "stock": 500,
+          "limit_per_user": 10
+        }
+      ],
+      "price_min": 88,
+      "price_max": 396,
+      "description": "松鹤楼(观前街店) 是 苏州 的老字号代表，主打苏帮菜。营业时间 10:30-20:30，人均消费约 ¥120。百年传承，主厨讲究火候与刀工，建议提前 1 天预约。",
+      "brand": "松鹤楼(观前街店)",
+      "vendor": "松鹤楼",
+      "refund_policy": "未使用 2h 前退",
+      "pickup": "到店出示券码",
+      "free_shipping": false,
+      "rating": 4.8,
+      "review_count": 1908,
+      "sales": 4770,
+      "badges": [
+        "老字号",
+        "招牌菜"
+      ],
+      "available_from": "今日",
+      "available_to": "60 天内",
+      "related": [
+        "p_food_2",
+        "p_quanjude",
+        "p_zhuozhengyuan"
+      ],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_beijing_ktm",
+      "name": "北京西站→上海虹桥 G1",
+      "category": "交通",
+      "city": "北京→上海",
+      "level": "高铁",
+      "open": "09:00-13:28",
+      "typical_dwell": "4.5h",
+      "best_slot": "morning",
+      "coords": [
+        116.32,
+        39.89
+      ],
+      "tags": [
+        "高铁"
+      ],
+      "demand": 0.85,
+      "cover": {
+        "emoji": "🚄",
+        "gradient": "linear-gradient(135deg,#86EFAC 0%,#22D3EE 100%)",
+        "caption": "北京西站→上海虹桥 G1"
+      },
+      "gallery": [
+        {
+          "emoji": "🚄",
+          "gradient": "linear-gradient(135deg,#86EFAC 0%,#22D3EE 100%)",
+          "caption": "北京西站→上海虹桥 G1 图 1"
+        },
+        {
+          "emoji": "🚄",
+          "gradient": "linear-gradient(135deg,#86EFAC 0%,#22D3EE 100%)",
+          "caption": "北京西站→上海虹桥 G1 图 2"
+        },
+        {
+          "emoji": "🚄",
+          "gradient": "linear-gradient(135deg,#86EFAC 0%,#22D3EE 100%)",
+          "caption": "北京西站→上海虹桥 G1 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_beijing_ktm_second",
+          "spec": "二等座",
+          "label": "二等座",
+          "price": 553,
+          "original_price": 558,
+          "limit_per_user": 5,
+          "stock": 120
+        },
+        {
+          "sku_id": "p_beijing_ktm_first",
+          "spec": "一等座",
+          "label": "一等座",
+          "price": 830,
+          "original_price": 885,
+          "limit_per_user": 5,
+          "stock": 60
+        },
+        {
+          "sku_id": "p_beijing_ktm_biz",
+          "spec": "商务座",
+          "label": "商务座",
+          "price": 1659,
+          "original_price": 1770,
+          "limit_per_user": 5,
+          "stock": 20
+        }
+      ],
+      "price_min": 553,
+      "price_max": 1659,
+      "description": "北京西站→上海虹桥 G1：09:00-13:28 区间运行，高铁直达，准点率高。¥ 553 起售。出行前 1.5h 可线上改签。",
+      "brand": "中国铁路",
+      "vendor": "12306",
+      "refund_policy": "开车/起飞 30min 前退",
+      "pickup": "刷身份证进站",
+      "free_shipping": true,
+      "rating": 4.9,
+      "review_count": 3816,
+      "sales": 21200,
+      "badges": [
+        "电子票",
+        "准点"
+      ],
+      "available_from": "09:00",
+      "available_to": "15 天内",
+      "related": [],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_pingjiang_road",
+      "name": "平江路历史街区",
+      "category": "景点",
+      "city": "苏州",
+      "level": "-",
+      "open": "全天",
+      "typical_dwell": "2h",
+      "best_slot": "afternoon",
+      "coords": [
+        120.633,
+        31.323
+      ],
+      "tags": [
+        "历史街区",
+        "美食"
+      ],
+      "demand": 0.82,
+      "cover": {
+        "emoji": "🏛",
+        "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+        "caption": "平江路历史街区"
+      },
+      "gallery": [
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "平江路历史街区 图 1"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "平江路历史街区 图 2"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "平江路历史街区 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_pingjiang_road_adult",
+          "spec": "成人票",
+          "label": "成人",
+          "price": 80,
+          "original_price": 90,
+          "stock": 2000,
+          "limit_per_user": 40
+        },
+        {
+          "sku_id": "p_pingjiang_road_student",
+          "spec": "学生票",
+          "label": "学生",
+          "price": 40,
+          "original_price": 45,
+          "stock": 800,
+          "limit_per_user": 16
+        },
+        {
+          "sku_id": "p_pingjiang_road_child",
+          "spec": "儿童票",
+          "label": "儿童",
+          "price": 0,
+          "original_price": 0,
+          "stock": 500,
+          "limit_per_user": 10
+        },
+        {
+          "sku_id": "p_pingjiang_road_family",
+          "spec": "亲子套餐(2大1小)",
+          "label": "亲子套餐",
+          "price": 184,
+          "original_price": 208,
+          "stock": 120,
+          "limit_per_user": 2
+        }
+      ],
+      "price_min": 40,
+      "price_max": 184,
+      "description": "平江路历史街区位于苏州，-级景区。开放时间 全天。建议游览时长 2h，最佳时段为下午。周边餐饮、住宿、文创一应俱全。",
+      "brand": "平江路历史街区",
+      "vendor": "苏州文旅",
+      "refund_policy": "未使用 23:59 前退",
+      "pickup": "刷身份证入园",
+      "free_shipping": false,
+      "rating": 4.9,
+      "review_count": 4826,
+      "sales": 15080,
+      "badges": [
+        "电子票",
+        "免预约"
+      ],
+      "available_from": "今日",
+      "available_to": "30 天内",
+      "related": [
+        "p_景点",
+        "p_zhuozhengyuan",
+        "p_lion_woods"
+      ],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_nanluoguxiang",
+      "name": "南锣鼓巷",
+      "category": "景点",
+      "city": "北京",
+      "level": "-",
+      "open": "全天",
+      "typical_dwell": "2h",
+      "best_slot": "afternoon",
+      "coords": [
+        116.403,
+        39.937
+      ],
+      "tags": [
+        "胡同",
+        "美食"
+      ],
+      "demand": 0.82,
+      "cover": {
+        "emoji": "🏛",
+        "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+        "caption": "南锣鼓巷"
+      },
+      "gallery": [
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "南锣鼓巷 图 1"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "南锣鼓巷 图 2"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "南锣鼓巷 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_nanluoguxiang_adult",
+          "spec": "成人票",
+          "label": "成人",
+          "price": 80,
+          "original_price": 90,
+          "stock": 2000,
+          "limit_per_user": 40
+        },
+        {
+          "sku_id": "p_nanluoguxiang_student",
+          "spec": "学生票",
+          "label": "学生",
+          "price": 40,
+          "original_price": 45,
+          "stock": 800,
+          "limit_per_user": 16
+        },
+        {
+          "sku_id": "p_nanluoguxiang_child",
+          "spec": "儿童票",
+          "label": "儿童",
+          "price": 0,
+          "original_price": 0,
+          "stock": 500,
+          "limit_per_user": 10
+        },
+        {
+          "sku_id": "p_nanluoguxiang_family",
+          "spec": "亲子套餐(2大1小)",
+          "label": "亲子套餐",
+          "price": 184,
+          "original_price": 208,
+          "stock": 120,
+          "limit_per_user": 2
+        }
+      ],
+      "price_min": 40,
+      "price_max": 184,
+      "description": "南锣鼓巷位于北京，-级景区。开放时间 全天。建议游览时长 2h，最佳时段为下午。周边餐饮、住宿、文创一应俱全。",
+      "brand": "南锣鼓巷",
+      "vendor": "北京文旅",
+      "refund_policy": "未使用 23:59 前退",
+      "pickup": "刷身份证入园",
+      "free_shipping": false,
+      "rating": 4.9,
+      "review_count": 4826,
+      "sales": 15080,
+      "badges": [
+        "电子票",
+        "免预约"
+      ],
+      "available_from": "今日",
+      "available_to": "30 天内",
+      "related": [
+        "p_景点",
+        "p_zhuozhengyuan",
+        "p_lion_woods"
+      ],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_temple_heaven",
+      "name": "天坛公园",
+      "category": "景点",
+      "city": "北京",
+      "level": "5A",
+      "open": "06:00-22:00",
+      "typical_dwell": "3h",
+      "best_slot": "morning",
+      "coords": [
+        116.411,
+        39.882
+      ],
+      "tags": [
+        "古建"
+      ],
+      "demand": 0.8,
+      "cover": {
+        "emoji": "🏛",
+        "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+        "caption": "天坛公园"
+      },
+      "gallery": [
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "天坛公园 图 1"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "天坛公园 图 2"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "天坛公园 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_temple_heaven_adult",
+          "spec": "成人票",
+          "label": "成人",
+          "price": 34,
+          "original_price": 44,
+          "stock": 2000,
+          "limit_per_user": 40
+        },
+        {
+          "sku_id": "p_temple_heaven_student",
+          "spec": "学生票",
+          "label": "学生",
+          "price": 17,
+          "original_price": 22,
+          "stock": 800,
+          "limit_per_user": 16
+        },
+        {
+          "sku_id": "p_temple_heaven_child",
+          "spec": "儿童票",
+          "label": "儿童",
+          "price": 0,
+          "original_price": 0,
+          "stock": 500,
+          "limit_per_user": 10
+        },
+        {
+          "sku_id": "p_temple_heaven_family",
+          "spec": "亲子套餐(2大1小)",
+          "label": "亲子套餐",
+          "price": 78,
+          "original_price": 88,
+          "stock": 120,
+          "limit_per_user": 2
+        }
+      ],
+      "price_min": 17,
+      "price_max": 78,
+      "description": "天坛公园位于北京，5A级景区。开放时间 06:00-22:00。建议游览时长 3h，最佳时段为上午。周边餐饮、住宿、文创一应俱全。",
+      "brand": "天坛公园",
+      "vendor": "北京文旅",
+      "refund_policy": "未使用 23:59 前退",
+      "pickup": "刷身份证入园",
+      "free_shipping": false,
+      "rating": 4.9,
+      "review_count": 4710,
+      "sales": 14720,
+      "badges": [
+        "电子票",
+        "免预约"
+      ],
+      "available_from": "今日",
+      "available_to": "30 天内",
+      "related": [
+        "p_景点",
+        "p_zhuozhengyuan",
+        "p_lion_woods"
+      ],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_shantang",
+      "name": "山塘街",
+      "category": "景点",
+      "city": "苏州",
+      "level": "-",
+      "open": "全天",
+      "typical_dwell": "2h",
+      "best_slot": "evening",
+      "coords": [
+        120.61,
+        31.319
+      ],
+      "tags": [
+        "历史街区",
+        "夜景"
+      ],
+      "demand": 0.78,
+      "cover": {
+        "emoji": "🏛",
+        "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+        "caption": "山塘街"
+      },
+      "gallery": [
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "山塘街 图 1"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "山塘街 图 2"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "山塘街 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_shantang_adult",
+          "spec": "成人票",
+          "label": "成人",
+          "price": 80,
+          "original_price": 90,
+          "stock": 2000,
+          "limit_per_user": 40
+        },
+        {
+          "sku_id": "p_shantang_student",
+          "spec": "学生票",
+          "label": "学生",
+          "price": 40,
+          "original_price": 45,
+          "stock": 800,
+          "limit_per_user": 16
+        },
+        {
+          "sku_id": "p_shantang_child",
+          "spec": "儿童票",
+          "label": "儿童",
+          "price": 0,
+          "original_price": 0,
+          "stock": 500,
+          "limit_per_user": 10
+        },
+        {
+          "sku_id": "p_shantang_family",
+          "spec": "亲子套餐(2大1小)",
+          "label": "亲子套餐",
+          "price": 184,
+          "original_price": 208,
+          "stock": 120,
+          "limit_per_user": 2
+        }
+      ],
+      "price_min": 40,
+      "price_max": 184,
+      "description": "山塘街位于苏州，-级景区。开放时间 全天。建议游览时长 2h，最佳时段为傍晚。周边餐饮、住宿、文创一应俱全。",
+      "brand": "山塘街",
+      "vendor": "苏州文旅",
+      "refund_policy": "未使用 23:59 前退",
+      "pickup": "刷身份证入园",
+      "free_shipping": false,
+      "rating": 4.9,
+      "review_count": 4595,
+      "sales": 14360,
+      "badges": [
+        "电子票",
+        "免预约"
+      ],
+      "available_from": "今日",
+      "available_to": "30 天内",
+      "related": [
+        "p_景点",
+        "p_zhuozhengyuan",
+        "p_lion_woods"
+      ],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_lion_woods",
+      "name": "狮子林",
+      "category": "景点",
+      "city": "苏州",
+      "level": "4A",
+      "open": "07:30-17:00",
+      "typical_dwell": "1.5h",
+      "best_slot": "morning",
+      "coords": [
+        120.624,
+        31.327
+      ],
+      "tags": [
+        "园林",
+        "假山"
+      ],
+      "demand": 0.7,
+      "cover": {
+        "emoji": "🏛",
+        "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+        "caption": "狮子林"
+      },
+      "gallery": [
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "狮子林 图 1"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "狮子林 图 2"
+        },
+        {
+          "emoji": "🏛",
+          "gradient": "linear-gradient(135deg,#60A5FA 0%,#A78BFA 100%)",
+          "caption": "狮子林 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_lion_woods_adult",
+          "spec": "成人票",
+          "label": "成人",
+          "price": 40,
+          "original_price": 50,
+          "stock": 2000,
+          "limit_per_user": 40
+        },
+        {
+          "sku_id": "p_lion_woods_student",
+          "spec": "学生票",
+          "label": "学生",
+          "price": 20,
+          "original_price": 25,
+          "stock": 800,
+          "limit_per_user": 16
+        },
+        {
+          "sku_id": "p_lion_woods_child",
+          "spec": "儿童票",
+          "label": "儿童",
+          "price": 0,
+          "original_price": 0,
+          "stock": 500,
+          "limit_per_user": 10
+        },
+        {
+          "sku_id": "p_lion_woods_family",
+          "spec": "亲子套餐(2大1小)",
+          "label": "亲子套餐",
+          "price": 92,
+          "original_price": 104,
+          "stock": 120,
+          "limit_per_user": 2
+        }
+      ],
+      "price_min": 20,
+      "price_max": 92,
+      "description": "狮子林位于苏州，4A级景区。开放时间 07:30-17:00。建议游览时长 1.5h，最佳时段为上午。周边餐饮、住宿、文创一应俱全。",
+      "brand": "狮子林",
+      "vendor": "苏州文旅",
+      "refund_policy": "未使用 23:59 前退",
+      "pickup": "刷身份证入园",
+      "free_shipping": false,
+      "rating": 4.8,
+      "review_count": 4134,
+      "sales": 12920,
+      "badges": [
+        "电子票",
+        "免预约"
+      ],
+      "available_from": "今日",
+      "available_to": "30 天内",
+      "related": [
+        "p_景点",
+        "p_zhuozhengyuan",
+        "p_museum_suz"
+      ],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_hotel_2",
+      "name": "桔子精品(观前街店)",
+      "category": "住宿",
+      "city": "苏州",
+      "level": "商务酒店",
+      "open": "全天",
+      "typical_dwell": "8h",
+      "best_slot": "night",
+      "coords": [
+        120.628,
+        31.319
+      ],
+      "tags": [
+        "商务"
+      ],
+      "demand": 0.7,
+      "cover": {
+        "emoji": "🏨",
+        "gradient": "linear-gradient(135deg,#C4B5FD 0%,#818CF8 100%)",
+        "caption": "桔子精品(观前街店)"
+      },
+      "gallery": [
+        {
+          "emoji": "🏨",
+          "gradient": "linear-gradient(135deg,#C4B5FD 0%,#818CF8 100%)",
+          "caption": "桔子精品(观前街店) 图 1"
+        },
+        {
+          "emoji": "🏨",
+          "gradient": "linear-gradient(135deg,#C4B5FD 0%,#818CF8 100%)",
+          "caption": "桔子精品(观前街店) 图 2"
+        },
+        {
+          "emoji": "🏨",
+          "gradient": "linear-gradient(135deg,#C4B5FD 0%,#818CF8 100%)",
+          "caption": "桔子精品(观前街店) 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_hotel_2_std",
+          "spec": "标准大床房",
+          "label": "标准大床",
+          "price": 480,
+          "original_price": 560,
+          "stock": 20,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_hotel_2_dlx",
+          "spec": "豪华双床房",
+          "label": "豪华双床",
+          "price": 648,
+          "original_price": 696,
+          "stock": 14,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_hotel_2_ste",
+          "spec": "行政套房",
+          "label": "行政套房",
+          "price": 1152,
+          "original_price": 1248,
+          "stock": 6,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_hotel_2_fam",
+          "spec": "亲子主题房",
+          "label": "亲子主题",
+          "price": 816,
+          "original_price": 888,
+          "stock": 8,
+          "limit_per_user": 1
+        }
+      ],
+      "price_min": 480,
+      "price_max": 1152,
+      "description": "桔子精品(观前街店) 位于 苏州，定位商务。城市商务精品，地铁 5 分钟直达核心商圈。",
+      "brand": "桔子精品",
+      "vendor": "桔子精品",
+      "refund_policy": "入住前 1 天 18:00 前退",
+      "pickup": "前台报姓名入住",
+      "free_shipping": false,
+      "rating": 4.8,
+      "review_count": 540,
+      "sales": 900,
+      "badges": [
+        "含早餐",
+        "免费 WiFi"
+      ],
+      "available_from": "今晚",
+      "available_to": "90 天内",
+      "related": [],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_food_2",
+      "name": "哑巴生煎(临顿路店)",
+      "category": "餐饮",
+      "city": "苏州",
+      "level": "名店",
+      "open": "06:30-19:00",
+      "typical_dwell": "0.5h",
+      "best_slot": "midday",
+      "coords": [
+        120.628,
+        31.321
+      ],
+      "tags": [
+        "小吃"
+      ],
+      "demand": 0.65,
+      "cover": {
+        "emoji": "🍜",
+        "gradient": "linear-gradient(135deg,#FCD34D 0%,#F472B6 100%)",
+        "caption": "哑巴生煎(临顿路店)"
+      },
+      "gallery": [
+        {
+          "emoji": "🍜",
+          "gradient": "linear-gradient(135deg,#FCD34D 0%,#F472B6 100%)",
+          "caption": "哑巴生煎(临顿路店) 图 1"
+        },
+        {
+          "emoji": "🍜",
+          "gradient": "linear-gradient(135deg,#FCD34D 0%,#F472B6 100%)",
+          "caption": "哑巴生煎(临顿路店) 图 2"
+        },
+        {
+          "emoji": "🍜",
+          "gradient": "linear-gradient(135deg,#FCD34D 0%,#F472B6 100%)",
+          "caption": "哑巴生煎(临顿路店) 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_food_2_set2",
+          "spec": "双人套餐",
+          "label": "双人套餐",
+          "price": 54,
+          "original_price": 72,
+          "stock": 150,
+          "limit_per_user": 3
+        },
+        {
+          "sku_id": "p_food_2_set4",
+          "spec": "四人套餐",
+          "label": "四人套餐",
+          "price": 99,
+          "original_price": 132,
+          "stock": 80,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_food_2_vip",
+          "spec": "招牌主厨套餐",
+          "label": "主厨套餐",
+          "price": 78,
+          "original_price": 96,
+          "stock": 40,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_food_2_card",
+          "spec": "代金券",
+          "label": "¥100 代金券",
+          "price": 88,
+          "original_price": 100,
+          "stock": 500,
+          "limit_per_user": 10
+        }
+      ],
+      "price_min": 54,
+      "price_max": 99,
+      "description": "哑巴生煎(临顿路店) 是 苏州 的名店代表，主打小吃。营业时间 06:30-19:00，人均消费约 ¥30。人气小馆，建议错峰前往或提前订位。",
+      "brand": "哑巴生煎(临顿路店)",
+      "vendor": "哑巴生煎",
+      "refund_policy": "未使用 2h 前退",
+      "pickup": "到店出示券码",
+      "free_shipping": false,
+      "rating": 4.7,
+      "review_count": 1476,
+      "sales": 3690,
+      "badges": [
+        "人气"
+      ],
+      "available_from": "今日",
+      "available_to": "60 天内",
+      "related": [
+        "p_food_1",
+        "p_quanjude",
+        "p_zhuozhengyuan"
+      ],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_hutong_r",
+      "name": "胡同民宿(南锣店)",
+      "category": "住宿",
+      "city": "北京",
+      "level": "民宿",
+      "open": "全天",
+      "typical_dwell": "8h",
+      "best_slot": "night",
+      "coords": [
+        116.404,
+        39.937
+      ],
+      "tags": [
+        "民宿"
+      ],
+      "demand": 0.65,
+      "cover": {
+        "emoji": "🏨",
+        "gradient": "linear-gradient(135deg,#C4B5FD 0%,#818CF8 100%)",
+        "caption": "胡同民宿(南锣店)"
+      },
+      "gallery": [
+        {
+          "emoji": "🏨",
+          "gradient": "linear-gradient(135deg,#C4B5FD 0%,#818CF8 100%)",
+          "caption": "胡同民宿(南锣店) 图 1"
+        },
+        {
+          "emoji": "🏨",
+          "gradient": "linear-gradient(135deg,#C4B5FD 0%,#818CF8 100%)",
+          "caption": "胡同民宿(南锣店) 图 2"
+        },
+        {
+          "emoji": "🏨",
+          "gradient": "linear-gradient(135deg,#C4B5FD 0%,#818CF8 100%)",
+          "caption": "胡同民宿(南锣店) 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_hutong_r_std",
+          "spec": "标准大床房",
+          "label": "标准大床",
+          "price": 680,
+          "original_price": 760,
+          "stock": 20,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_hutong_r_dlx",
+          "spec": "豪华双床房",
+          "label": "豪华双床",
+          "price": 918,
+          "original_price": 986,
+          "stock": 14,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_hutong_r_ste",
+          "spec": "行政套房",
+          "label": "行政套房",
+          "price": 1632,
+          "original_price": 1768,
+          "stock": 6,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_hutong_r_fam",
+          "spec": "亲子主题房",
+          "label": "亲子主题",
+          "price": 1156,
+          "original_price": 1258,
+          "stock": 8,
+          "limit_per_user": 1
+        }
+      ],
+      "price_min": 680,
+      "price_max": 1632,
+      "description": "胡同民宿(南锣店) 位于 北京，定位民宿。原汁原味的在地民宿，步行可达南锣鼓巷与什刹海。",
+      "brand": "胡同民宿",
+      "vendor": "胡同民宿",
+      "refund_policy": "入住前 1 天 18:00 前退",
+      "pickup": "前台报姓名入住",
+      "free_shipping": false,
+      "rating": 4.7,
+      "review_count": 504,
+      "sales": 840,
+      "badges": [
+        "含早餐",
+        "免费 WiFi"
+      ],
+      "available_from": "今晚",
+      "available_to": "90 天内",
+      "related": [],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_hotel_1",
+      "name": "南园宾馆",
+      "category": "住宿",
+      "city": "苏州",
+      "level": "园林酒店",
+      "open": "全天",
+      "typical_dwell": "8h",
+      "best_slot": "night",
+      "coords": [
+        120.625,
+        31.32
+      ],
+      "tags": [
+        "园林",
+        "五星"
+      ],
+      "demand": 0.6,
+      "cover": {
+        "emoji": "🏨",
+        "gradient": "linear-gradient(135deg,#C4B5FD 0%,#818CF8 100%)",
+        "caption": "南园宾馆"
+      },
+      "gallery": [
+        {
+          "emoji": "🏨",
+          "gradient": "linear-gradient(135deg,#C4B5FD 0%,#818CF8 100%)",
+          "caption": "南园宾馆 图 1"
+        },
+        {
+          "emoji": "🏨",
+          "gradient": "linear-gradient(135deg,#C4B5FD 0%,#818CF8 100%)",
+          "caption": "南园宾馆 图 2"
+        },
+        {
+          "emoji": "🏨",
+          "gradient": "linear-gradient(135deg,#C4B5FD 0%,#818CF8 100%)",
+          "caption": "南园宾馆 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_hotel_1_std",
+          "spec": "标准大床房",
+          "label": "标准大床",
+          "price": 880,
+          "original_price": 960,
+          "stock": 20,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_hotel_1_dlx",
+          "spec": "豪华双床房",
+          "label": "豪华双床",
+          "price": 1188,
+          "original_price": 1276,
+          "stock": 14,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_hotel_1_ste",
+          "spec": "行政套房",
+          "label": "行政套房",
+          "price": 2112,
+          "original_price": 2288,
+          "stock": 6,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_hotel_1_fam",
+          "spec": "亲子主题房",
+          "label": "亲子主题",
+          "price": 1496,
+          "original_price": 1628,
+          "stock": 8,
+          "limit_per_user": 1
+        }
+      ],
+      "price_min": 880,
+      "price_max": 2112,
+      "description": "南园宾馆 位于 苏州，定位园林、五星。城市商务精品，地铁 5 分钟直达核心商圈。",
+      "brand": "南园宾馆",
+      "vendor": "南园宾馆",
+      "refund_policy": "入住前 1 天 18:00 前退",
+      "pickup": "前台报姓名入住",
+      "free_shipping": false,
+      "rating": 4.7,
+      "review_count": 468,
+      "sales": 780,
+      "badges": [
+        "含早餐",
+        "免费 WiFi"
+      ],
+      "available_from": "今晚",
+      "available_to": "90 天内",
+      "related": [],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_huguang",
+      "name": "胡庆余堂",
+      "category": "购物",
+      "city": "苏州",
+      "level": "中华老字号",
+      "open": "08:30-17:30",
+      "typical_dwell": "1h",
+      "best_slot": "midday",
+      "coords": [
+        120.629,
+        31.318
+      ],
+      "tags": [
+        "老字号",
+        "伴手礼"
+      ],
+      "demand": 0.6,
+      "cover": {
+        "emoji": "🛍",
+        "gradient": "linear-gradient(135deg,#FBCFE8 0%,#F472B6 100%)",
+        "caption": "胡庆余堂"
+      },
+      "gallery": [
+        {
+          "emoji": "🛍",
+          "gradient": "linear-gradient(135deg,#FBCFE8 0%,#F472B6 100%)",
+          "caption": "胡庆余堂 图 1"
+        },
+        {
+          "emoji": "🛍",
+          "gradient": "linear-gradient(135deg,#FBCFE8 0%,#F472B6 100%)",
+          "caption": "胡庆余堂 图 2"
+        },
+        {
+          "emoji": "🛍",
+          "gradient": "linear-gradient(135deg,#FBCFE8 0%,#F472B6 100%)",
+          "caption": "胡庆余堂 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_huguang_std",
+          "spec": "标准装",
+          "label": "标准装",
+          "price": 88,
+          "original_price": 128,
+          "stock": 600,
+          "limit_per_user": 12
+        },
+        {
+          "sku_id": "p_huguang_gift",
+          "spec": "礼品装(含礼盒手提袋)",
+          "label": "礼品装",
+          "price": 168,
+          "original_price": 228,
+          "stock": 300,
+          "limit_per_user": 6
+        },
+        {
+          "sku_id": "p_huguang_big",
+          "spec": "家庭分享装",
+          "label": "分享装",
+          "price": 198,
+          "original_price": 268,
+          "stock": 200,
+          "limit_per_user": 4
+        }
+      ],
+      "price_min": 88,
+      "price_max": 198,
+      "description": "胡庆余堂 是 苏州 的中华老字号购物地标，主营老字号、伴手礼。营业时间 08:30-17:30，本地人代购首选，可快递到家也可到店自提。",
+      "brand": "胡庆余堂",
+      "vendor": "胡庆余堂",
+      "refund_policy": "未拆封 7 天无理由退",
+      "pickup": "快递 / 到店自提",
+      "free_shipping": true,
+      "rating": 4.7,
+      "review_count": 612,
+      "sales": 2040,
+      "badges": [
+        "包邮",
+        "正品"
+      ],
+      "available_from": "今日",
+      "available_to": "常驻库存",
+      "related": [],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_panjiayuan",
+      "name": "潘家园旧货市场",
+      "category": "购物",
+      "city": "北京",
+      "level": "-",
+      "open": "全天",
+      "typical_dwell": "2h",
+      "best_slot": "morning",
+      "coords": [
+        116.435,
+        39.876
+      ],
+      "tags": [
+        "古玩",
+        "集市"
+      ],
+      "demand": 0.6,
+      "cover": {
+        "emoji": "🛍",
+        "gradient": "linear-gradient(135deg,#FBCFE8 0%,#F472B6 100%)",
+        "caption": "潘家园旧货市场"
+      },
+      "gallery": [
+        {
+          "emoji": "🛍",
+          "gradient": "linear-gradient(135deg,#FBCFE8 0%,#F472B6 100%)",
+          "caption": "潘家园旧货市场 图 1"
+        },
+        {
+          "emoji": "🛍",
+          "gradient": "linear-gradient(135deg,#FBCFE8 0%,#F472B6 100%)",
+          "caption": "潘家园旧货市场 图 2"
+        },
+        {
+          "emoji": "🛍",
+          "gradient": "linear-gradient(135deg,#FBCFE8 0%,#F472B6 100%)",
+          "caption": "潘家园旧货市场 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_panjiayuan_std",
+          "spec": "标准装",
+          "label": "标准装",
+          "price": 88,
+          "original_price": 128,
+          "stock": 600,
+          "limit_per_user": 12
+        },
+        {
+          "sku_id": "p_panjiayuan_gift",
+          "spec": "礼品装(含礼盒手提袋)",
+          "label": "礼品装",
+          "price": 168,
+          "original_price": 228,
+          "stock": 300,
+          "limit_per_user": 6
+        },
+        {
+          "sku_id": "p_panjiayuan_big",
+          "spec": "家庭分享装",
+          "label": "分享装",
+          "price": 198,
+          "original_price": 268,
+          "stock": 200,
+          "limit_per_user": 4
+        }
+      ],
+      "price_min": 88,
+      "price_max": 198,
+      "description": "潘家园旧货市场 是 北京 的-购物地标，主营古玩、集市。营业时间 全天，本地人代购首选，可快递到家也可到店自提。",
+      "brand": "潘家园旧货市场",
+      "vendor": "潘家园旧货市场",
+      "refund_policy": "未拆封 7 天无理由退",
+      "pickup": "快递 / 到店自提",
+      "free_shipping": true,
+      "rating": 4.7,
+      "review_count": 612,
+      "sales": 2040,
+      "badges": [
+        "包邮",
+        "正品"
+      ],
+      "available_from": "今日",
+      "available_to": "常驻库存",
+      "related": [],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_suzhou_kunqu",
+      "name": "中国昆曲博物馆",
+      "category": "文化",
+      "city": "苏州",
+      "level": "免费",
+      "open": "09:00-16:30",
+      "typical_dwell": "1.5h",
+      "best_slot": "afternoon",
+      "coords": [
+        120.624,
+        31.32
+      ],
+      "tags": [
+        "非遗",
+        "戏曲"
+      ],
+      "demand": 0.55,
+      "cover": {
+        "emoji": "📜",
+        "gradient": "linear-gradient(135deg,#A5B4FC 0%,#818CF8 100%)",
+        "caption": "中国昆曲博物馆"
+      },
+      "gallery": [
+        {
+          "emoji": "📜",
+          "gradient": "linear-gradient(135deg,#A5B4FC 0%,#818CF8 100%)",
+          "caption": "中国昆曲博物馆 图 1"
+        },
+        {
+          "emoji": "📜",
+          "gradient": "linear-gradient(135deg,#A5B4FC 0%,#818CF8 100%)",
+          "caption": "中国昆曲博物馆 图 2"
+        },
+        {
+          "emoji": "📜",
+          "gradient": "linear-gradient(135deg,#A5B4FC 0%,#818CF8 100%)",
+          "caption": "中国昆曲博物馆 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_suzhou_kunqu_tkt",
+          "spec": "讲解票(含人工导览 60min)",
+          "label": "含讲解",
+          "price": 98,
+          "original_price": 128,
+          "stock": 80,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_suzhou_kunqu_fam",
+          "spec": "亲子研学套餐(2大1小+手工体验)",
+          "label": "研学套餐",
+          "price": 268,
+          "original_price": 328,
+          "stock": 40,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_suzhou_kunqu_ann",
+          "spec": "年卡",
+          "label": "年卡",
+          "price": 198,
+          "original_price": 268,
+          "stock": 300,
+          "limit_per_user": 6
+        }
+      ],
+      "price_min": 98,
+      "price_max": 268,
+      "description": "中国昆曲博物馆 位于 苏州，非遗、戏曲。这里浓缩了城市的历史脉络，建议预留 1.5h 沉浸体验。",
+      "brand": "中国昆曲博物馆",
+      "vendor": "苏州文旅",
+      "refund_policy": "未使用 1 天前退",
+      "pickup": "到馆报姓名核销",
+      "free_shipping": false,
+      "rating": 4.7,
+      "review_count": 212,
+      "sales": 470,
+      "badges": [
+        "含讲解",
+        "可预约"
+      ],
+      "available_from": "今日",
+      "available_to": "90 天内",
+      "related": [],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    },
+    {
+      "id": "p_liulichang",
+      "name": "琉璃厂文化街",
+      "category": "文化",
+      "city": "北京",
+      "level": "-",
+      "open": "全天",
+      "typical_dwell": "1.5h",
+      "best_slot": "midday",
+      "coords": [
+        116.387,
+        39.901
+      ],
+      "tags": [
+        "古街",
+        "字画"
+      ],
+      "demand": 0.5,
+      "cover": {
+        "emoji": "📜",
+        "gradient": "linear-gradient(135deg,#A5B4FC 0%,#818CF8 100%)",
+        "caption": "琉璃厂文化街"
+      },
+      "gallery": [
+        {
+          "emoji": "📜",
+          "gradient": "linear-gradient(135deg,#A5B4FC 0%,#818CF8 100%)",
+          "caption": "琉璃厂文化街 图 1"
+        },
+        {
+          "emoji": "📜",
+          "gradient": "linear-gradient(135deg,#A5B4FC 0%,#818CF8 100%)",
+          "caption": "琉璃厂文化街 图 2"
+        },
+        {
+          "emoji": "📜",
+          "gradient": "linear-gradient(135deg,#A5B4FC 0%,#818CF8 100%)",
+          "caption": "琉璃厂文化街 图 3"
+        }
+      ],
+      "skus": [
+        {
+          "sku_id": "p_liulichang_tkt",
+          "spec": "讲解票(含人工导览 60min)",
+          "label": "含讲解",
+          "price": 98,
+          "original_price": 128,
+          "stock": 80,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_liulichang_fam",
+          "spec": "亲子研学套餐(2大1小+手工体验)",
+          "label": "研学套餐",
+          "price": 268,
+          "original_price": 328,
+          "stock": 40,
+          "limit_per_user": 1
+        },
+        {
+          "sku_id": "p_liulichang_ann",
+          "spec": "年卡",
+          "label": "年卡",
+          "price": 198,
+          "original_price": 268,
+          "stock": 300,
+          "limit_per_user": 6
+        }
+      ],
+      "price_min": 98,
+      "price_max": 268,
+      "description": "琉璃厂文化街 位于 北京，古街、字画。这里浓缩了城市的历史脉络，建议预留 1.5h 沉浸体验。",
+      "brand": "琉璃厂文化街",
+      "vendor": "北京文旅",
+      "refund_policy": "未使用 1 天前退",
+      "pickup": "到馆报姓名核销",
+      "free_shipping": false,
+      "rating": 4.7,
+      "review_count": 194,
+      "sales": 430,
+      "badges": [
+        "含讲解",
+        "可预约"
+      ],
+      "available_from": "今日",
+      "available_to": "90 天内",
+      "related": [],
+      "source": "rag",
+      "listed_at": "2026-08-12T10:00:00Z",
+      "listed": true,
+      "created_at": "2026-08-12T10:00:00Z",
+      "_seed": true
+    }
+  ]
+}

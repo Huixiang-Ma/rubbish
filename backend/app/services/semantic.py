@@ -51,6 +51,12 @@ def _memory_all(tenant_id: str | None) -> list[dict[str, Any]]:
     return _MEMORY.get(tenant_id or "default", [])
 
 
+def has_chunk(job_id_prefix: str) -> bool:
+    """语义层是否已存在该前缀的语料（幂等重灌判断）。PG/内存两模式通用。"""
+    rows = all_chunks(None)
+    return any(str(r.get("job_id") or "").startswith(job_id_prefix) for r in rows)
+
+
 def all_chunks(tenant_id: str | None = None) -> list[dict[str, Any]]:
     """对外只读全量块（幂等检查用）：PG 已启用查 pgvector，否则查进程内存兜底。"""
     pg_mirror._ensure()

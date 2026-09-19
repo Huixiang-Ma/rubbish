@@ -3,8 +3,8 @@
 .env.*
 !.env.example
 
-# ---- 运行时数据 ----
-data/
+# ---- 运行时数据（仅仓库根目录的 data/；backend/app/data/ 是代码依赖的种子数据，需入库） ----
+/data/
 *.log
 logs/
 
@@ -36,6 +36,7 @@ docker-compose.override.yml
 # ---- 会话产物 / 临时文件（不入库） ----
 .preview/
 .workbuddy/
+.codebuddy/
 plans_tmp.json
 压测结果*.json
 压测终态.json
@@ -89,7 +90,6 @@ _retheme.py
 # ---- 其它内部文档与备份（不入库） ----
 docs/
 backend/scripts/*.png
-# 旧版单文件前端 frontend/ 已整体移除（frontend-v2 为唯一前端），历史忽略规则随之清理
 
 # ---- 其它内部文档 ----
 实训视频讲解文档*

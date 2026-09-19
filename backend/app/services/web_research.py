@@ -9,7 +9,6 @@
 from __future__ import annotations
 
 import html.parser
-import json
 import time
 import urllib.request
 from datetime import datetime, timezone
@@ -128,7 +127,6 @@ def extract_rules(html_text: str, spot_name: str) -> dict | None:
 
     keywords_open = ("开放时间", "开馆时间", "闭馆时间")
     keywords_booking = ("预约", "购票", "实名")
-    header_markers = ("开放时间", "开馆时间", "闭馆时间", "预约须知", "预约", "购票须知")
 
     def is_data_line(line: str) -> bool:
         return any(ch.isdigit() for ch in line)

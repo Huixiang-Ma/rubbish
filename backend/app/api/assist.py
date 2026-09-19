@@ -19,12 +19,11 @@ import time
 from pathlib import Path
 from typing import Any, Iterator
 
-from fastapi import APIRouter, Body, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.api._staff import caller
-from app.config import get_settings
 from app.services import semantic, shop_store, web_search_agent
 from app.services.llm_client import LLMClient
 from app.services.paths import DATA_ROOT
@@ -232,11 +231,15 @@ def kb_list() -> dict[str, Any]:
 
 @router.post("/api/kb/docs")
 def kb_create(payload: KbDocRequest) -> dict[str, Any]:
-    """上传知识库文档：入库 JSON 台账 + 分块摄入语义层（kb: 前缀，RAG 可检索）。"""
+    """上传知识库文档：入库 JSON 台账 + 分块摄入语义层（kb: 前缀，RAG 可检索）。
+    同名文档拒绝重复入库（409），避免整夹批量上传时同一份资料被反复摄入。"""
     doc_id = "kbdoc_" + hashlib.sha1(f"{payload.title}{time.time()}".encode()).hexdigest()[:10]
     chunks = _chunk_text(payload.content)
     if not chunks:
         raise HTTPException(status_code=400, detail="文档内容解析为空")
+    with _KB_LOCK:
+        if any(x.get("title") == payload.title for x in _kb_docs().get("docs", [])):
+            raise HTTPException(status_code=409, detail="同名文档已存在于知识库,如需更新请先删除原文档")
     mode, embedder = "memory", None
     with _KB_LOCK:
         for i, c in enumerate(chunks):
@@ -244,12 +247,90 @@ def kb_create(payload: KbDocRequest) -> dict[str, Any]:
             mode, embedder = res.get("mode", mode), res.get("embedder", embedder)
     record = {"id": doc_id, "title": payload.title, "tags": payload.tags[:6],
               "chunks": len(chunks), "chars": len(payload.content),
+              "content": payload.content[:20000],
               "mode": mode, "embedder": embedder, "created_at": time.strftime("%Y-%m-%d %H:%M")}
     with _KB_LOCK:
         d = _kb_docs()
         d.setdefault("docs", []).insert(0, record)
         _save_kb_docs(d)
+    _extract_drafts_async(doc_id, record["title"], payload.content)
     return {"ok": True, **record}
+
+
+_KB_FILE_SUFFIXES = {".pdf", ".docx", ".html", ".htm", ".txt", ".md", ".markdown"}
+_KB_FILE_MAX_BYTES = 20 * 1024 * 1024
+
+
+@router.post("/api/kb/docs/file")
+async def kb_create_file(
+    request: Request,
+    filename: str = Query(..., min_length=1, max_length=200, description="原始文件名（含扩展名）"),
+    tags: str = Query(default="", description="逗号分隔标签"),
+) -> dict[str, Any]:
+    """文档文件直传：pdf/docx/html/txt/md → document_ingest 解析 → 与 kb/docs 同链路入库。
+
+    二进制直传（request.body），不引入 multipart 依赖；同名 409 与 kb_create 一致。
+    """
+    from app.services.document_ingest import extract_document
+
+    suffix = Path(filename).suffix.lower()
+    if suffix not in _KB_FILE_SUFFIXES:
+        raise HTTPException(status_code=422, detail=f"不支持的文档类型:{suffix or '(无后缀)'}（支持 pdf/docx/html/htm/txt/md）")
+    data = await request.body()
+    if not data:
+        raise HTTPException(status_code=422, detail="文件内容为空")
+    if len(data) > _KB_FILE_MAX_BYTES:
+        raise HTTPException(status_code=413, detail="文件超过 20MB 上限")
+
+    title = Path(filename).stem.strip()[:40] or "未命名文档"
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()][:6]
+    doc_id = "kbdoc_" + hashlib.sha1(f"{title}{time.time()}".encode()).hexdigest()[:10]
+
+    with _KB_LOCK:
+        if any(x.get("title") == title for x in _kb_docs().get("docs", [])):
+            raise HTTPException(status_code=409, detail="同名文档已存在于知识库,如需更新请先删除原文档")
+
+    tmp_dir = DATA_ROOT / "kb_upload_tmp"
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+    tmp_path = tmp_dir / f"{time.time_ns()}_{Path(filename).name}"
+    await file_write(tmp_path, data)
+    try:
+        try:
+            _meta_title, text = extract_document(tmp_path)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=500, detail=str(exc))
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc))
+        chunks = _chunk_text(text)
+        if not chunks:
+            raise HTTPException(status_code=400, detail="文档内容解析为空")
+        mode, embedder = "memory", None
+        with _KB_LOCK:
+            for i, c in enumerate(chunks):
+                res = semantic.add_chunk(f"{doc_id}#{i + 1}", f"【{title}】{c}", "default")
+                mode, embedder = res.get("mode", mode), res.get("embedder", embedder)
+        record = {"id": doc_id, "title": title, "tags": tag_list,
+                  "chunks": len(chunks), "chars": len(text),
+                  "content": text[:20000],
+                  "mode": mode, "embedder": embedder, "created_at": time.strftime("%Y-%m-%d %H:%M")}
+        with _KB_LOCK:
+            d = _kb_docs()
+            d.setdefault("docs", []).insert(0, record)
+            _save_kb_docs(d)
+        _extract_drafts_async(doc_id, record["title"], text)
+        return {"ok": True, **record}
+    finally:
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except OSError:
+            pass
+
+
+async def file_write(path: Path, data: bytes) -> None:
+    """小工具：线程池里写盘，避免阻塞事件循环。"""
+    import anyio
+
+    await anyio.to_thread.run_sync(lambda: path.write_bytes(data))
 
 
 @router.delete("/api/kb/docs/{doc_id}")
@@ -381,3 +462,172 @@ def rag_assistant_chat(payload: AssistantRequest):
             yield "data: " + json.dumps({"type": "error", "message": str(exc)}, ensure_ascii=False) + "\n\n"
 
     return StreamingResponse(sse(), media_type="text/event-stream")
+
+
+# ----------------------------------------------------------------------------
+# 数据智能闭环（环3）：知识库文档 → LLM 抽取素材草稿 → toB 人工确认入库
+# 上传入库成功后异步抽取（LLM 不可用时静默跳过，文档仍作纯文本语料）；
+# 草稿须经人工确认才进素材库（素材价格参与下单计价，防脏数据直入交易链路）。
+# ----------------------------------------------------------------------------
+_KB_DRAFTS_FILE = DATA_ROOT / "kb_drafts.json"
+_KB_DRAFTS_LOCK = threading.Lock()
+
+
+def _kb_drafts() -> dict[str, Any]:
+    try:
+        return json.loads(_KB_DRAFTS_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {"drafts": []}
+
+
+def _save_kb_drafts(doc: dict[str, Any]) -> None:
+    tmp = _KB_DRAFTS_FILE.with_suffix(".tmp")
+    tmp.write_text(json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp.replace(_KB_DRAFTS_FILE)
+
+
+def _extract_drafts_async(doc_id: str, doc_title: str, content: str, city_hint: str = '') -> None:
+    """后台线程：LLM 从文档正文抽取 POI 候选 → 素材草稿（与既有素材/草稿同名去重）。"""
+
+    def work() -> None:
+        try:
+            from app.services import material_store
+            from app.services.llm_client import LLMClient
+
+            llm = LLMClient()
+            if llm.mode != "real" or not llm.api_key or not content.strip():
+                return
+            prompt = (
+                "从以下文旅文档中抽取可作为「标品素材」的景点/场馆/体验类条目。"
+                "只抽取文档中明确提到名称的条目，每条输出：name(名称), city(城市，未知填空串), "
+                "ticket_price(参考票价数字，免费填0), open_time(开放时间，未知填空串), "
+                "description(30-80字游客口径简介)。输出 JSON {\"spots\":[...]}，最多 6 条；"
+                "文档中没有可抽取的景点类条目时输出 {\"spots\":[]}。\n\n文档标题："
+                f"{doc_title}\n正文：\n{content[:4000]}"
+            )
+            result = llm.generate_json(prompt) or {}
+            candidates = [c for c in (result.get("spots") or []) if isinstance(c, dict) and c.get("name")]
+            if not candidates:
+                return
+            existing_products = {str(p.get("name") or "") for p in material_store.product_rows()}
+            with _KB_DRAFTS_LOCK:
+                d = _kb_drafts()
+                existing_drafts = {x.get("name") for x in d.get("drafts", []) if x.get("status") == "pending"}
+                added = 0
+                for c in candidates[:8]:
+                    name = str(c.get("name")).strip()[:40]
+                    if not name or name in existing_products or name in existing_drafts:
+                        continue
+                    existing_drafts.add(name)
+                    draft = {
+                        "id": "kd_" + hashlib.sha1(f"{doc_id}{name}{time.time()}".encode()).hexdigest()[:10],
+                        "doc_id": doc_id, "doc_title": doc_title,
+                        "name": name, "city": str(c.get("city") or "")[:12],
+                        "category": "景点", "ticket_price": max(0, int(c.get("ticket_price") or 0)),
+                        "open_time": str(c.get("open_time") or "")[:40],
+                        "description": str(c.get("description") or "")[:120],
+                        "status": "pending", "created_at": time.strftime("%Y-%m-%d %H:%M"),
+                    }
+                    d.setdefault("drafts", []).insert(0, draft)
+                    added += 1
+                if added:
+                    _save_kb_drafts(d)
+                    # 数据生产闭环：抽取候选自动同步素材库
+                    try:
+                        from app.services.material_sync import sync_candidates
+                        sync_candidates(candidates[:added], city_hint, doc_title)
+                    except Exception:
+                        pass
+        except Exception:
+            pass  # 抽取失败静默：文档本体仍作为纯文本语料生效
+
+    threading.Thread(target=work, daemon=True).start()
+
+
+def reingest_kb_docs() -> dict[str, Any]:
+    """语义层自愈（kbdoc 语料）：内存/PG 语义层重启后，从台账 content 重建文档语料。
+
+    幂等：语义层已存在的 job_id 跳过。kb_create 起台账会存原文（截断 2 万字），
+    历史文档（无存档原文）无法重灌，只能重新上传。
+    """
+    from app.services import semantic
+
+    rebuilt = skipped = 0
+    with _KB_LOCK:
+        for d in _kb_docs().get("docs", []):
+            doc_id, content = d.get("id"), d.get("content")
+            if not doc_id or not content:
+                skipped += 1
+                continue
+            if semantic.has_chunk(doc_id):
+                skipped += 1
+                continue
+            for i, c in enumerate(_chunk_text(content)):
+                try:
+                    semantic.add_chunk(f"{doc_id}#{i + 1}", f"【{d.get('title')}】{c}", "default")
+                except Exception:
+                    break
+            rebuilt += 1
+    return {"rebuilt": rebuilt, "skipped": skipped}
+
+
+@router.get("/api/kb/drafts")
+def kb_drafts_list(request: Request, status: str | None = None) -> dict[str, Any]:
+    """素材草稿清单（staff）：待确认的 AI 抽取候选。"""
+    from app.api._staff import require_staff
+
+    require_staff(request)
+    drafts = _kb_drafts().get("drafts", [])
+    if status:
+        drafts = [d for d in drafts if d.get("status") == status]
+    return {"total": len(drafts), "items": drafts[:200]}
+
+
+@router.post("/api/kb/drafts/{draft_id}/approve")
+def kb_draft_approve(draft_id: str, request: Request) -> dict[str, Any]:
+    """草稿确认入库：创建素材（create_product 内自动挂 cat: 语料）。"""
+    from app.api._staff import require_staff
+    from app.services import material_store
+
+    require_staff(request)
+    with _KB_DRAFTS_LOCK:
+        d = _kb_drafts()
+        draft = next((x for x in d.get("drafts", []) if x.get("id") == draft_id), None)
+        if not draft:
+            raise HTTPException(status_code=404, detail="草稿不存在")
+        if draft.get("status") != "pending":
+            raise HTTPException(status_code=400, detail="草稿已处理")
+        if any(str(p.get("name") or "") == draft["name"] for p in material_store.product_rows()):
+            draft["status"] = "rejected"
+            draft["note"] = "素材库已存在同名素材"
+            _save_kb_drafts(d)
+            raise HTTPException(status_code=409, detail="素材库已存在同名素材")
+        payload = {
+            "name": draft["name"], "category": draft.get("category") or "景点",
+            "city": draft.get("city") or "苏州",
+            "price_min": draft.get("ticket_price") or 0, "price_max": draft.get("ticket_price") or 0,
+            "stock": 20, "typical_dwell": "2h", "rating": 4.5,
+            "description": draft.get("description") or draft["name"],
+            "tags": ["知识库抽取", draft.get("doc_title") or ""],
+            "listed": True,
+        }
+        product = material_store.create_product(payload)
+        draft["status"] = "approved"
+        draft["product_id"] = product.get("id")
+        _save_kb_drafts(d)
+    return {"ok": True, "product_id": product.get("id"), "title": draft["name"]}
+
+
+@router.post("/api/kb/drafts/{draft_id}/reject")
+def kb_draft_reject(draft_id: str, request: Request) -> dict[str, Any]:
+    from app.api._staff import require_staff
+
+    require_staff(request)
+    with _KB_DRAFTS_LOCK:
+        d = _kb_drafts()
+        draft = next((x for x in d.get("drafts", []) if x.get("id") == draft_id), None)
+        if not draft:
+            raise HTTPException(status_code=404, detail="草稿不存在")
+        draft["status"] = "rejected"
+        _save_kb_drafts(d)
+    return {"ok": True}

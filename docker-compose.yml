@@ -39,19 +39,20 @@ services:
       - "${BACKEND_HOST_PORT:-8000}:8000"
     volumes:
       - ./data:/data
-      # 前端构建产物以挂载方式提供：宿主先 npm run build（frontend-v2/dist），
+      # 前端构建产物以挂载方式提供：宿主先 npm run build（frontend/dist），
       # 改前端无需重建镜像，杜绝"改了没同步"的静默过期问题；dist 缺失时后端仅提供 API。
-      - ./frontend-v2/dist:/app/web:ro
+      - ./frontend/dist:/app/web:ro
     restart: unless-stopped
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
 
   # 生产演进：PostgreSQL 镜像层（审计/任务跨实例落库 + pgvector 语义检索）
   # 启用：docker compose --profile postgres up -d，并设置 DATABASE_URL=postgresql+psycopg://wl:wl@postgres:5432/wl_travel
   postgres:
     image: pgvector/pgvector:pg16
-    profiles: ["postgres"]
     environment:
       POSTGRES_USER: wl
       POSTGRES_PASSWORD: wl
@@ -60,6 +61,11 @@ services:
       - "5432:5432"
     volumes:
       - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wl -d wl_travel"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
 
   # 生产演进：监控（Prometheus 抓取 backend /metrics + Grafana 看板）
   # 启用：docker compose --profile observability up -d

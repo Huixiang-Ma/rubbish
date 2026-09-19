@@ -11,12 +11,9 @@
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 import time
 from pathlib import Path
-
-import urllib.request
 
 _BACKEND_ROOT = Path(__file__).resolve().parents[1]
 if str(_BACKEND_ROOT) not in sys.path:
@@ -37,7 +34,7 @@ SCRIPT = [
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
-    args = parser.parse_args()
+    parser.parse_args()
     engine = MemoryEngine()
     thread = f"sim_{int(time.time())}"
     intervene_ms: list[float] = []

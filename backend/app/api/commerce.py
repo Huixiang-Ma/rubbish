@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from app.api._staff import require_staff
 from app.services import auth_service, shop_store
+from app.services.shop_store import plans_seed
 
 router = APIRouter(tags=["商业闭环：在售方案 / 订单 / 收藏"])
 
@@ -118,6 +119,51 @@ def plan_delete(plan_id: str, request: Request = None) -> dict:
         return {"ok": True}
     except LookupError as e:
         raise _err(e)
+
+
+@router.get("/api/plan-products/autodraft-suggestions")
+def plan_autodraft_suggestions(request: Request) -> dict:
+    """方案上架自动化：统计完成任务目的地，找出「被反复规划但无在售方案」的城市，
+    建议自动生成方案草稿（下架态），toB 审核后一键上架——人只做审核。
+    注意：必须声明在 /{plan_id} 通配路由之前，否则被通配吞掉。"""
+    from app.models.states import JobStatus
+    from app.services import job_index, material_store
+    from app.services.paths import DATA_ROOT as _DATA_ROOT
+
+    require_staff(request)
+
+    listed_cities = {str(p.get("city") or "") for p in plans_seed() if p.get("listed") is not False}
+    dest_agg: dict[str, dict] = {}
+    for state in job_index.iter_states(_DATA_ROOT):
+        if state.get("status") != JobStatus.COMPLETED.value:
+            continue
+        ui = state.get("user_input") or {}
+        dest = str(ui.get("destination") or "").strip()
+        if not dest:
+            continue
+        g = dest_agg.setdefault(dest, {"count": 0, "budgets": [], "days": []})
+        g["count"] += 1
+        if ui.get("budget"):
+            g["budgets"].append(int(ui["budget"]))
+        if ui.get("days"):
+            g["days"].append(int(ui["days"]))
+
+    items = []
+    for city, g in sorted(dest_agg.items(), key=lambda kv: -kv[1]["count"]):
+        if city in listed_cities or g["count"] < 2:
+            continue
+        days = max(1, round(sum(g["days"]) / len(g["days"]))) if g["days"] else 2
+        avg_budget = int(sum(g["budgets"]) / len(g["budgets"])) if g["budgets"] else days * 580 * 2
+        material_count = sum(1 for p in material_store.product_rows()
+                             if city.removesuffix("市") in str(p.get("city") or ""))
+        items.append({
+            "city": city, "completed_plans": g["count"], "suggested_days": min(7, days),
+            "suggested_per_price": max(199, min(9999, round(avg_budget / days * 1.3 / 10) * 10)),
+            "material_count": material_count,
+            "can_build": material_count >= 3,
+            "note": "" if material_count >= 3 else "该城市素材不足 3 条，建议先补素材再上架",
+        })
+    return {"total": len(items), "items": items}
 
 
 @router.get("/api/plan-products/{plan_id}")

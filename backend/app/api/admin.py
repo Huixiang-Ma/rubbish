@@ -2,7 +2,7 @@ import csv
 import io
 import json
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Query, Response
 
 from app.models.states import JobStatus
 from app.services import job_index
@@ -144,3 +144,102 @@ def stats_overview(tenant: str | None = None) -> dict:
         "customers": sorted(customer_counter.items(), key=lambda pair: pair[1], reverse=True)[:8],
         "tenant": tenant,
     }
+
+
+# ---------- 数据智能闭环：价格时效环（环5） + POI 批量拉取（素材自动化） ----------
+
+
+def _catalog_std_price(name: str) -> tuple[int, str] | None:
+    """按名称互相包含匹配标品库，返回 (标准票价, 标品名)。取 skus 首个非零价（成人口径）。"""
+    from app.services import material_store
+
+    for p in material_store.product_rows():
+        pname = str(p.get("name") or "")
+        if p.get("category") not in ("景点", "文化") or not pname:
+            continue
+        if pname in name or name in pname:
+            prices = [int(s.get("price") or 0) for s in (p.get("skus") or []) if s.get("price")]
+            price = next((x for x in prices if x > 0), int(p.get("price_min") or 0))
+            return price, pname
+    return None
+
+
+@router.get("/stats/price-drift")
+def price_drift(job_id: str | None = None) -> dict:
+    """价格时效环：任务行程实采票面价 vs 标品库标准票 → 漂移清单（实时计算不落盘）。
+
+    默认取最近一个 COMPLETED 任务。票面价来自高德/静态/标品回退链，标品价来自 skus 成人价。
+    """
+    states = [s for s in _iter_states() if s.get("status") == JobStatus.COMPLETED.value]
+    states.sort(key=lambda s: str(s.get("updated_at") or ""), reverse=True)
+    if job_id:
+        states = [s for s in states if s.get("job_id") == job_id]
+    if not states:
+        return {"total": 0, "items": [], "note": "暂无已完成任务"}
+    state = states[0]
+    jid = state.get("job_id")
+    b_rel = (state.get("agent_outputs") or {}).get("Budget")
+    budget_payload: dict = {}
+    if b_rel:
+        try:
+            raw = (DATA_ROOT / jid / b_rel).read_text(encoding="utf-8")
+            budget_payload = (json.loads(raw.splitlines()[-1])).get("payload", {})
+        except Exception:
+            budget_payload = {}
+    try:
+        itin_rel = (state.get("agent_outputs") or {}).get("Itinerary")
+        output = json.loads((DATA_ROOT / jid / itin_rel).read_text(encoding="utf-8"))
+        itinerary = output.get("payload", {}).get("itinerary") or []
+    except Exception:
+        itinerary = []
+
+    items: list[dict] = []
+    checked = 0
+    for day in itinerary:
+        for it in day.get("items", []):
+            spot = it.get("spot") or {}
+            name = str(spot.get("name") or "").strip()
+            used = int(spot.get("ticket_price") or 0)
+            if not name or used <= 0:
+                continue
+            checked += 1
+            match = _catalog_std_price(name)
+            if match is None:
+                items.append({"spot": name, "used_price": used, "catalog_price": None,
+                              "catalog_name": "", "note": "标品库无对应素材（未覆盖）"})
+            else:
+                cat_price, cat_name = match
+                if abs(cat_price - used) > max(2, int(cat_price * 0.1)):
+                    items.append({"spot": name, "used_price": used, "catalog_price": cat_price,
+                                  "catalog_name": cat_name,
+                                  "note": f"漂移 {cat_price - used:+d} 元，建议核对素材价格"})
+    return {"job_id": jid, "checked": checked, "total": len(items), "items": items,
+            "budget_tickets": budget_payload.get("budget_breakdown", {}).get("tickets")}
+
+
+@router.get("/stats/poi-candidates")
+def poi_candidates(city: str = Query(..., min_length=1)) -> dict:
+    """素材自动化：按城市拉取高德 POI 候选（含静态/标品票价回退），供批量生成素材草稿。"""
+    from app.services.scenic_spot_service import ScenicSpotService
+    from app.services import material_store
+
+    spots = ScenicSpotService().recommend(city, [], limit=12)
+    existing = {str(p.get("name") or "") for p in material_store.product_rows()}
+    items = []
+    for s in spots:
+        name = str(s.get("name") or "")
+        if not name:
+            continue
+        dup = any(name in e or e in name for e in existing)
+        items.append({
+            "name": name, "city": city, "category": "景点",
+            "price": s.get("ticket_price", 0),
+            "visit_minutes": s.get("visit_minutes", 120),
+            "open_time": s.get("open_time", ""),
+            "rating": s.get("rating", ""),
+            "tags": s.get("tags", [])[:3],
+            "description": f"{name}（{city}）。开放时间 {s.get('open_time', '以景区公告为准')}。"
+                           f"建议游玩 {s.get('visit_minutes', 120)} 分钟。",
+            "duplicate": dup,
+        })
+    return {"city": city, "total": len(items), "items": items}

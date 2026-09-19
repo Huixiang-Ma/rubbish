@@ -19,8 +19,14 @@ class LoginRequest(BaseModel):
     sms_code: str | None = Field(default=None, min_length=1)
 
 
+class ResetPasswordRequest(BaseModel):
+    phone: str = Field(..., pattern=r"^1\d{10}$")
+    sms_code: str = Field(..., min_length=1)
+    password: str = Field(..., min_length=6, max_length=32)
+
+
 class RegisterRequest(BaseModel):
-    username: str = Field(..., min_length=1)
+    username: str | None = Field(default=None, min_length=1)
     password: str | None = Field(default=None, min_length=1)
     phone: str | None = Field(default=None, pattern=r"^1\d{10}$")
     sms_code: str | None = Field(default=None, min_length=1)
@@ -69,13 +75,38 @@ def login(payload: LoginRequest) -> dict:
 
 @router.post("/register")
 def register(payload: RegisterRequest) -> dict:
-    display, error = auth_service.register(payload.username, payload.password, payload.display)
+    """注册链路：手机号 + 短信验证码（验码通过才建号），账号即手机号；密码用于后续账号密码登录。"""
+    if not payload.phone or not payload.sms_code:
+        raise HTTPException(status_code=422, detail="注册需手机号与短信验证码")
+    if not payload.password:
+        raise HTTPException(status_code=422, detail="注册需设置登录密码")
+    ok, err = auth_service.verify_sms_code(payload.phone, payload.sms_code)
+    if not ok:
+        raise HTTPException(status_code=401, detail=err or "验证码错误")
+    username = payload.username or payload.phone
+    display, error = auth_service.register(username, payload.password, payload.display, phone=payload.phone)
     if error:
         raise HTTPException(status_code=400, detail=error)
     return {
-        "token": auth_service.issue_token(payload.username, "traveler"),
+        "token": auth_service.issue_token(username, "traveler"),
         "role": "traveler",
         "name": display,
+    }
+
+
+@router.post("/reset-password")
+def reset_password(payload: ResetPasswordRequest) -> dict:
+    """toC 找回密码：手机号 + 短信验证码 + 新密码（复用 request-code 通道）。成功即返回新 token。"""
+    ok, err = auth_service.verify_sms_code(payload.phone, payload.sms_code)
+    if not ok:
+        raise HTTPException(status_code=401, detail=err or "验证码错误")
+    user, error = auth_service.reset_password_by_phone(payload.phone, payload.password)
+    if error or not user:
+        raise HTTPException(status_code=400, detail=error or "重置失败")
+    return {
+        "token": auth_service.issue_token(user["username"], "traveler"),
+        "role": "traveler",
+        "name": user.get("display", payload.phone),
     }
 
 

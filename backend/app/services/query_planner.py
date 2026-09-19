@@ -7,7 +7,6 @@
 """
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from app.services.llm_client import LLMClient

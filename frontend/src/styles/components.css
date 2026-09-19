@@ -1,0 +1,164 @@
+/* ============================================================
+   通用组件样式(按钮、卡片、Chip、Tag、输入、表格、标签)
+   ============================================================ */
+
+/* —— 按钮 —— */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
+  height: 40px; padding: 0 var(--s-5);
+  border: 1px solid transparent; border-radius: var(--r);
+  background: transparent;
+  font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--text);
+  letter-spacing: 0.005em;
+  transition: background var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease),
+              color var(--dur-1) var(--ease),
+              transform var(--dur-1) var(--ease),
+              box-shadow var(--dur-1) var(--ease);
+  white-space: nowrap;
+}
+.btn:active { transform: translateY(1px); }
+.btn-sm { height: 32px; padding: 0 var(--s-4); font-size: var(--fs-xs); }
+.btn-lg { height: 48px; padding: 0 var(--s-6); font-size: var(--fs-base); }
+.btn-pill { border-radius: var(--r-pill); }
+
+/* primary(克制:浅棕底 + 深棕字)*/
+.btn-primary {
+  background: var(--text); color: var(--text-on-dark);
+  border-color: var(--text);
+}
+.btn-primary:hover { background: #2A2724; border-color: #2A2724; box-shadow: var(--shadow); }
+/* 浅色primary(克制:浅米底 + 主点缀字 + 主点缀边框)*/
+.btn-primary-soft {
+  background: var(--accent); color: #FFF;
+  border-color: var(--accent);
+}
+.btn-primary-soft:hover { background: #5E6B50; border-color: #5E6B50; box-shadow: var(--shadow); }
+
+.btn-ghost { background: transparent; color: var(--text-2); border-color: var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: var(--text-3); background: var(--surface); }
+
+.btn-text { background: transparent; color: var(--text-2); border-color: transparent; padding: 0 var(--s-3); }
+.btn-text:hover { color: var(--text); background: var(--bg-soft); }
+
+.btn-icon { width: 36px; height: 36px; padding: 0; border-radius: var(--r); }
+
+/* —— 卡片 —— */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  padding: var(--s-5);
+  transition: border-color var(--dur-2) var(--ease),
+              box-shadow var(--dur-2) var(--ease),
+              transform var(--dur-2) var(--ease);
+}
+.card-hover:hover {
+  border-color: var(--border);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+.card-flat { background: var(--surface-2); }
+
+/* —— Chip(分类筛选用) —— */
+.chip {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  height: 32px; padding: 0 var(--s-4);
+  border-radius: var(--r-pill);
+  background: transparent;
+  border: 1px solid var(--border);
+  font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--text-2);
+  cursor: pointer;
+  transition: all var(--dur-1) var(--ease);
+}
+.chip:hover { color: var(--text); border-color: var(--text-3); }
+.chip.active {
+  background: var(--text); color: var(--text-on-dark); border-color: var(--text);
+}
+.chip-sm { height: 26px; padding: 0 var(--s-3); font-size: var(--fs-xs); }
+
+/* —— Tag —— */
+.tag {
+  display: inline-flex; align-items: center; gap: var(--s-1);
+  padding: 2px var(--s-3);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-xs); font-weight: var(--fw-medium);
+  background: var(--bg-soft); color: var(--text-2);
+}
+.tag-accent { background: var(--accent-soft); color: var(--accent); }
+.tag-accent-2 { background: var(--accent-2-soft); color: var(--accent-2); }
+.tag-ok { background: var(--ok-soft); color: var(--ok); }
+.tag-warn { background: var(--warn-soft); color: var(--warn); }
+.tag-danger { background: var(--danger-soft); color: var(--danger); }
+.tag-info { background: var(--info-soft); color: var(--info); }
+
+/* —— 输入 —— */
+.input, .select, textarea.input {
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--s-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  font-size: var(--fs-sm); color: var(--text);
+  transition: border-color var(--dur-1) var(--ease),
+              box-shadow var(--dur-1) var(--ease),
+              background var(--dur-1) var(--ease);
+}
+textarea.input { height: auto; padding: var(--s-3) var(--s-4); line-height: var(--lh-base); resize: vertical; }
+.input:hover, .select:hover { border-color: var(--border-strong); }
+.input:focus, .select:focus, textarea.input:focus {
+  outline: none; border-color: var(--text); box-shadow: 0 0 0 3px rgba(31,29,26,.06);
+}
+.input::placeholder, textarea.input::placeholder { color: var(--text-faint); }
+
+/* —— 表格 —— */
+.table {
+  width: 100%; border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+.table th {
+  text-align: left; font-weight: var(--fw-medium); color: var(--text-3);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-xs); letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.table td {
+  padding: var(--s-4);
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--text);
+}
+.table tbody tr { transition: background var(--dur-1) var(--ease); }
+.table tbody tr:hover { background: var(--surface-2); }
+.table tbody tr:last-child td { border-bottom: 0; }
+
+/* —— 分隔线 —— */
+.divider {
+  height: 1px; background: var(--border-soft); border: 0; margin: var(--s-5) 0;
+}
+.divider-v {
+  width: 1px; align-self: stretch; background: var(--border-soft); margin: 0 var(--s-4);
+}
+
+/* —— 圆形 Avatar —— */
+.avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--bg-soft); color: var(--text-2);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: var(--fs-xs); font-weight: var(--fw-medium);
+  border: 1px solid var(--border-soft);
+}
+.avatar-lg { width: 40px; height: 40px; }
+
+/* —— 进度条 —— */
+.progress {
+  height: 6px; background: var(--bg-soft); border-radius: var(--r-pill);
+  overflow: hidden;
+}
+.progress > span {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  border-radius: var(--r-pill);
+  transition: width var(--dur-3) var(--ease);
+}

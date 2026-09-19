@@ -61,7 +61,7 @@ class ResearcherAgent(AgentBase):
                     spot["knowledge_distance"] = top["distance"]
             except Exception:
                 continue  # RAG 失败不阻断行程主链路
-        return {
+        result = {
             "agent": self.name,
             "status": "ok",
             "payload": {
@@ -70,3 +70,23 @@ class ResearcherAgent(AgentBase):
                 "notes": "MVP 使用演示城市静态景点库，不承诺实时路网。",
             },
         }
+        # 数据生产闭环：Researcher 搜集的 POI 自动同步到素材库（去重，新建自动挂语料）
+        try:
+            from app.services.material_sync import sync_pois
+
+            pois = [
+                {
+                    "name": s.get("name", ""), "city": user_input["destination"],
+                    "lat": s.get("lat"), "lng": s.get("lng"),
+                    "ticket_price": s.get("ticket_price", 0),
+                    "visit_minutes": s.get("visit_minutes", 120),
+                    "open_time": s.get("open_time", ""),
+                    "tags": s.get("tags", []), "rating": s.get("rating", ""),
+                    "description": (s.get("knowledge") or "")[:120],
+                }
+                for s in spots if s.get("name")
+            ]
+            result["payload"]["material_sync"] = sync_pois(pois, user_input["destination"], source="agent")
+        except Exception:
+            pass  # 同步失败不阻断规划主链路
+        return result

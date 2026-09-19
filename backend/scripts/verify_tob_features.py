@@ -57,8 +57,6 @@ def main() -> int:
 
     print("== 1. 方案列表与状态覆盖 ==")
     _, plans = call("GET", f"{base}/api/plans?limit=500", token=token)
-    items = plans["items"]
-    batch = [i for i in items if True]  # 列表接口无约束字段，逐条过滤太贵；用 PG 侧核对
     check("列表可访问", plans.get("total", 0) > 0, f"total={plans.get('total')}")
 
     print("== 2. HITL 审核台 ==")
@@ -85,7 +83,6 @@ def main() -> int:
 
     print("== 5. 版本 diff（父子链） ==")
     _, all_p = call("GET", f"{base}/api/plans?limit=500", token=token)
-    child = next((i for i in all_p["items"] if i["status"] == "COMPLETED" and (i.get("version", 1) > 1 or True)), None)
     # 找有 parent 的：直接用 PG 标记的子任务——简化：从 feed 侧扫已完成且可 diff 的
     diff_ok = False
     diff_detail = ""

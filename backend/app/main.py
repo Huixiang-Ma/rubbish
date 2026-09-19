@@ -9,7 +9,8 @@ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from app.api.admin import router as admin_router
 from app.api.assist import router as assist_router
-from app.api.auth import require_admin, router as auth_router
+from app.api._staff import require_staff
+from app.api.auth import router as auth_router
 from app.api.catalog import router as catalog_router
 from app.api.commerce import router as commerce_router
 from app.api.composer import router as composer_router
@@ -55,10 +56,11 @@ app.include_router(rag_router)
 app.include_router(assist_router)
 app.include_router(auth_router)
 
-# toB 管理类路由：AUTH_ENABLED=true 时强制 Bearer 校验。
+# toB 管理类路由：AUTH_ENABLED=true 时强制工作台会话（admin/supervisor/consultant 三种角色均可，
+# 与 _staff.require_staff 口径一致——治理看板为只读聚合，主管/顾问亦需可见才能工作）。
 # 注意：此处只能注册一次——FastAPI 按注册顺序匹配，若先注册一份无守卫的同名路由，
 # 请求会命中无守卫的那份，导致鉴权被绕过。
-_auth_deps = [Depends(require_admin)] if get_settings().auth_enabled else []
+_auth_deps = [Depends(require_staff)] if get_settings().auth_enabled else []
 app.include_router(admin_router, dependencies=_auth_deps)
 app.include_router(services_router)
 
@@ -133,6 +135,15 @@ def startup() -> None:
     summary = recover_pending_jobs(queue_client)
     if summary["recovered"] or summary["corrupted"]:
         log_event("recovery", recovered=summary["recovered"], corrupted=summary["corrupted"], requeued=summary.get("requeued"))
+    # kbdoc 语料自愈：语义层重启后从知识库台账重建文档语料（幂等，缺原文的旧文档跳过）
+    try:
+        from app.api.assist import reingest_kb_docs
+
+        heal = reingest_kb_docs()
+        if heal.get("rebuilt"):
+            log_event("kb_corpus_reingest", **heal)
+    except Exception:
+        log_event("kb_corpus_reingest_failed")
     plan_worker.start()
 
 
@@ -142,15 +153,15 @@ def shutdown() -> None:
 
 
 # ----------------------------------------------------------------------------
-# 前端（Vue3 + Vite 构建产物，hash 路由，构建目录 frontend-v2/dist）：
-#   本地开发 → WL项目/frontend-v2/dist；容器内 → /app/web（compose bind-mount）。
-#   toC 游客端入口 /、toB 工作台 /#/b、行程分享页 /#/s/{job_id}。
-#   旧版单文件前端已整体移除；/b、/s/{job_id} 旧书签保留为 307 重定向。
+# 前端（Vue3 + Vite 构建产物，hash 路由，构建目录 frontend/dist）：
+#   本地开发 → WL项目/frontend/dist；容器内 → /app/web（compose bind-mount）。
+#   toC 游客端入口 /、toB 工作台 /#/tob/auth，行程任务详情 /#/plan/{job_id}。
+#   旧版单文件前端与 frontend-v2 已整体移除；/b、/s/{job_id} 旧书签保留为 307 重定向。
 #   挂载必须放在所有 API 路由之后：mount("/") 是通配兜底，先注册会把
 #   其后声明的 /health、/metrics 等一并吞掉（曾导致健康检查 404）。
 # ----------------------------------------------------------------------------
 _web_candidates = [
-    Path(__file__).resolve().parents[2] / "frontend-v2" / "dist",
+    Path(__file__).resolve().parents[2] / "frontend" / "dist",
     Path(__file__).resolve().parents[1] / "web",
 ]
 WEB_DIR = next((p for p in _web_candidates if p.exists()), None)
@@ -160,4 +171,4 @@ if WEB_DIR:
     app.mount("/v2", StaticFiles(directory=str(WEB_DIR), html=True), name="web_v2_alias")
     app.mount("/", StaticFiles(directory=str(WEB_DIR), html=True), name="web")
 else:
-    log_event("web_dir_missing", hint="frontend-v2 未构建，仅 API 可用：先执行 cd frontend-v2 && npm run build")
+    log_event("web_dir_missing", hint="frontend 未构建，仅 API 可用：先执行 cd frontend && npm run build")

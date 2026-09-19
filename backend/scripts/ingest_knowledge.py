@@ -10,7 +10,6 @@ from __future__ import annotations
 import argparse
 import csv
 import io
-import re
 import sys
 from html.parser import HTMLParser
 from pathlib import Path

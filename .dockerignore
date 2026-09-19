@@ -3,8 +3,8 @@
 .env.*
 !.env.example
 
-# 运行时数据（compose 以挂载方式提供 ./data:/data）
-data/
+# 运行时数据（compose 以挂载方式提供 ./data:/data；backend/app/data 种子数据需进镜像）
+/data/
 logs/
 *.log
 
@@ -23,7 +23,6 @@ venv/
 
 # 前端本地依赖与构建产物
 node_modules/
-frontend-v2/node_modules/
 
 # 文档 / 观测配置不影响镜像，但排除减少上下文
 docs/

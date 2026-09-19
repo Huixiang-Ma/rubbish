@@ -1,11 +1,26 @@
 import json
 import math
+from functools import lru_cache
 from typing import Any
 
 from app.agents.base import AgentBase
 from app.services.llm_client import LLMClient
 
 CLUSTER_RADIUS_KM = 5.0  # 同一地理簇的半径：簇内景点彼此步行/短途可达
+
+
+@lru_cache(maxsize=16)
+def _city_signature_names(city_full: str) -> frozenset[str]:
+    """城市特色名集：目的地城市的标品素材库名称（素材库即运营 curated 的当地代表作）。"""
+    from app.services import material_store
+
+    city = city_full.removesuffix("市")
+    names = frozenset(
+        str(p.get("name") or "")
+        for p in material_store.product_rows()
+        if city and city in str(p.get("city") or "")
+    )
+    return frozenset(n for n in names if n)
 
 
 def _cluster_areas(spots: list[dict[str, Any]]) -> dict[str, str]:
@@ -68,23 +83,60 @@ class PlannerAgent(AgentBase):
     def _rule_days(
         self, user_input: dict[str, Any], spots: list[dict[str, Any]], max_per_day: int | None = None
     ) -> list[dict[str, Any]]:
-        """规则编排兜底：经济实惠导向（免费/低价优先），按每日上限切片分天。"""
+        """规则编排兜底：地理簇分天（同天不跨区）+ 簇内按城市特色/评分/低价排序。
+
+        选点优先级：距已选点近（同簇保证）> 城市特色 > 评分 > 低价；
+        评分/坐标缺失时降级处理（中性分参与排序、未定位组排最后），不剔除候选。
+        """
         limit = max_per_day or self.MAX_SPOTS_PER_DAY
-        ordered = sorted(spots, key=lambda spot: spot.get("ticket_price", 0))
-        days = []
-        per_day = max(1, min(limit, len(ordered) // user_input["days"] or 1))
+        days_total = max(1, int(user_input["days"]))
+        city = user_input["destination"].removesuffix("市")
+        signature = _city_signature_names(user_input["destination"])
+        areas = _cluster_areas(spots)
+
+        def rank_key(spot: dict[str, Any]) -> tuple:
+            name = spot.get("name", "")
+            featured = 2.0 if (city and city in name) else 0.0
+            featured += 1.0 if name in signature else 0.0
+            try:
+                rating = float(spot.get("rating") or 0)
+            except (TypeError, ValueError):
+                rating = 0.0  # 评分缺失：中性偏低，不剔除
+            price = float(spot.get("ticket_price") or 0)
+            price_term = 3.0 if price == 0 else max(0.0, 3.0 - price / 60)
+            return -(featured * 2 + rating + price_term)
+
+        # 按地理簇分组（无坐标 → "未定位"组排最后，仅作补位）
+        grouped: dict[str, list[dict[str, Any]]] = {}
+        for spot in spots:
+            grouped.setdefault(areas.get(spot.get("name", ""), "未定位"), []).append(spot)
+        for label in grouped:
+            grouped[label].sort(key=rank_key)
+        cluster_order = sorted(grouped, key=lambda k: (k == "未定位", -len(grouped[k])))
+
+        # 每天从当前簇取 limit 个；簇耗尽顺延到下一簇（相邻补位）；全耗尽回到首个簇评分序补足
+        days: list[dict[str, Any]] = []
         themes = ["历史文化经典线", "城市漫步体验线", "亲子休闲美食线", "自然风景放松线"]
-        for day in range(1, user_input["days"] + 1):
-            start = (day - 1) * per_day
-            selected = ordered[start : start + per_day]
-            if not selected:
-                selected = ordered[:per_day]
+        used: set[str] = set()
+        ci = 0
+        for day in range(1, days_total + 1):
+            selected: list[dict[str, Any]] = []
+            while ci < len(cluster_order) and len(selected) < limit:
+                pool = [s for s in grouped[cluster_order[ci]] if s.get("name") not in used]
+                take = min(limit - len(selected), len(pool))
+                selected.extend(pool[:take])
+                used.update(s.get("name", "") for s in pool[:take])
+                if len(grouped[cluster_order[ci]]) - len([s for s in grouped[cluster_order[ci]] if s.get("name") in used]) == 0:
+                    ci += 1
+            if not selected:  # 全部耗尽：按评分序从已用池补足（降级重复使用）
+                leftover = sorted(used, key=lambda n: rank_key(next(s for s in spots if s.get("name") == n)))
+                selected = [next(s for s in spots if s.get("name") == n) for n in leftover[:limit]]
             days.append(
                 {
                     "day": day,
                     "theme": themes[(day - 1) % len(themes)],
                     "spot_names": [spot["name"] for spot in selected],
-                    "reason": "按经济实惠导向（免费/低价优先）与每日强度分配。",
+                    "reason": "同地理簇分天（不跨区往返），簇内按城市特色/评分/低价排序。",
                 }
             )
         return days
@@ -114,6 +166,7 @@ class PlannerAgent(AgentBase):
                 "name": spot.get("name", ""),
                 "area": areas.get(spot.get("name", ""), ""),
                 "tags": spot.get("tags", []),
+                "rating": spot.get("rating", ""),
                 "ticket_price": spot.get("ticket_price", 0),
                 "visit_minutes": spot.get("visit_minutes", 120),
             }
@@ -131,6 +184,7 @@ class PlannerAgent(AgentBase):
             "（收费景点每天至多 1 个，该名额优先留给著名地标级景点）；整趟门票总额控制在预算的 15% 以内；\n"
             "3.5 著名景点必选：候选清单中地标级/榜单头部的当地代表作（城市门面、顶级历史古迹）必须收录，优先排在 Day 1 或最匹配偏好的一天，让游客第一程就体会到当地最著名的一面；\n"
             "3.6 当地特色贯穿：theme 与选点需体现当地独有特色（历史街区/地方美食聚集地/特色文化地标），避免行程像任何城市都成立的通用安排；\n"
+            "3.7 同区同价时评分更高者优先（facts 中 rating），评分缺失不影响入选但排后；\n"
             "4. 约束优先：若约束含「不要太赶/轻松」则每天不超过 "
             f"{max_per_day} 个景点；含「避免早起」则当天首站选开放晚、无需预约的景点。\n"
             f'输出 JSON {{"days": [{{"day": int, "theme": str, "spot_names": [str]}}]}}，要求：'
