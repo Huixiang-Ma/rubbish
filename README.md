@@ -97,9 +97,9 @@ uvicorn app.main:app --reload
 前端只有一套（`frontend/`，Vue3 + Vite 重做版 UI，hash 路由），由后端同源托管其构建产物（同源无跨域）：
 
 ```text
-游客端 toC：http://127.0.0.1:8000/
-企业端 toB：http://127.0.0.1:8000/#/tob/auth
-AI 任务详情：http://127.0.0.1:8000/#/plan/{job_id}
+游客端 toC：http://127.0.0.1:8010/
+企业端 toB：http://127.0.0.1:8010/#/tob/auth
+AI 任务详情：http://127.0.0.1:8010/#/plan/{job_id}
 ```
 
 旧路径 `/b`、`/s/{job_id}` 会自动 307 重定向到新 hash 路由。本地迭代前端用 Vite dev：`cd frontend && npm run dev`（默认 `5173`，`/api` 代理到后端）。

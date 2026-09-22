@@ -1,9 +1,12 @@
+# 独立部署项目：固定命名与端口，不复用数字人项目容器
+name: wl_mvp
+
 services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
     ports:
-      - "${REDIS_HOST_PORT:-6379}:6379"
+      - "6381:6379"
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis-data:/data
@@ -36,7 +39,7 @@ services:
       # 告警桥接：Alertmanager webhook 回调鉴权（生产必改）
       ALERT_BRIDGE_TOKEN: ${ALERT_BRIDGE_TOKEN:-alert-bridge-change-me}
     ports:
-      - "${BACKEND_HOST_PORT:-8000}:8000"
+      - "8010:8000"
     volumes:
       - ./data:/data
       # 前端构建产物以挂载方式提供：宿主先 npm run build（frontend/dist），
@@ -58,7 +61,7 @@ services:
       POSTGRES_PASSWORD: wl
       POSTGRES_DB: wl_travel
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pg-data:/var/lib/postgresql/data
     healthcheck:
