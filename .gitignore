@@ -64,7 +64,8 @@ v8版本/
 融合版*.md
 落地实施方案*.md
 补全方案*.md
-工单*.md
+*工单*.md
+*需求派单*.md
 实现*.md
 实现简报*.md
 三方*.md
@@ -90,6 +91,13 @@ _retheme.py
 # ---- 其它内部文档与备份（不入库） ----
 docs/
 backend/scripts/*.png
+
+# ---- 验收截图 / 一次性脚本（不入库，本地保留） ----
+frontend/_shots/
+frontend/_*.py
+
+# ---- git filter-branch 的中间残留目录 ----
+.git-rewrite/
 
 # ---- 其它内部文档 ----
 实训视频讲解文档*
